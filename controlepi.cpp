@@ -39,16 +39,16 @@ volatile long pulsosRTE = 0;
 volatile long pulsosRTD = 0;
 
 // Roda frontal esquerda
-MotorPI RFE = {25, 26, 34, 35, &pulsosRFE, 0, 0, 1.5, 3.0, 1};
+MotorPI RFE = {2, 3, 14, 27, &pulsosRFE, 0, 0, 1.5, 3.0, 1};
 
 // Roda frontal direita
-MotorPI RFD = {27, 14, 32, 33, &pulsosRFD, 0, 0, 1.5, 3.0, 1};
+MotorPI RFD = {19, 21, 18, 5, &pulsosRFD, 0, 0, 1.5, 3.0, 1};
 
 // Roda traseira esquerda
-MotorPI RTE = {12, 13, 18, 19, &pulsosRTE, 0, 0, 1.5, 3.0, 1};
+MotorPI RTE = {25, 26, 13, 3, &pulsosRTE, 0, 0, 1.5, 3.0, 1};
 
 // Roda traseira direita
-MotorPI RTD = {23, 22, 21, 4, &pulsosRTD, 0, 0, 1.5, 3.0, 1};
+MotorPI RTD = {17, 16, 4, 15, &pulsosRTD, 0, 0, 1.5, 3.0, 1};
 
 void setMotor(MotorPI& m, int pwm) {
   pwm = pwm * m.invertido;
