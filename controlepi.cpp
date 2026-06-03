@@ -45,7 +45,7 @@ MotorPI RTE = {13, 25, 14, 16, &pulsosRFE, 0, 0, 1.5, 3.0, 1};
 MotorPI RFD = {26, 27, 17, 18, &pulsosRFD, 0, 0, 1.5, 3.0, 1};
 
 // Roda traseira esquerda
-MotorPI RFE = {32, 33, 19, 21, &pulsosRTE, 0, 0, 1.5, 3.0, 1};
+MotorPI RFE = {32, 33, 34, 35, &pulsosRTE, 0, 0, 1.5, 3.0, 1};
 
 // Roda traseira direita
 MotorPI RTD = {12, 4, 22, 23, &pulsosRTD, 0, 0, 1.5, 3.0, 1};
