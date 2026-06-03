@@ -3,7 +3,7 @@
 #define PULSOS_POR_VOLTA 480.0
 #define TCONTROLE 20
 
-float velocidadeAlvo = -50.0;
+float velocidadeAlvo = 10.0;
 
 enum Movimento {
   PARADO,
@@ -39,15 +39,17 @@ volatile long pulsosRTE = 0;
 volatile long pulsosRTD = 0;
 
 // Roda frontal esquerda
-MotorPI RFE = {13, 25, 14, 16, &pulsosRFE, 0, 0, 1.5, 3.0, 1};
+MotorPI RTE = {13, 25, 14, 16, &pulsosRFE, 0, 0, 1.5, 3.0, 1};
+
 // Roda frontal direita
 MotorPI RFD = {26, 27, 17, 18, &pulsosRFD, 0, 0, 1.5, 3.0, 1};
 
 // Roda traseira esquerda
-MotorPI RTE = {32, 33, 19, 21, &pulsosRTE, 0, 0, 1.5, 3.0, 1};
+MotorPI RFE = {32, 33, 19, 21, &pulsosRTE, 0, 0, 1.5, 3.0, 1};
 
 // Roda traseira direita
-MotorPI RTD = {12, 16, 22, 23, &pulsosRTD, 0, 0, 1.5, 3.0, 1};
+MotorPI RTD = {12, 4, 22, 23, &pulsosRTD, 0, 0, 1.5, 3.0, 1};
+
 
 void setMotor(MotorPI& m, int pwm) {
   pwm = pwm * m.invertido;
@@ -176,6 +178,9 @@ unsigned long tempoInicio = 0;
 void setup() {
   Serial.begin(115200);
 
+  pinMode(13, OUTPUT);
+  pinMode(26, OUTPUT);
+
   configurarMotor(RFE);
   configurarMotor(RFD);
   configurarMotor(RTE);
@@ -184,7 +189,7 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(RFE.encA), isrRFE, RISING);
   attachInterrupt(digitalPinToInterrupt(RFD.encA), isrRFD, RISING);
   attachInterrupt(digitalPinToInterrupt(RTE.encA), isrRTE, RISING);
-  attachInterrupt(digitalPinToInterrupt(RTD.encA), isrRTD, RISING);
+  attachInterrupt(digitalPinToInterrupt(RTD.encA), isrRTD, RISING); 
 
   ultimoControle = millis();
   tempoInicio = millis();
@@ -201,10 +206,14 @@ void loop() {
     }
 
   /* Para testar o funcionamento das rodas:
-  setMotor(RFE, 100);
-  setMotor(RFD, 100);
-  setMotor(RTE, 100);
-  setMotor(RTD, 100);
+  setMotor(RFE, 50);
+  setMotor(RFD, 50);
+  setMotor(RTE, 50);
+  setMotor(RTD, 50); */
+
+
+
+  delay(1000); 
+
   
-  */
 }
