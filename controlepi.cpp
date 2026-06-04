@@ -3,16 +3,14 @@
 #define PULSOS_POR_VOLTA 480.0
 #define TCONTROLE 20
 
-float velocidadeAlvo = 10.0;
+double velocidadeAlvo = -30;
 
-enum Movimento {
-  PARADO,
-  FRENTE,
-  CURVA_DIREITA,
-  CURVA_ESQUERDA
-};
+unsigned long agora = 0;
 
-Movimento movimentoAtual = FRENTE;
+double rpmRFE;
+double rpmRFD;
+double rpmRTE;
+double rpmRTD;
 
 struct MotorPI {
   int rpwm;
@@ -25,34 +23,26 @@ struct MotorPI {
 
   long posAnterior;
 
-  float integral;
-  float kp;
-  float ki;
+  double integral;
+  double kp;
+  double ki;
 
-  int invertido;
+  int invertidoMotor;
+  int invertidoEncoder;
 };
 
-// Encoders
 volatile long pulsosRFE = 0;
 volatile long pulsosRFD = 0;
 volatile long pulsosRTE = 0;
 volatile long pulsosRTD = 0;
 
-// Roda frontal esquerda
-MotorPI RTE = {13, 25, 14, 16, &pulsosRFE, 0, 0, 1.5, 3.0, 1};
-
-// Roda frontal direita
-MotorPI RFD = {26, 27, 17, 18, &pulsosRFD, 0, 0, 1.5, 3.0, 1};
-
-// Roda traseira esquerda
-MotorPI RFE = {32, 33, 34, 35, &pulsosRTE, 0, 0, 1.5, 3.0, 1};
-
-// Roda traseira direita
-MotorPI RTD = {12, 4, 22, 23, &pulsosRTD, 0, 0, 1.5, 3.0, 1};
-
+MotorPI RTE = {13, 25, 14, 16, &pulsosRTE, 0, 0, 1.5, 3.0, -1, 1};
+MotorPI RFD = {26, 27, 36, 39, &pulsosRFD, 0, 0, 1.5, 3.0, 1, 1};
+MotorPI RFE = {32, 33, 22, 23, &pulsosRFE, 0, 0, 1.5, 3.0, -1, 1};
+MotorPI RTD = {15, 4, 34, 35, &pulsosRTD, 0, 0, 1.5, 3.0, 1, 1};
 
 void setMotor(MotorPI& m, int pwm) {
-  pwm = pwm * m.invertido;
+  pwm = pwm * m.invertidoMotor;
   pwm = constrain(pwm, -255, 255);
 
   if (pwm > 0) {
@@ -67,7 +57,7 @@ void setMotor(MotorPI& m, int pwm) {
   }
 }
 
-float atualizarPI(MotorPI& m, float alvoRPM, float deltaT) {
+double atualizarPI(MotorPI& m, double alvoRPM, double deltaT) {
   long posAtual;
 
   noInterrupts();
@@ -77,14 +67,15 @@ float atualizarPI(MotorPI& m, float alvoRPM, float deltaT) {
   long deltaPulsos = posAtual - m.posAnterior;
   m.posAnterior = posAtual;
 
-  float rpm = (deltaPulsos / PULSOS_POR_VOLTA) * (60.0 / deltaT);
+  double rpm = (deltaPulsos / PULSOS_POR_VOLTA) * (60.0 / deltaT);
+  
 
-  float erro = alvoRPM - rpm;
+  double erro = alvoRPM - rpm;
 
   m.integral += erro * deltaT;
   m.integral = constrain(m.integral, -100.0, 100.0);
 
-  float controle = m.kp * erro + m.ki * m.integral;
+  double controle = m.kp * erro + m.ki * m.integral;
 
   int pwm = constrain((int)controle, -255, 255);
 
@@ -93,24 +84,43 @@ float atualizarPI(MotorPI& m, float alvoRPM, float deltaT) {
   return rpm;
 }
 
-void mover(float rpmEsquerda, float rpmDireita, float deltaT) {
-  atualizarPI(RFE, rpmEsquerda, deltaT);
-  atualizarPI(RTE, rpmEsquerda, deltaT);
+void mover(double rpmEsquerda, double rpmDireita, double deltaT) {
+  rpmRFE = atualizarPI(RFE, rpmEsquerda, deltaT);
+  rpmRTE = atualizarPI(RTE, rpmEsquerda, deltaT);
 
-  atualizarPI(RFD, rpmDireita, deltaT);
-  atualizarPI(RTD, rpmDireita, deltaT);
+  rpmRFD = atualizarPI(RFD, rpmDireita, deltaT);
+  rpmRTD = atualizarPI(RTD, rpmDireita, deltaT);
 }
 
-void Frente(float rpm, float deltaT) {
+void moverLateral(double dig1, double dig2, double deltaT) {
+  rpmRFE = atualizarPI(RFE, dig1, deltaT);
+  rpmRTE = atualizarPI(RTE, dig2, deltaT);
+
+  rpmRFD = atualizarPI(RFD, dig2, deltaT);
+  rpmRTD = atualizarPI(RTD, dig1, deltaT);
+}
+
+void Frente(double rpm, double deltaT) {
   mover(rpm, rpm, deltaT);
 }
 
-void CurvaDireita(float rpm, float deltaT) {
+void Tras(double rpm, double deltaT) {
+  mover(-rpm, -rpm, deltaT);
+}
+
+void CurvaDireita(double rpm, double deltaT) {
   mover(rpm, rpm * 0.5, deltaT);
 }
 
-void CurvaEsquerda(float rpm, float deltaT) {
+void CurvaEsquerda(double rpm, double deltaT) {
   mover(rpm * 0.5, rpm, deltaT);
+}
+
+void Esquerda (double rpm, double deltaT) {
+  moverLateral(rpm, -rpm, deltaT);
+}
+void Direita (double rpm, double deltaT) {
+  moverLateral(-rpm, rpm, deltaT);
 }
 
 void Parar() {
@@ -125,21 +135,6 @@ void zerarIntegrais() {
   RFD.integral = 0;
   RTE.integral = 0;
   RTD.integral = 0;
-}
-
-void executarMovimento(float deltaT) {
-  if (movimentoAtual == FRENTE) {
-    Frente(velocidadeAlvo, deltaT);
-  } 
-  else if (movimentoAtual == CURVA_DIREITA) {
-    CurvaDireita(velocidadeAlvo, deltaT);
-  } 
-  else if (movimentoAtual == CURVA_ESQUERDA) {
-    CurvaEsquerda(velocidadeAlvo, deltaT);
-  } 
-  else {
-    Parar();
-  }
 }
 
 void IRAM_ATTR isrRFE() {
@@ -178,9 +173,6 @@ unsigned long tempoInicio = 0;
 void setup() {
   Serial.begin(115200);
 
-  pinMode(13, OUTPUT);
-  pinMode(26, OUTPUT);
-
   configurarMotor(RFE);
   configurarMotor(RFD);
   configurarMotor(RTE);
@@ -193,27 +185,46 @@ void setup() {
 
   ultimoControle = millis();
   tempoInicio = millis();
+  agora = millis(); 
 }
+
 void loop() {
-  unsigned long agora = millis();
+  agora = millis();
 
   if (agora - ultimoControle >= TCONTROLE) {
-    float deltaT = (agora - ultimoControle) / 1000.0;
+    double deltaT = (agora - ultimoControle) / 1000.0;
 
-    Frente(velocidadeAlvo, deltaT);
+    if (agora <= 5000)
+    Direita(velocidadeAlvo, deltaT);
+    else if (agora <= 8000)
+    Parar();
+    else if (agora <= 13000)
+    Frente(velocidadeAlvo, deltaT);    
+    else if (agora <= 16000)
+    Parar();
+    else if (agora <= 21000)
+    Esquerda(velocidadeAlvo, deltaT);    
+    else if (agora <= 24000)
+    Parar();
+    else if (agora <= 29000)
+    Tras(velocidadeAlvo, deltaT);
+    else Parar();
+    
 
     ultimoControle = agora;
-    }
+  } 
 
-  /* Para testar o funcionamento das rodas:
-  setMotor(RFE, 50);
-  setMotor(RFD, 50);
-  setMotor(RTE, 50);
-  setMotor(RTD, 50); */
+  Serial.print("RPM RFE: ");
+  Serial.print(rpmRFE);
+  Serial.print(" / ");
+  Serial.print("RPM RFD: ");
+  Serial.print(rpmRFD);
+  Serial.print(" / ");
+  Serial.print("RPM RTE: ");
+  Serial.print(rpmRTE);
+  Serial.print(" / ");
+  Serial.print("RPM RTD: ");
+  Serial.println(rpmRTD);
 
-
-
-  delay(1000); 
-
-  
+  delay(10); 
 }
