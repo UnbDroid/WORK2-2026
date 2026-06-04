@@ -2,8 +2,12 @@
 
 #define PULSOS_POR_VOLTA 480.0
 #define TCONTROLE 20
+#define R 20
+#define H 19.5
+#define RAIO 0.0375
 
-double velocidadeAlvo = -30;
+
+double velocidadeAlvo = -40;
 
 unsigned long agora = 0;
 
@@ -100,6 +104,18 @@ void moverLateral(double dig1, double dig2, double deltaT) {
   rpmRTD = atualizarPI(RTD, dig1, deltaT);
 }
 
+void movimentar (double vx, double vy, double w, double deltaT, double inverter) {
+  double velRFE = (vx + vy + R * w - H * w);
+  double velRTD = (vx + vy - R * w + H * w);
+  double velRFD = (vx - vy - R * w + H * w);
+  double velRTE = (vx - vy + R * w - H * w);
+
+  rpmRFE = atualizarPI(RFE, velRFE, deltaT);  
+  rpmRTE = atualizarPI(RTE, velRTE, deltaT);
+  rpmRFD = atualizarPI(RFD, velRFD, deltaT);
+  rpmRTD = atualizarPI(RTD, velRTD, deltaT);
+}
+
 void Frente(double rpm, double deltaT) {
   mover(rpm, rpm, deltaT);
 }
@@ -194,27 +210,12 @@ void loop() {
   if (agora - ultimoControle >= TCONTROLE) {
     double deltaT = (agora - ultimoControle) / 1000.0;
 
-    if (agora <= 5000)
-    Direita(velocidadeAlvo, deltaT);
-    else if (agora <= 8000)
-    Parar();
-    else if (agora <= 13000)
-    Frente(velocidadeAlvo, deltaT);    
-    else if (agora <= 16000)
-    Parar();
-    else if (agora <= 21000)
-    Esquerda(velocidadeAlvo, deltaT);    
-    else if (agora <= 24000)
-    Parar();
-    else if (agora <= 29000)
-    Tras(velocidadeAlvo, deltaT);
-    else Parar();
-    
+    movimentar(-velocidadeAlvo, 0, 0, deltaT, 1);
 
     ultimoControle = agora;
   } 
 
-  Serial.print("RPM RFE: ");
+  /*Serial.print("RPM RFE: ");
   Serial.print(rpmRFE);
   Serial.print(" / ");
   Serial.print("RPM RFD: ");
@@ -224,7 +225,7 @@ void loop() {
   Serial.print(rpmRTE);
   Serial.print(" / ");
   Serial.print("RPM RTD: ");
-  Serial.println(rpmRTD);
+  Serial.println(rpmRTD);*/
 
   delay(10); 
 }
