@@ -77,164 +77,83 @@ rcl_subscription_t garra_sub;
 std_msgs__msg__String garra_msg;
 // std_msgs__msg__Bool led_msg;
 
-char command_buffer[32]; //diminuir
-int giro180 = 1600;
-int giro90 = 800;
-int giro270 = 2400;
-
-void printResetReason() {
-  esp_reset_reason_t reason = esp_reset_reason();
-  Serial.print("Motivo do reset: ");
-  switch (reason) {
-    case ESP_RST_POWERON:   Serial.println("POWERON (ligou da tomada/USB)"); break;
-    case ESP_RST_EXT:       Serial.println("EXT (pino de reset externo)"); break;
-    case ESP_RST_SW:        Serial.println("SW (reset por software)"); break;
-    case ESP_RST_PANIC:     Serial.println("PANIC (crash de código / exceção)"); break;
-    case ESP_RST_INT_WDT:   Serial.println("INT_WDT (watchdog de interrupção travada)"); break;
-    case ESP_RST_TASK_WDT:  Serial.println("TASK_WDT (watchdog de task travada)"); break;
-    case ESP_RST_WDT:       Serial.println("WDT (outro watchdog)"); break;
-    case ESP_RST_BROWNOUT:  Serial.println(">>> BROWNOUT (queda de tensão) <<<"); break;
-    case ESP_RST_SDIO:      Serial.println("SDIO"); break;
-    default:                Serial.println("Outro / desconhecido"); break;
-  }
-}
-
-//Stepper Motor
-
-#define stepPin 33
-#define dirPin 32
-#define MS1 27
-#define MS2 26
-#define MS3 25
-
-FastAccelStepperEngine engine = FastAccelStepperEngine();
-FastAccelStepper *stepper = NULL;
-
-/*
- * TODO : Define your subscription callbacks here
- * leave the last one as timer_callback()
-*/
-// void led_callback(const void *msgin) {
-
-//   std_msgs__msg__Bool *led_msg = (std_msgs__msg__Bool *)msgin;
-//   /*
-//    * Do something with your receive message
-//    */
-//   led_test_state = led_msg->data;
-//   digitalWrite(LED_PIN_TEST, led_test_state);
-
+// void printResetReason() {
+//   esp_reset_reason_t reason = esp_reset_reason();
+//   Serial.print("Motivo do reset: ");
+//   switch (reason) {
+//     case ESP_RST_POWERON:   Serial.println("POWERON (ligou da tomada/USB)"); break;
+//     case ESP_RST_EXT:       Serial.println("EXT (pino de reset externo)"); break;
+//     case ESP_RST_SW:        Serial.println("SW (reset por software)"); break;
+//     case ESP_RST_PANIC:     Serial.println("PANIC (crash de código / exceção)"); break;
+//     case ESP_RST_INT_WDT:   Serial.println("INT_WDT (watchdog de interrupção travada)"); break;
+//     case ESP_RST_TASK_WDT:  Serial.println("TASK_WDT (watchdog de task travada)"); break;
+//     case ESP_RST_WDT:       Serial.println("WDT (outro watchdog)"); break;
+//     case ESP_RST_BROWNOUT:  Serial.println(">>> BROWNOUT (queda de tensão) <<<"); break;
+//     case ESP_RST_SDIO:      Serial.println("SDIO"); break;
+//     default:                Serial.println("Outro / desconhecido"); break;
+//   }
 // }
 
-void girar_90() {
-  if (!stepper) return;
+//Stepper Motor1 (rotacao)
 
-  Serial.println("Moving to position 800");
-  stepper->moveTo(giro90, true);
+#define stepPin1 14
+#define dirPin1 27
+#define MS1_1 26
+
+char command_buffer[32]; //diminuir
+int slot1 = 1200;
+int slot2 = 1600;
+int slot3 = 2000;
+
+FastAccelStepperEngine engine = FastAccelStepperEngine();
+FastAccelStepper *stepper1 = NULL;
+
+void rotacionar(int npasso) {
+  if (!stepper1) return;
+
+  // Serial.println("Moving to position 800");
+  stepper1->moveTo(npasso, true);
 }
 
-void girar_180() {
-  if (!stepper) return;
+//Stepper Motor2 (movimento vertical)
 
-  Serial.println("Moving to position 1600");
-  stepper->moveTo(giro180, true);
+#define stepPin2 33 
+#define dirPin2 32
+#define enablePin2 25
 
+int altura_inicial = 0;
+int cinco_cm = 3200;
+int dez_cm = 6400;
+int quinze_cm = 9600;
+int shelf_cm = 12800;
+
+FastAccelStepper *stepper2 = NULL;
+
+void vertical(int npasso) {
+  if (!stepper2) return;
+
+  // Serial.println("Moving to position 800");
+  stepper2->moveTo(npasso, true);
 }
 
-void girar_270() {
-  if (!stepper) return;
-    
-  Serial.println("Moving to position 2400");
-  stepper->moveTo(giro270, true);
+void vertical_bloq(int npasso) {
+  if (!stepper2) return;
+
+  // Serial.println("Moving to position 800");
+  stepper2->moveTo(npasso, false);
 }
 
-void voltar() {
-  if (!stepper) return;
+//Servomotor
 
-  Serial.println("Moving to position 0");
-  stepper->moveTo(0, true);     // blocking (tirar true para não bloquear)
+Servo myservo;
+#define SERVO_PIN 18
+
+void fechar_garra(){
+  myservo.write(90);
 }
 
-// Motor DC
-
-#define IN1 21
-#define IN2 19
-#define ENCODER_A 23 //branco
-#define ENCODER_B 22
-
-volatile long pulso_global = 0;      // posição absoluta REAL, só a ISR escreve aqui
-volatile long pulsos_restantes = 0;  // contagem regressiva do movimento atual
-
-const long alvo1 = 10000;
-const long alvo2 = 20000;
-
-void pararMotor() {
-    digitalWrite(IN1, LOW);
-    digitalWrite(IN2, LOW);
-}
-
-void IRAM_ATTR encoderISR() {
-
-    // Determina o sentido usando o canal B
-    if (digitalRead(ENCODER_B)) {
-        pulso_global++;
-    } else {
-        pulso_global--;
-    }
-
-    // Para o motor dentro do interrupt para não depender do loop
-    if (pulsos_restantes > 0) {
-      pulsos_restantes--;
-      if (pulsos_restantes == 0) {
-        pararMotor();
-        //detachInterrupt(digitalPinToInterrupt(ENCODER_A)); (causa erro)
-      }
-    }
-}
-
-// Alvo desejado deve ter referência global
-void iniciarMotorDC(long alvoDesejado) {
-  long delta = alvoDesejado - pulso_global;
-
-  if (delta == 0) {
-    pararMotor();          // já está no lugar certo, nem liga o motor
-    return;
-  }
-
-  noInterrupts(); // protege a seção crítica enquanto reseta o estado
-  pulsos_restantes = labs(delta);
-  interrupts();
-
-  // Reanexa a interrupção, caso tenha sido desligada num movimento anterior
-  attachInterrupt(digitalPinToInterrupt(ENCODER_A), encoderISR, RISING);
-
-  // Girar em sentido horário (subir) caso alvo desejado seja maior e anti-horário (descer) caso seja menor
-  if (delta > 0) {
-    digitalWrite(IN1, HIGH);
-    digitalWrite(IN2, LOW);
-  } else {
-    digitalWrite(IN1, LOW);
-    digitalWrite(IN2, HIGH);
-  }
-
-  while (true) {
-    long restante_temp;
-    
-    // Leitura segura da variável modificada pela ISR
-    noInterrupts();
-    restante_temp = pulsos_restantes;
-    interrupts();
-
-    // Se chegou ao destino, sai do loop
-    if (restante_temp <= 0) {
-      break;
-    }
-
-    // Processa chamadas do micro-ROS enquanto espera, evitando timeout da comunicação
-    rclc_executor_spin_some(&executor, RCL_MS_TO_NS(1));
-    
-    // Alimenta o Watchdog do ESP32 para evitar resets por PANIC/WDT
-    yield(); 
-  }
+void abrir_garra(){
+  myservo.write(0);
 }
 
 void garra_callback(const void *msgin)
@@ -242,47 +161,78 @@ void garra_callback(const void *msgin)
     const std_msgs__msg__String *garra_msg =
         (const std_msgs__msg__String *)msgin;
 
-    if (strcmp(garra_msg->data.data, "90") == 0)
+    if (strcmp(garra_msg->data.data, "1") == 0)
     {
-        Serial.println("Comando 90 recebido!");
-
-        iniciarMotorDC(10000);
-        girar_90();
-        iniciarMotorDC(0);
+        // Serial.println("Comando 90 recebido!");
+      rotacionar(slot1);
+        
     }
 
-    else if (strcmp(garra_msg->data.data, "180") == 0)
+    else if (strcmp(garra_msg->data.data, "2") == 0)
     {
-        Serial.println("Comando 180 recebido!");
-
-        girar_180();
-        iniciarMotorDC(10000);
-        girar_90();
-        girar_270();
-        iniciarMotorDC(0);
-        voltar();
-        girar_180();
+        // Serial.println("Comando 180 recebido!");
+      rotacionar(slot2);
+        
     }
-
-    else if (strcmp(garra_msg->data.data, "270") == 0)
+    else if (strcmp(garra_msg->data.data, "3") == 0)
     {
-        Serial.println("Comando 270 recebido!");
-
-        girar_270();
-        iniciarMotorDC(20000);
+        // Serial.println("Comando 270 recebido!");
+      rotacionar(slot3);
+        
     }
 
     else if (strcmp(garra_msg->data.data, "0") == 0)
     {
-        Serial.println("Comando de retornar a origem recebido!");
+        // Serial.println("Comando de retornar a origem recebido!");
+      rotacionar(0);
+        
+    }
 
-        voltar();
+    else if (strcmp(garra_msg->data.data, "5cm") == 0)
+    {
+        // Serial.println("Comando 180 recebido!");
+      vertical(cinco_cm);
+        
+    }
+    else if (strcmp(garra_msg->data.data, "10cm") == 0)
+    {
+        // Serial.println("Comando 270 recebido!");
+      vertical(dez_cm);
+        
+    }
+
+    else if (strcmp(garra_msg->data.data, "15cm") == 0)
+    {
+        // Serial.println("Comando de retornar a origem recebido!");
+      vertical(quinze_cm);
+        
+    }
+
+    else if (strcmp(garra_msg->data.data, "shelf") == 0)
+    {
+        // Serial.println("Comando de retornar a origem recebido!");
+      vertical(shelf_cm);
+        
+    }
+
+    else if (strcmp(garra_msg->data.data, "abre") == 0)
+    {
+        // Serial.println("Comando de retornar a origem recebido!");
+      abrir_garra();
+        
+    }
+
+    else if (strcmp(garra_msg->data.data, "fecha") == 0)
+    {
+        // Serial.println("Comando de retornar a origem recebido!");
+      fechar_garra();
+        
     }
 
     else
     {
-        Serial.print("Comando desconhecido: ");
-        Serial.println(garra_msg->data.data);
+        // Serial.print("Comando desconhecido: ");
+        // Serial.println(garra_msg->data.data);
     }
 }
 
@@ -291,64 +241,44 @@ void garra_callback(const void *msgin)
 */
 bool create_entities()
 {
-  /*
-     TODO : Define your
-     - ROS node name
-     - namespace
-     - ROS_DOMAIN_ID
-  */
   const char * node_name = "esp32_node";
   const char * ns = "";
   const int domain_id = 0;
-  
-  /*
-   * Initialize node ?
-   */
+
   allocator = rcl_get_default_allocator();
   init_options = rcl_get_zero_initialized_init_options();
-  rcl_init_options_init(&init_options, allocator);
-  rcl_init_options_set_domain_id(&init_options, domain_id);
-  rclc_support_init_with_options(&support, 0, NULL, &init_options, &allocator);
-  rclc_node_init_default(&node, node_name, ns, &support);
 
-  
-  /*
-   * TODO : Init your publisher and subscriber 
-   */
+  rcl_ret_t rc;
 
-  rclc_subscription_init_default(
-    &garra_sub,
-    &node,
+  rc = rcl_init_options_init(&init_options, allocator);
+  if (rc != RCL_RET_OK) return false;
+
+  rc = rcl_init_options_set_domain_id(&init_options, domain_id);
+  if (rc != RCL_RET_OK) return false;
+
+  rc = rclc_support_init_with_options(&support, 0, NULL, &init_options, &allocator);
+  if (rc != RCL_RET_OK) return false;
+
+  rc = rclc_node_init_default(&node, node_name, ns, &support);
+  if (rc != RCL_RET_OK) return false;
+
+  rc = rclc_subscription_init_default(
+    &garra_sub, &node,
     ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, String),
     "/topico_garra"
   );
+  if (rc != RCL_RET_OK) return false;
 
-  // rclc_subscription_init(
-  //   &led_sub,
-  //   &node,
-  //   ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Bool),
-  //   "/esp/led", &rmw_qos_profile_default
-  // );
-
-  /*
-   * Init Executor
-   * TODO : make sure the num_handles is correct
-   * num_handles = total_of_subscriber + timer
-   * publisher is not counted
-   * 
-   * TODO : make sure the name of sub msg and callback are correct
-   */
   unsigned int num_handles = 1;
+  rc = rclc_executor_init(&executor, &support.context, num_handles, &allocator);
+  if (rc != RCL_RET_OK) return false;
 
-  rclc_executor_init(&executor, &support.context, num_handles, &allocator);
-  rclc_executor_add_subscription(&executor, &garra_sub, &garra_msg, &garra_callback, ON_NEW_DATA);
-  // rclc_executor_add_subscription(&executor, &led_sub, &led_msg, &led_callback, ON_NEW_DATA);
+  rc = rclc_executor_add_subscription(&executor, &garra_sub, &garra_msg, &garra_callback, ON_NEW_DATA);
+  if (rc != RCL_RET_OK) return false;
 
   return true;
 }
-/*
- * Clean up all the created objects
- */
+
 void destroy_entities()
 {
   rmw_context_t *rmw_context = rcl_context_get_rmw_context(&support.context);
@@ -368,9 +298,9 @@ void destroy_entities()
 
 void setup() {
   Serial.begin(115200);
-  delay(2000);
-  printResetReason(); 
-  delay(2000);
+  // delay(2000);
+  // printResetReason(); 
+  // delay(2000);
   /*
    * TODO : select either of USB or WiFi 
    * comment the one that not use
@@ -386,47 +316,54 @@ void setup() {
   // pinMode(LED_PIN_TEST, OUTPUT);
 
 
-  // Stepper driver
-  pinMode(dirPin, OUTPUT);
-  pinMode(stepPin, OUTPUT);
-  pinMode(MS1, OUTPUT);
-  pinMode(MS2, OUTPUT);
-  pinMode(MS3, OUTPUT);
+  // Stepper driver 1
+  pinMode(dirPin1, OUTPUT);
+  pinMode(stepPin1, OUTPUT);
+  pinMode(MS1_1, OUTPUT);
 
-  digitalWrite(MS1, HIGH);
-  digitalWrite(MS2, HIGH);
-  digitalWrite(MS3, HIGH);
+  digitalWrite(MS1_1, HIGH);
 
-  // Initialize engine
+  // Stepper driver 2
+  pinMode(dirPin2, OUTPUT);
+  pinMode(stepPin2, OUTPUT);
+  pinMode(enablePin2, OUTPUT);
+
+  // Initialize engine1
     engine.init();
     
     // Connect and configure stepper
-    stepper = engine.stepperConnectToPin(stepPin);
-    if (stepper) {
-        stepper->setDirectionPin(dirPin);
-        stepper->setAutoEnable(true);
+    stepper1 = engine.stepperConnectToPin(stepPin1);
+    if (stepper1) {
+        stepper1->setDirectionPin(dirPin1);
+        stepper1->setAutoEnable(true);
         
         // Motion parameters
-        stepper->setSpeedInHz(4000);       
-        stepper->setAcceleration(8000);    
+        stepper1->setSpeedInHz(1000);       
+        stepper1->setAcceleration(1500);    
         
-        Serial.println("Stepper initialized");
+        // Serial.println("Stepper initialized");
     } else {
-        Serial.println("Stepper connection failed!");
+        // Serial.println("Stepper connection failed!");
+    }
+    
+    // Connect and configure stepper
+    stepper2 = engine.stepperConnectToPin(stepPin2);
+    if (stepper2) {
+        stepper2->setDirectionPin(dirPin2);
+        stepper2->setEnablePin(enablePin2, true);  // true = active-low
+        stepper2->setAutoEnable(true);
+        
+        // Motion parameters
+        stepper2->setSpeedInHz(1000);       
+        stepper2->setAcceleration(1500);    
+        
+        // Serial.println("Stepper initialized");
+    } else {
+        // Serial.println("Stepper connection failed!");
     }
 
-  //Motor DC
-  pinMode(IN1, OUTPUT);
-  pinMode(IN2, OUTPUT);
-
-  pinMode(ENCODER_A, INPUT_PULLUP);
-  pinMode(ENCODER_B, INPUT_PULLUP);
-
-  attachInterrupt(
-      digitalPinToInterrupt(ENCODER_A),
-      encoderISR,
-      RISING
-  );
+  //Servomotor
+  myservo.attach(SERVO_PIN);
 
   /*
    * TODO : Initialze the message data variable
@@ -477,7 +414,7 @@ void loop() {
   }
 
   // Print periódico da contagem de pulsos, sem bloquear o loop
-  EXECUTE_EVERY_N_MS(100, Serial.println(pulso_global););
+  // EXECUTE_EVERY_N_MS(100, Serial.println(pulso_global););
 
   /*
    * Output LED when in AGENT_CONNECTED state
