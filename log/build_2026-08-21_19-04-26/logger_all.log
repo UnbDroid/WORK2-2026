@@ -1,0 +1,165 @@
+[0.121s] DEBUG:colcon:Command line arguments: ['/usr/bin/colcon', 'build', '--symlink-install']
+[0.121s] DEBUG:colcon:Parsed command line arguments: Namespace(log_base=None, log_level=None, verb_name='build', build_base='build', install_base='install', merge_install=False, symlink_install=True, test_result_base=None, continue_on_error=False, executor='parallel', parallel_workers=12, event_handlers=None, ignore_user_meta=False, metas=['./colcon.meta'], base_paths=['.'], packages_ignore=None, packages_ignore_regex=None, paths=None, packages_up_to=None, packages_up_to_regex=None, packages_above=None, packages_above_and_dependencies=None, packages_above_depth=None, packages_select_by_dep=None, packages_skip_by_dep=None, packages_skip_up_to=None, packages_select_build_failed=False, packages_skip_build_finished=False, packages_select_test_failures=False, packages_skip_test_passed=False, packages_select=None, packages_skip=None, packages_select_regex=None, packages_skip_regex=None, packages_start=None, packages_end=None, cmake_args=None, cmake_target=None, cmake_target_skip_unavailable=False, cmake_clean_cache=False, cmake_clean_first=False, cmake_force_configure=False, ament_cmake_args=None, catkin_cmake_args=None, catkin_skip_building_tests=False, verb_parser=<colcon_defaults.argument_parser.defaults.DefaultArgumentsDecorator object at 0x7179b9715b20>, verb_extension=<colcon_core.verb.build.BuildVerb object at 0x7179b983a7e0>, main=<bound method BuildVerb.main of <colcon_core.verb.build.BuildVerb object at 0x7179b983a7e0>>)
+[0.171s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) check parameters
+[0.171s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) check parameters
+[0.171s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) check parameters
+[0.171s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) check parameters
+[0.171s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) discover
+[0.171s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) discover
+[0.171s] INFO:colcon.colcon_core.package_discovery:Crawling recursively for packages in '/home/aksc/WORK2-2026'
+[0.171s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['ignore', 'ignore_ament_install']
+[0.172s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ignore'
+[0.172s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ignore_ament_install'
+[0.172s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['colcon_pkg']
+[0.172s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'colcon_pkg'
+[0.172s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['colcon_meta']
+[0.172s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'colcon_meta'
+[0.172s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['ros']
+[0.172s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ros'
+[0.204s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['cmake', 'python']
+[0.204s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'cmake'
+[0.204s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'python'
+[0.204s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['python_setup_py']
+[0.204s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'python_setup_py'
+[0.204s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extensions ['ignore', 'ignore_ament_install']
+[0.204s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extension 'ignore'
+[0.204s] Level 1:colcon.colcon_core.package_identification:_identify(build) ignored
+[0.204s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extensions ['ignore', 'ignore_ament_install']
+[0.205s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extension 'ignore'
+[0.205s] Level 1:colcon.colcon_core.package_identification:_identify(install) ignored
+[0.205s] Level 1:colcon.colcon_core.package_identification:_identify(log) by extensions ['ignore', 'ignore_ament_install']
+[0.205s] Level 1:colcon.colcon_core.package_identification:_identify(log) by extension 'ignore'
+[0.205s] Level 1:colcon.colcon_core.package_identification:_identify(log) ignored
+[0.205s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['ignore', 'ignore_ament_install']
+[0.205s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'ignore'
+[0.205s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'ignore_ament_install'
+[0.205s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['colcon_pkg']
+[0.205s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'colcon_pkg'
+[0.205s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['colcon_meta']
+[0.205s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'colcon_meta'
+[0.205s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['ros']
+[0.205s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'ros'
+[0.205s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['cmake', 'python']
+[0.205s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'cmake'
+[0.205s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'python'
+[0.205s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['python_setup_py']
+[0.206s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'python_setup_py'
+[0.206s] Level 1:colcon.colcon_core.package_identification:_identify(src/planning) by extensions ['ignore', 'ignore_ament_install']
+[0.206s] Level 1:colcon.colcon_core.package_identification:_identify(src/planning) by extension 'ignore'
+[0.206s] Level 1:colcon.colcon_core.package_identification:_identify(src/planning) by extension 'ignore_ament_install'
+[0.206s] Level 1:colcon.colcon_core.package_identification:_identify(src/planning) by extensions ['colcon_pkg']
+[0.206s] Level 1:colcon.colcon_core.package_identification:_identify(src/planning) by extension 'colcon_pkg'
+[0.206s] Level 1:colcon.colcon_core.package_identification:_identify(src/planning) by extensions ['colcon_meta']
+[0.206s] Level 1:colcon.colcon_core.package_identification:_identify(src/planning) by extension 'colcon_meta'
+[0.206s] Level 1:colcon.colcon_core.package_identification:_identify(src/planning) by extensions ['ros']
+[0.206s] Level 1:colcon.colcon_core.package_identification:_identify(src/planning) by extension 'ros'
+[0.210s] DEBUG:colcon.colcon_core.package_identification:Package 'src/planning' with type 'ros.ament_python' and name 'planning'
+[0.210s] Level 1:colcon.colcon_core.package_identification:_identify(src/ros2_visao) by extensions ['ignore', 'ignore_ament_install']
+[0.210s] Level 1:colcon.colcon_core.package_identification:_identify(src/ros2_visao) by extension 'ignore'
+[0.211s] Level 1:colcon.colcon_core.package_identification:_identify(src/ros2_visao) by extension 'ignore_ament_install'
+[0.211s] Level 1:colcon.colcon_core.package_identification:_identify(src/ros2_visao) by extensions ['colcon_pkg']
+[0.211s] Level 1:colcon.colcon_core.package_identification:_identify(src/ros2_visao) by extension 'colcon_pkg'
+[0.211s] Level 1:colcon.colcon_core.package_identification:_identify(src/ros2_visao) by extensions ['colcon_meta']
+[0.211s] Level 1:colcon.colcon_core.package_identification:_identify(src/ros2_visao) by extension 'colcon_meta'
+[0.211s] Level 1:colcon.colcon_core.package_identification:_identify(src/ros2_visao) by extensions ['ros']
+[0.211s] Level 1:colcon.colcon_core.package_identification:_identify(src/ros2_visao) by extension 'ros'
+[0.212s] DEBUG:colcon.colcon_core.package_identification:Package 'src/ros2_visao' with type 'ros.ament_python' and name 'ros2_visao'
+[0.212s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) using defaults
+[0.212s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) discover
+[0.212s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) using defaults
+[0.212s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) discover
+[0.212s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) using defaults
+[0.236s] Level 5:colcon.colcon_core.verb:set package 'planning' build argument 'cmake_args' from command line to 'None'
+[0.236s] Level 5:colcon.colcon_core.verb:set package 'planning' build argument 'cmake_target' from command line to 'None'
+[0.236s] Level 5:colcon.colcon_core.verb:set package 'planning' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.236s] Level 5:colcon.colcon_core.verb:set package 'planning' build argument 'cmake_clean_cache' from command line to 'False'
+[0.236s] Level 5:colcon.colcon_core.verb:set package 'planning' build argument 'cmake_clean_first' from command line to 'False'
+[0.236s] Level 5:colcon.colcon_core.verb:set package 'planning' build argument 'cmake_force_configure' from command line to 'False'
+[0.236s] Level 5:colcon.colcon_core.verb:set package 'planning' build argument 'ament_cmake_args' from command line to 'None'
+[0.236s] Level 5:colcon.colcon_core.verb:set package 'planning' build argument 'catkin_cmake_args' from command line to 'None'
+[0.236s] Level 5:colcon.colcon_core.verb:set package 'planning' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.236s] DEBUG:colcon.colcon_core.verb:Building package 'planning' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/aksc/WORK2-2026/build/planning', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/aksc/WORK2-2026/install/planning', 'merge_install': False, 'path': '/home/aksc/WORK2-2026/src/planning', 'symlink_install': True, 'test_result_base': None}
+[0.237s] Level 5:colcon.colcon_core.verb:set package 'ros2_visao' build argument 'cmake_args' from command line to 'None'
+[0.237s] Level 5:colcon.colcon_core.verb:set package 'ros2_visao' build argument 'cmake_target' from command line to 'None'
+[0.237s] Level 5:colcon.colcon_core.verb:set package 'ros2_visao' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.237s] Level 5:colcon.colcon_core.verb:set package 'ros2_visao' build argument 'cmake_clean_cache' from command line to 'False'
+[0.237s] Level 5:colcon.colcon_core.verb:set package 'ros2_visao' build argument 'cmake_clean_first' from command line to 'False'
+[0.237s] Level 5:colcon.colcon_core.verb:set package 'ros2_visao' build argument 'cmake_force_configure' from command line to 'False'
+[0.237s] Level 5:colcon.colcon_core.verb:set package 'ros2_visao' build argument 'ament_cmake_args' from command line to 'None'
+[0.237s] Level 5:colcon.colcon_core.verb:set package 'ros2_visao' build argument 'catkin_cmake_args' from command line to 'None'
+[0.237s] Level 5:colcon.colcon_core.verb:set package 'ros2_visao' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.237s] DEBUG:colcon.colcon_core.verb:Building package 'ros2_visao' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/aksc/WORK2-2026/build/ros2_visao', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/aksc/WORK2-2026/install/ros2_visao', 'merge_install': False, 'path': '/home/aksc/WORK2-2026/src/ros2_visao', 'symlink_install': True, 'test_result_base': None}
+[0.237s] INFO:colcon.colcon_core.executor:Executing jobs using 'parallel' executor
+[0.239s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:run_until_complete
+[0.239s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/home/aksc/WORK2-2026/src/planning' with build type 'ament_python'
+[0.240s] Level 1:colcon.colcon_core.shell:create_environment_hook('planning', 'ament_prefix_path')
+[0.242s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_core.shell.bat': Not used on non-Windows systems
+[0.242s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/aksc/WORK2-2026/install/planning/share/planning/hook/ament_prefix_path.dsv'
+[0.242s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/aksc/WORK2-2026/install/planning/share/planning/hook/ament_prefix_path.sh'
+[0.243s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.248s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/home/aksc/WORK2-2026/src/ros2_visao' with build type 'ament_python'
+[0.249s] Level 1:colcon.colcon_core.shell:create_environment_hook('ros2_visao', 'ament_prefix_path')
+[0.249s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/aksc/WORK2-2026/install/ros2_visao/share/ros2_visao/hook/ament_prefix_path.dsv'
+[0.250s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/aksc/WORK2-2026/install/ros2_visao/share/ros2_visao/hook/ament_prefix_path.sh'
+[0.251s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.578s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/home/aksc/WORK2-2026/src/planning'
+[0.579s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.846s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/home/aksc/WORK2-2026/src/ros2_visao'
+[0.846s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[1.527s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/aksc/WORK2-2026/build/planning': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/aksc/WORK2-2026/build/planning/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/aksc/WORK2-2026/install/planning/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/aksc/WORK2-2026/build/planning/build --no-deps symlink_data
+[1.549s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/aksc/WORK2-2026/build/ros2_visao': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/aksc/WORK2-2026/build/ros2_visao/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/aksc/WORK2-2026/install/ros2_visao/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/aksc/WORK2-2026/build/ros2_visao/build --no-deps symlink_data
+[2.209s] Level 1:colcon.colcon_core.shell:create_environment_hook('planning', 'pythonpath_develop')
+[2.209s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/aksc/WORK2-2026/build/planning/share/planning/hook/pythonpath_develop.dsv'
+[2.210s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/aksc/WORK2-2026/build/planning' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/aksc/WORK2-2026/build/planning/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/aksc/WORK2-2026/install/planning/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/aksc/WORK2-2026/build/planning/build --no-deps symlink_data
+[2.211s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/aksc/WORK2-2026/build/planning/share/planning/hook/pythonpath_develop.sh'
+[2.220s] Level 1:colcon.colcon_core.environment:checking '/home/aksc/WORK2-2026/install/planning' for CMake module files
+[2.220s] Level 1:colcon.colcon_core.environment:checking '/home/aksc/WORK2-2026/install/planning' for CMake config files
+[2.221s] Level 1:colcon.colcon_core.environment:checking '/home/aksc/WORK2-2026/install/planning/lib'
+[2.221s] Level 1:colcon.colcon_core.environment:checking '/home/aksc/WORK2-2026/install/planning/bin'
+[2.221s] Level 1:colcon.colcon_core.environment:checking '/home/aksc/WORK2-2026/install/planning/lib/pkgconfig/planning.pc'
+[2.222s] Level 1:colcon.colcon_core.environment:checking '/home/aksc/WORK2-2026/install/planning/lib/python3.12/site-packages'
+[2.222s] Level 1:colcon.colcon_core.shell:create_environment_hook('planning', 'pythonpath')
+[2.222s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/aksc/WORK2-2026/install/planning/share/planning/hook/pythonpath.dsv'
+[2.222s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/aksc/WORK2-2026/install/planning/share/planning/hook/pythonpath.sh'
+[2.223s] Level 1:colcon.colcon_core.environment:checking '/home/aksc/WORK2-2026/install/planning/bin'
+[2.223s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(planning)
+[2.223s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/aksc/WORK2-2026/install/planning/share/planning/package.dsv'
+[2.224s] INFO:colcon.colcon_core.shell:Creating package script '/home/aksc/WORK2-2026/install/planning/share/planning/package.sh'
+[2.225s] INFO:colcon.colcon_core.shell:Creating package script '/home/aksc/WORK2-2026/install/planning/share/planning/package.bash'
+[2.226s] INFO:colcon.colcon_core.shell:Creating package script '/home/aksc/WORK2-2026/install/planning/share/planning/package.zsh'
+[2.226s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/aksc/WORK2-2026/install/planning/share/colcon-core/packages/planning)
+[2.315s] Level 1:colcon.colcon_core.shell:create_environment_hook('ros2_visao', 'pythonpath_develop')
+[2.315s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/aksc/WORK2-2026/build/ros2_visao/share/ros2_visao/hook/pythonpath_develop.dsv'
+[2.316s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/aksc/WORK2-2026/build/ros2_visao' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/aksc/WORK2-2026/build/ros2_visao/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/aksc/WORK2-2026/install/ros2_visao/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/aksc/WORK2-2026/build/ros2_visao/build --no-deps symlink_data
+[2.316s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/aksc/WORK2-2026/build/ros2_visao/share/ros2_visao/hook/pythonpath_develop.sh'
+[2.317s] Level 1:colcon.colcon_core.environment:checking '/home/aksc/WORK2-2026/install/ros2_visao' for CMake module files
+[2.318s] Level 1:colcon.colcon_core.environment:checking '/home/aksc/WORK2-2026/install/ros2_visao' for CMake config files
+[2.318s] Level 1:colcon.colcon_core.environment:checking '/home/aksc/WORK2-2026/install/ros2_visao/lib'
+[2.318s] Level 1:colcon.colcon_core.environment:checking '/home/aksc/WORK2-2026/install/ros2_visao/bin'
+[2.318s] Level 1:colcon.colcon_core.environment:checking '/home/aksc/WORK2-2026/install/ros2_visao/lib/pkgconfig/ros2_visao.pc'
+[2.319s] Level 1:colcon.colcon_core.environment:checking '/home/aksc/WORK2-2026/install/ros2_visao/lib/python3.12/site-packages'
+[2.319s] Level 1:colcon.colcon_core.shell:create_environment_hook('ros2_visao', 'pythonpath')
+[2.319s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/aksc/WORK2-2026/install/ros2_visao/share/ros2_visao/hook/pythonpath.dsv'
+[2.319s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/aksc/WORK2-2026/install/ros2_visao/share/ros2_visao/hook/pythonpath.sh'
+[2.320s] Level 1:colcon.colcon_core.environment:checking '/home/aksc/WORK2-2026/install/ros2_visao/bin'
+[2.320s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(ros2_visao)
+[2.321s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/aksc/WORK2-2026/install/ros2_visao/share/ros2_visao/package.dsv'
+[2.321s] INFO:colcon.colcon_core.shell:Creating package script '/home/aksc/WORK2-2026/install/ros2_visao/share/ros2_visao/package.sh'
+[2.322s] INFO:colcon.colcon_core.shell:Creating package script '/home/aksc/WORK2-2026/install/ros2_visao/share/ros2_visao/package.bash'
+[2.322s] INFO:colcon.colcon_core.shell:Creating package script '/home/aksc/WORK2-2026/install/ros2_visao/share/ros2_visao/package.zsh'
+[2.322s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/aksc/WORK2-2026/install/ros2_visao/share/colcon-core/packages/ros2_visao)
+[2.323s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:closing loop
+[2.323s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:loop closed
+[2.323s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:run_until_complete finished with '0'
+[2.323s] DEBUG:colcon.colcon_core.event_reactor:joining thread
+[2.333s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_notification.desktop_notification.terminal_notifier': Not used on non-Darwin systems
+[2.333s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_notification.desktop_notification.win32': Not used on non-Windows systems
+[2.334s] INFO:colcon.colcon_notification.desktop_notification:Sending desktop notification using 'notify2'
+[2.367s] DEBUG:colcon.colcon_core.event_reactor:joined thread
+[2.367s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/aksc/WORK2-2026/install/local_setup.sh'
+[2.369s] INFO:colcon.colcon_core.shell:Creating prefix util module '/home/aksc/WORK2-2026/install/_local_setup_util_sh.py'
+[2.372s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/aksc/WORK2-2026/install/setup.sh'
+[2.374s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/aksc/WORK2-2026/install/local_setup.bash'
+[2.375s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/aksc/WORK2-2026/install/setup.bash'
+[2.379s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/aksc/WORK2-2026/install/local_setup.zsh'
+[2.380s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/aksc/WORK2-2026/install/setup.zsh'

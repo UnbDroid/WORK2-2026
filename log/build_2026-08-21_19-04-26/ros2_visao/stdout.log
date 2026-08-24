@@ -1,0 +1,23 @@
+running develop
+running egg_info
+creating ros2_visao.egg-info
+writing ros2_visao.egg-info/PKG-INFO
+writing dependency_links to ros2_visao.egg-info/dependency_links.txt
+writing entry points to ros2_visao.egg-info/entry_points.txt
+writing requirements to ros2_visao.egg-info/requires.txt
+writing top-level names to ros2_visao.egg-info/top_level.txt
+writing manifest file 'ros2_visao.egg-info/SOURCES.txt'
+reading manifest file 'ros2_visao.egg-info/SOURCES.txt'
+writing manifest file 'ros2_visao.egg-info/SOURCES.txt'
+running build_ext
+Creating /home/aksc/WORK2-2026/install/ros2_visao/lib/python3.12/site-packages/ros2-visao.egg-link (link to .)
+Installing listener script to /home/aksc/WORK2-2026/install/ros2_visao/lib/ros2_visao
+Installing talker script to /home/aksc/WORK2-2026/install/ros2_visao/lib/ros2_visao
+
+Installed /home/aksc/WORK2-2026/build/ros2_visao
+running symlink_data
+creating /home/aksc/WORK2-2026/install/ros2_visao/share/ament_index
+creating /home/aksc/WORK2-2026/install/ros2_visao/share/ament_index/resource_index
+creating /home/aksc/WORK2-2026/install/ros2_visao/share/ament_index/resource_index/packages
+symbolically linking /home/aksc/WORK2-2026/build/ros2_visao/resource/ros2_visao -> /home/aksc/WORK2-2026/install/ros2_visao/share/ament_index/resource_index/packages
+symbolically linking /home/aksc/WORK2-2026/build/ros2_visao/package.xml -> /home/aksc/WORK2-2026/install/ros2_visao/share/ros2_visao

@@ -1,0 +1,22 @@
+[1.287s] Invoking command in '/home/aksc/WORK2-2026/build/planning': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/aksc/WORK2-2026/build/planning/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/aksc/WORK2-2026/install/planning/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/aksc/WORK2-2026/build/planning/build --no-deps symlink_data
+[1.661s] running develop
+[1.851s] running egg_info
+[1.852s] creating planning.egg-info
+[1.869s] writing planning.egg-info/PKG-INFO
+[1.869s] writing dependency_links to planning.egg-info/dependency_links.txt
+[1.870s] writing requirements to planning.egg-info/requires.txt
+[1.870s] writing top-level names to planning.egg-info/top_level.txt
+[1.870s] writing manifest file 'planning.egg-info/SOURCES.txt'
+[1.905s] reading manifest file 'planning.egg-info/SOURCES.txt'
+[1.906s] writing manifest file 'planning.egg-info/SOURCES.txt'
+[1.926s] running build_ext
+[1.927s] Creating /home/aksc/WORK2-2026/install/planning/lib/python3.12/site-packages/planning.egg-link (link to .)
+[1.927s] 
+[1.927s] Installed /home/aksc/WORK2-2026/build/planning
+[1.927s] running symlink_data
+[1.928s] creating /home/aksc/WORK2-2026/install/planning/share/ament_index
+[1.928s] creating /home/aksc/WORK2-2026/install/planning/share/ament_index/resource_index
+[1.928s] creating /home/aksc/WORK2-2026/install/planning/share/ament_index/resource_index/packages
+[1.928s] symbolically linking /home/aksc/WORK2-2026/build/planning/resource/planning -> /home/aksc/WORK2-2026/install/planning/share/ament_index/resource_index/packages
+[1.928s] symbolically linking /home/aksc/WORK2-2026/build/planning/package.xml -> /home/aksc/WORK2-2026/install/planning/share/planning
+[1.970s] Invoked command in '/home/aksc/WORK2-2026/build/planning' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/aksc/WORK2-2026/build/planning/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/aksc/WORK2-2026/install/planning/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/aksc/WORK2-2026/build/planning/build --no-deps symlink_data

@@ -1,0 +1,25 @@
+[1.300s] Invoking command in '/home/aksc/WORK2-2026/build/ros2_visao': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/aksc/WORK2-2026/build/ros2_visao/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/aksc/WORK2-2026/install/ros2_visao/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/aksc/WORK2-2026/build/ros2_visao/build --no-deps symlink_data
+[1.738s] running develop
+[1.933s] running egg_info
+[1.934s] creating ros2_visao.egg-info
+[1.952s] writing ros2_visao.egg-info/PKG-INFO
+[1.953s] writing dependency_links to ros2_visao.egg-info/dependency_links.txt
+[1.953s] writing entry points to ros2_visao.egg-info/entry_points.txt
+[1.953s] writing requirements to ros2_visao.egg-info/requires.txt
+[1.954s] writing top-level names to ros2_visao.egg-info/top_level.txt
+[1.954s] writing manifest file 'ros2_visao.egg-info/SOURCES.txt'
+[1.979s] reading manifest file 'ros2_visao.egg-info/SOURCES.txt'
+[1.980s] writing manifest file 'ros2_visao.egg-info/SOURCES.txt'
+[2.004s] running build_ext
+[2.024s] Creating /home/aksc/WORK2-2026/install/ros2_visao/lib/python3.12/site-packages/ros2-visao.egg-link (link to .)
+[2.025s] Installing listener script to /home/aksc/WORK2-2026/install/ros2_visao/lib/ros2_visao
+[2.026s] Installing talker script to /home/aksc/WORK2-2026/install/ros2_visao/lib/ros2_visao
+[2.026s] 
+[2.026s] Installed /home/aksc/WORK2-2026/build/ros2_visao
+[2.026s] running symlink_data
+[2.027s] creating /home/aksc/WORK2-2026/install/ros2_visao/share/ament_index
+[2.027s] creating /home/aksc/WORK2-2026/install/ros2_visao/share/ament_index/resource_index
+[2.027s] creating /home/aksc/WORK2-2026/install/ros2_visao/share/ament_index/resource_index/packages
+[2.027s] symbolically linking /home/aksc/WORK2-2026/build/ros2_visao/resource/ros2_visao -> /home/aksc/WORK2-2026/install/ros2_visao/share/ament_index/resource_index/packages
+[2.027s] symbolically linking /home/aksc/WORK2-2026/build/ros2_visao/package.xml -> /home/aksc/WORK2-2026/install/ros2_visao/share/ros2_visao
+[2.068s] Invoked command in '/home/aksc/WORK2-2026/build/ros2_visao' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/aksc/WORK2-2026/build/ros2_visao/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/aksc/WORK2-2026/install/ros2_visao/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/aksc/WORK2-2026/build/ros2_visao/build --no-deps symlink_data

@@ -1,0 +1,20 @@
+running develop
+running egg_info
+creating planning.egg-info
+writing planning.egg-info/PKG-INFO
+writing dependency_links to planning.egg-info/dependency_links.txt
+writing requirements to planning.egg-info/requires.txt
+writing top-level names to planning.egg-info/top_level.txt
+writing manifest file 'planning.egg-info/SOURCES.txt'
+reading manifest file 'planning.egg-info/SOURCES.txt'
+writing manifest file 'planning.egg-info/SOURCES.txt'
+running build_ext
+Creating /home/aksc/WORK2-2026/install/planning/lib/python3.12/site-packages/planning.egg-link (link to .)
+
+Installed /home/aksc/WORK2-2026/build/planning
+running symlink_data
+creating /home/aksc/WORK2-2026/install/planning/share/ament_index
+creating /home/aksc/WORK2-2026/install/planning/share/ament_index/resource_index
+creating /home/aksc/WORK2-2026/install/planning/share/ament_index/resource_index/packages
+symbolically linking /home/aksc/WORK2-2026/build/planning/resource/planning -> /home/aksc/WORK2-2026/install/planning/share/ament_index/resource_index/packages
+symbolically linking /home/aksc/WORK2-2026/build/planning/package.xml -> /home/aksc/WORK2-2026/install/planning/share/planning

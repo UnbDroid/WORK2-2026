@@ -1,0 +1,3 @@
+[console_scripts]
+listener = ros2_visao.testedoiscentro:main
+talker = ros2_visao.img_pub_node:main
