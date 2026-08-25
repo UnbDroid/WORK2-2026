@@ -1,0 +1,15 @@
+[1.698s] Invoking command in '/home/aksc/WORK2-2026/build/planning': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/aksc/WORK2-2026/build/planning/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/aksc/WORK2-2026/install/planning/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/aksc/WORK2-2026/build/planning/build --no-deps symlink_data
+[2.113s] running develop
+[2.316s] running egg_info
+[2.335s] writing planning.egg-info/PKG-INFO
+[2.336s] writing dependency_links to planning.egg-info/dependency_links.txt
+[2.336s] writing requirements to planning.egg-info/requires.txt
+[2.336s] writing top-level names to planning.egg-info/top_level.txt
+[2.375s] reading manifest file 'planning.egg-info/SOURCES.txt'
+[2.376s] writing manifest file 'planning.egg-info/SOURCES.txt'
+[2.396s] running build_ext
+[2.396s] Creating /home/aksc/WORK2-2026/install/planning/lib/python3.12/site-packages/planning.egg-link (link to .)
+[2.397s] 
+[2.397s] Installed /home/aksc/WORK2-2026/build/planning
+[2.397s] running symlink_data
+[2.452s] Invoked command in '/home/aksc/WORK2-2026/build/planning' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/aksc/WORK2-2026/build/planning/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/aksc/WORK2-2026/install/planning/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/aksc/WORK2-2026/build/planning/build --no-deps symlink_data

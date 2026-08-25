@@ -1,0 +1,18 @@
+[1.689s] Invoking command in '/home/aksc/WORK2-2026/build/ros2_visao': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/aksc/WORK2-2026/build/ros2_visao/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/aksc/WORK2-2026/install/ros2_visao/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/aksc/WORK2-2026/build/ros2_visao/build --no-deps symlink_data
+[2.106s] running develop
+[2.319s] running egg_info
+[2.338s] writing ros2_visao.egg-info/PKG-INFO
+[2.339s] writing dependency_links to ros2_visao.egg-info/dependency_links.txt
+[2.339s] writing entry points to ros2_visao.egg-info/entry_points.txt
+[2.340s] writing requirements to ros2_visao.egg-info/requires.txt
+[2.340s] writing top-level names to ros2_visao.egg-info/top_level.txt
+[2.359s] reading manifest file 'ros2_visao.egg-info/SOURCES.txt'
+[2.360s] writing manifest file 'ros2_visao.egg-info/SOURCES.txt'
+[2.384s] running build_ext
+[2.406s] Creating /home/aksc/WORK2-2026/install/ros2_visao/lib/python3.12/site-packages/ros2-visao.egg-link (link to .)
+[2.407s] Installing listener script to /home/aksc/WORK2-2026/install/ros2_visao/lib/ros2_visao
+[2.407s] Installing talker script to /home/aksc/WORK2-2026/install/ros2_visao/lib/ros2_visao
+[2.408s] 
+[2.408s] Installed /home/aksc/WORK2-2026/build/ros2_visao
+[2.408s] running symlink_data
+[2.473s] Invoked command in '/home/aksc/WORK2-2026/build/ros2_visao' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/aksc/WORK2-2026/build/ros2_visao/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/aksc/WORK2-2026/install/ros2_visao/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/aksc/WORK2-2026/build/ros2_visao/build --no-deps symlink_data

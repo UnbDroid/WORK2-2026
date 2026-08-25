@@ -1,0 +1,291 @@
+[0.332s] DEBUG:colcon:Command line arguments: ['/usr/bin/colcon', 'build', '--symlink-install']
+[0.332s] DEBUG:colcon:Parsed command line arguments: Namespace(log_base=None, log_level=None, verb_name='build', build_base='build', install_base='install', merge_install=False, symlink_install=True, test_result_base=None, continue_on_error=False, executor='parallel', parallel_workers=12, event_handlers=None, ignore_user_meta=False, metas=['./colcon.meta'], base_paths=['.'], packages_ignore=None, packages_ignore_regex=None, paths=None, packages_up_to=None, packages_up_to_regex=None, packages_above=None, packages_above_and_dependencies=None, packages_above_depth=None, packages_select_by_dep=None, packages_skip_by_dep=None, packages_skip_up_to=None, packages_select_build_failed=False, packages_skip_build_finished=False, packages_select_test_failures=False, packages_skip_test_passed=False, packages_select=None, packages_skip=None, packages_select_regex=None, packages_skip_regex=None, packages_start=None, packages_end=None, cmake_args=None, cmake_target=None, cmake_target_skip_unavailable=False, cmake_clean_cache=False, cmake_clean_first=False, cmake_force_configure=False, ament_cmake_args=None, catkin_cmake_args=None, catkin_skip_building_tests=False, verb_parser=<colcon_defaults.argument_parser.defaults.DefaultArgumentsDecorator object at 0x747dbbebe690>, verb_extension=<colcon_core.verb.build.BuildVerb object at 0x747dbcc86960>, main=<bound method BuildVerb.main of <colcon_core.verb.build.BuildVerb object at 0x747dbcc86960>>)
+[0.498s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) check parameters
+[0.498s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) check parameters
+[0.498s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) check parameters
+[0.499s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) check parameters
+[0.499s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) discover
+[0.499s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) discover
+[0.499s] INFO:colcon.colcon_core.package_discovery:Crawling recursively for packages in '/home/aksc/WORK2-2026'
+[0.499s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['ignore', 'ignore_ament_install']
+[0.499s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ignore'
+[0.500s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ignore_ament_install'
+[0.500s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['colcon_pkg']
+[0.500s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'colcon_pkg'
+[0.500s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['colcon_meta']
+[0.500s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'colcon_meta'
+[0.500s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['ros']
+[0.500s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ros'
+[0.577s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['cmake', 'python']
+[0.577s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'cmake'
+[0.577s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'python'
+[0.577s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['python_setup_py']
+[0.577s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'python_setup_py'
+[0.577s] Level 1:colcon.colcon_core.package_identification:_identify(aksc) by extensions ['ignore', 'ignore_ament_install']
+[0.577s] Level 1:colcon.colcon_core.package_identification:_identify(aksc) by extension 'ignore'
+[0.577s] Level 1:colcon.colcon_core.package_identification:_identify(aksc) by extension 'ignore_ament_install'
+[0.577s] Level 1:colcon.colcon_core.package_identification:_identify(aksc) by extensions ['colcon_pkg']
+[0.577s] Level 1:colcon.colcon_core.package_identification:_identify(aksc) by extension 'colcon_pkg'
+[0.577s] Level 1:colcon.colcon_core.package_identification:_identify(aksc) by extensions ['colcon_meta']
+[0.577s] Level 1:colcon.colcon_core.package_identification:_identify(aksc) by extension 'colcon_meta'
+[0.578s] Level 1:colcon.colcon_core.package_identification:_identify(aksc) by extensions ['ros']
+[0.578s] Level 1:colcon.colcon_core.package_identification:_identify(aksc) by extension 'ros'
+[0.578s] Level 1:colcon.colcon_core.package_identification:_identify(aksc) by extensions ['cmake', 'python']
+[0.578s] Level 1:colcon.colcon_core.package_identification:_identify(aksc) by extension 'cmake'
+[0.578s] Level 1:colcon.colcon_core.package_identification:_identify(aksc) by extension 'python'
+[0.578s] Level 1:colcon.colcon_core.package_identification:_identify(aksc) by extensions ['python_setup_py']
+[0.578s] Level 1:colcon.colcon_core.package_identification:_identify(aksc) by extension 'python_setup_py'
+[0.578s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2) by extensions ['ignore', 'ignore_ament_install']
+[0.578s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2) by extension 'ignore'
+[0.578s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2) by extension 'ignore_ament_install'
+[0.578s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2) by extensions ['colcon_pkg']
+[0.578s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2) by extension 'colcon_pkg'
+[0.578s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2) by extensions ['colcon_meta']
+[0.578s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2) by extension 'colcon_meta'
+[0.578s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2) by extensions ['ros']
+[0.578s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2) by extension 'ros'
+[0.578s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2) by extensions ['cmake', 'python']
+[0.578s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2) by extension 'cmake'
+[0.578s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2) by extension 'python'
+[0.578s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2) by extensions ['python_setup_py']
+[0.579s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2) by extension 'python_setup_py'
+[0.579s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward) by extensions ['ignore', 'ignore_ament_install']
+[0.579s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward) by extension 'ignore'
+[0.579s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward) by extension 'ignore_ament_install'
+[0.579s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward) by extensions ['colcon_pkg']
+[0.579s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward) by extension 'colcon_pkg'
+[0.579s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward) by extensions ['colcon_meta']
+[0.579s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward) by extension 'colcon_meta'
+[0.579s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward) by extensions ['ros']
+[0.579s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward) by extension 'ros'
+[0.579s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward) by extensions ['cmake', 'python']
+[0.579s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward) by extension 'cmake'
+[0.579s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward) by extension 'python'
+[0.579s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward) by extensions ['python_setup_py']
+[0.579s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward) by extension 'python_setup_py'
+[0.579s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward) by extensions ['ignore', 'ignore_ament_install']
+[0.580s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward) by extension 'ignore'
+[0.580s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward) by extension 'ignore_ament_install'
+[0.580s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward) by extensions ['colcon_pkg']
+[0.580s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward) by extension 'colcon_pkg'
+[0.580s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward) by extensions ['colcon_meta']
+[0.580s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward) by extension 'colcon_meta'
+[0.580s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward) by extensions ['ros']
+[0.580s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward) by extension 'ros'
+[0.580s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward) by extensions ['cmake', 'python']
+[0.580s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward) by extension 'cmake'
+[0.580s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward) by extension 'python'
+[0.580s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward) by extensions ['python_setup_py']
+[0.580s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward) by extension 'python_setup_py'
+[0.580s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/preprocess) by extensions ['ignore', 'ignore_ament_install']
+[0.580s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/preprocess) by extension 'ignore'
+[0.580s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/preprocess) by extension 'ignore_ament_install'
+[0.580s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/preprocess) by extensions ['colcon_pkg']
+[0.581s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/preprocess) by extension 'colcon_pkg'
+[0.581s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/preprocess) by extensions ['colcon_meta']
+[0.581s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/preprocess) by extension 'colcon_meta'
+[0.581s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/preprocess) by extensions ['ros']
+[0.581s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/preprocess) by extension 'ros'
+[0.581s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/preprocess) by extensions ['cmake', 'python']
+[0.581s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/preprocess) by extension 'cmake'
+[0.581s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/preprocess) by extension 'python'
+[0.581s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/preprocess) by extensions ['python_setup_py']
+[0.581s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/preprocess) by extension 'python_setup_py'
+[0.581s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/search) by extensions ['ignore', 'ignore_ament_install']
+[0.581s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/search) by extension 'ignore'
+[0.581s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/search) by extension 'ignore_ament_install'
+[0.581s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/search) by extensions ['colcon_pkg']
+[0.581s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/search) by extension 'colcon_pkg'
+[0.581s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/search) by extensions ['colcon_meta']
+[0.581s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/search) by extension 'colcon_meta'
+[0.581s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/search) by extensions ['ros']
+[0.581s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/search) by extension 'ros'
+[0.582s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/search) by extensions ['cmake', 'python']
+[0.582s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/search) by extension 'cmake'
+[0.582s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/search) by extension 'python'
+[0.582s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/search) by extensions ['python_setup_py']
+[0.582s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/search) by extension 'python_setup_py'
+[0.582s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/translate) by extensions ['ignore', 'ignore_ament_install']
+[0.582s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/translate) by extension 'ignore'
+[0.582s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/translate) by extension 'ignore_ament_install'
+[0.582s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/translate) by extensions ['colcon_pkg']
+[0.582s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/translate) by extension 'colcon_pkg'
+[0.582s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/translate) by extensions ['colcon_meta']
+[0.582s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/translate) by extension 'colcon_meta'
+[0.582s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/translate) by extensions ['ros']
+[0.582s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/translate) by extension 'ros'
+[0.582s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/translate) by extensions ['cmake', 'python']
+[0.582s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/translate) by extension 'cmake'
+[0.582s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/translate) by extension 'python'
+[0.582s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/translate) by extensions ['python_setup_py']
+[0.582s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/translate) by extension 'python_setup_py'
+[0.583s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/translate/pddl) by extensions ['ignore', 'ignore_ament_install']
+[0.583s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/translate/pddl) by extension 'ignore'
+[0.583s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/translate/pddl) by extension 'ignore_ament_install'
+[0.583s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/translate/pddl) by extensions ['colcon_pkg']
+[0.583s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/translate/pddl) by extension 'colcon_pkg'
+[0.583s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/translate/pddl) by extensions ['colcon_meta']
+[0.583s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/translate/pddl) by extension 'colcon_meta'
+[0.583s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/translate/pddl) by extensions ['ros']
+[0.583s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/translate/pddl) by extension 'ros'
+[0.583s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/translate/pddl) by extensions ['cmake', 'python']
+[0.583s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/translate/pddl) by extension 'cmake'
+[0.583s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/translate/pddl) by extension 'python'
+[0.583s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/translate/pddl) by extensions ['python_setup_py']
+[0.583s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/downward/translate/pddl) by extension 'python_setup_py'
+[0.583s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/example) by extensions ['ignore', 'ignore_ament_install']
+[0.583s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/example) by extension 'ignore'
+[0.583s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/example) by extension 'ignore_ament_install'
+[0.583s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/example) by extensions ['colcon_pkg']
+[0.584s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/example) by extension 'colcon_pkg'
+[0.584s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/example) by extensions ['colcon_meta']
+[0.584s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/example) by extension 'colcon_meta'
+[0.584s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/example) by extensions ['ros']
+[0.584s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/example) by extension 'ros'
+[0.584s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/example) by extensions ['cmake', 'python']
+[0.584s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/example) by extension 'cmake'
+[0.584s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/example) by extension 'python'
+[0.584s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/example) by extensions ['python_setup_py']
+[0.584s] Level 1:colcon.colcon_core.package_identification:_identify(aksc/plansys2/TemporalFastDownward/example) by extension 'python_setup_py'
+[0.584s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extensions ['ignore', 'ignore_ament_install']
+[0.584s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extension 'ignore'
+[0.584s] Level 1:colcon.colcon_core.package_identification:_identify(build) ignored
+[0.584s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extensions ['ignore', 'ignore_ament_install']
+[0.584s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extension 'ignore'
+[0.584s] Level 1:colcon.colcon_core.package_identification:_identify(install) ignored
+[0.584s] Level 1:colcon.colcon_core.package_identification:_identify(log) by extensions ['ignore', 'ignore_ament_install']
+[0.585s] Level 1:colcon.colcon_core.package_identification:_identify(log) by extension 'ignore'
+[0.585s] Level 1:colcon.colcon_core.package_identification:_identify(log) ignored
+[0.585s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['ignore', 'ignore_ament_install']
+[0.585s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'ignore'
+[0.585s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'ignore_ament_install'
+[0.585s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['colcon_pkg']
+[0.585s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'colcon_pkg'
+[0.585s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['colcon_meta']
+[0.585s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'colcon_meta'
+[0.585s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['ros']
+[0.585s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'ros'
+[0.585s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['cmake', 'python']
+[0.585s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'cmake'
+[0.585s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'python'
+[0.585s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extensions ['python_setup_py']
+[0.585s] Level 1:colcon.colcon_core.package_identification:_identify(src) by extension 'python_setup_py'
+[0.585s] Level 1:colcon.colcon_core.package_identification:_identify(src/planning) by extensions ['ignore', 'ignore_ament_install']
+[0.585s] Level 1:colcon.colcon_core.package_identification:_identify(src/planning) by extension 'ignore'
+[0.585s] Level 1:colcon.colcon_core.package_identification:_identify(src/planning) by extension 'ignore_ament_install'
+[0.586s] Level 1:colcon.colcon_core.package_identification:_identify(src/planning) by extensions ['colcon_pkg']
+[0.586s] Level 1:colcon.colcon_core.package_identification:_identify(src/planning) by extension 'colcon_pkg'
+[0.586s] Level 1:colcon.colcon_core.package_identification:_identify(src/planning) by extensions ['colcon_meta']
+[0.586s] Level 1:colcon.colcon_core.package_identification:_identify(src/planning) by extension 'colcon_meta'
+[0.586s] Level 1:colcon.colcon_core.package_identification:_identify(src/planning) by extensions ['ros']
+[0.586s] Level 1:colcon.colcon_core.package_identification:_identify(src/planning) by extension 'ros'
+[0.594s] DEBUG:colcon.colcon_core.package_identification:Package 'src/planning' with type 'ros.ament_python' and name 'planning'
+[0.594s] Level 1:colcon.colcon_core.package_identification:_identify(src/ros2_visao) by extensions ['ignore', 'ignore_ament_install']
+[0.594s] Level 1:colcon.colcon_core.package_identification:_identify(src/ros2_visao) by extension 'ignore'
+[0.595s] Level 1:colcon.colcon_core.package_identification:_identify(src/ros2_visao) by extension 'ignore_ament_install'
+[0.595s] Level 1:colcon.colcon_core.package_identification:_identify(src/ros2_visao) by extensions ['colcon_pkg']
+[0.595s] Level 1:colcon.colcon_core.package_identification:_identify(src/ros2_visao) by extension 'colcon_pkg'
+[0.595s] Level 1:colcon.colcon_core.package_identification:_identify(src/ros2_visao) by extensions ['colcon_meta']
+[0.595s] Level 1:colcon.colcon_core.package_identification:_identify(src/ros2_visao) by extension 'colcon_meta'
+[0.595s] Level 1:colcon.colcon_core.package_identification:_identify(src/ros2_visao) by extensions ['ros']
+[0.595s] Level 1:colcon.colcon_core.package_identification:_identify(src/ros2_visao) by extension 'ros'
+[0.596s] DEBUG:colcon.colcon_core.package_identification:Package 'src/ros2_visao' with type 'ros.ament_python' and name 'ros2_visao'
+[0.596s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) using defaults
+[0.596s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) discover
+[0.596s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) using defaults
+[0.596s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) discover
+[0.596s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) using defaults
+[0.637s] Level 5:colcon.colcon_core.verb:set package 'planning' build argument 'cmake_args' from command line to 'None'
+[0.637s] Level 5:colcon.colcon_core.verb:set package 'planning' build argument 'cmake_target' from command line to 'None'
+[0.637s] Level 5:colcon.colcon_core.verb:set package 'planning' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.637s] Level 5:colcon.colcon_core.verb:set package 'planning' build argument 'cmake_clean_cache' from command line to 'False'
+[0.637s] Level 5:colcon.colcon_core.verb:set package 'planning' build argument 'cmake_clean_first' from command line to 'False'
+[0.637s] Level 5:colcon.colcon_core.verb:set package 'planning' build argument 'cmake_force_configure' from command line to 'False'
+[0.638s] Level 5:colcon.colcon_core.verb:set package 'planning' build argument 'ament_cmake_args' from command line to 'None'
+[0.638s] Level 5:colcon.colcon_core.verb:set package 'planning' build argument 'catkin_cmake_args' from command line to 'None'
+[0.638s] Level 5:colcon.colcon_core.verb:set package 'planning' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.638s] DEBUG:colcon.colcon_core.verb:Building package 'planning' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/aksc/WORK2-2026/build/planning', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/aksc/WORK2-2026/install/planning', 'merge_install': False, 'path': '/home/aksc/WORK2-2026/src/planning', 'symlink_install': True, 'test_result_base': None}
+[0.638s] Level 5:colcon.colcon_core.verb:set package 'ros2_visao' build argument 'cmake_args' from command line to 'None'
+[0.638s] Level 5:colcon.colcon_core.verb:set package 'ros2_visao' build argument 'cmake_target' from command line to 'None'
+[0.638s] Level 5:colcon.colcon_core.verb:set package 'ros2_visao' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.638s] Level 5:colcon.colcon_core.verb:set package 'ros2_visao' build argument 'cmake_clean_cache' from command line to 'False'
+[0.638s] Level 5:colcon.colcon_core.verb:set package 'ros2_visao' build argument 'cmake_clean_first' from command line to 'False'
+[0.638s] Level 5:colcon.colcon_core.verb:set package 'ros2_visao' build argument 'cmake_force_configure' from command line to 'False'
+[0.638s] Level 5:colcon.colcon_core.verb:set package 'ros2_visao' build argument 'ament_cmake_args' from command line to 'None'
+[0.638s] Level 5:colcon.colcon_core.verb:set package 'ros2_visao' build argument 'catkin_cmake_args' from command line to 'None'
+[0.638s] Level 5:colcon.colcon_core.verb:set package 'ros2_visao' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.638s] DEBUG:colcon.colcon_core.verb:Building package 'ros2_visao' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/aksc/WORK2-2026/build/ros2_visao', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': None, 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/aksc/WORK2-2026/install/ros2_visao', 'merge_install': False, 'path': '/home/aksc/WORK2-2026/src/ros2_visao', 'symlink_install': True, 'test_result_base': None}
+[0.638s] INFO:colcon.colcon_core.executor:Executing jobs using 'parallel' executor
+[0.640s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:run_until_complete
+[0.641s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/home/aksc/WORK2-2026/src/planning' with build type 'ament_python'
+[0.641s] Level 1:colcon.colcon_core.shell:create_environment_hook('planning', 'ament_prefix_path')
+[0.646s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_core.shell.bat': Not used on non-Windows systems
+[0.646s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/aksc/WORK2-2026/install/planning/share/planning/hook/ament_prefix_path.dsv'
+[0.647s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/aksc/WORK2-2026/install/planning/share/planning/hook/ament_prefix_path.sh'
+[0.648s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.660s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/home/aksc/WORK2-2026/src/ros2_visao' with build type 'ament_python'
+[0.661s] Level 1:colcon.colcon_core.shell:create_environment_hook('ros2_visao', 'ament_prefix_path')
+[0.661s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/aksc/WORK2-2026/install/ros2_visao/share/ros2_visao/hook/ament_prefix_path.dsv'
+[0.663s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/aksc/WORK2-2026/install/ros2_visao/share/ros2_visao/hook/ament_prefix_path.sh'
+[0.664s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[1.085s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/home/aksc/WORK2-2026/src/planning'
+[1.085s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[1.432s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/home/aksc/WORK2-2026/src/ros2_visao'
+[1.432s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[2.414s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/aksc/WORK2-2026/build/ros2_visao': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/aksc/WORK2-2026/build/ros2_visao/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/aksc/WORK2-2026/install/ros2_visao/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/aksc/WORK2-2026/build/ros2_visao/build --no-deps symlink_data
+[2.428s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/aksc/WORK2-2026/build/planning': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/aksc/WORK2-2026/build/planning/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/aksc/WORK2-2026/install/planning/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/aksc/WORK2-2026/build/planning/build --no-deps symlink_data
+[3.095s] Level 1:colcon.colcon_core.shell:create_environment_hook('ros2_visao', 'pythonpath_develop')
+[3.096s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/aksc/WORK2-2026/build/ros2_visao' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/aksc/WORK2-2026/build/ros2_visao/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/aksc/WORK2-2026/install/ros2_visao/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/aksc/WORK2-2026/build/ros2_visao/build --no-deps symlink_data
+[3.096s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/aksc/WORK2-2026/build/ros2_visao/share/ros2_visao/hook/pythonpath_develop.dsv'
+[3.097s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/aksc/WORK2-2026/build/ros2_visao/share/ros2_visao/hook/pythonpath_develop.sh'
+[3.107s] Level 1:colcon.colcon_core.environment:checking '/home/aksc/WORK2-2026/install/ros2_visao' for CMake module files
+[3.107s] Level 1:colcon.colcon_core.environment:checking '/home/aksc/WORK2-2026/install/ros2_visao' for CMake config files
+[3.108s] Level 1:colcon.colcon_core.environment:checking '/home/aksc/WORK2-2026/install/ros2_visao/lib'
+[3.108s] Level 1:colcon.colcon_core.environment:checking '/home/aksc/WORK2-2026/install/ros2_visao/bin'
+[3.109s] Level 1:colcon.colcon_core.environment:checking '/home/aksc/WORK2-2026/install/ros2_visao/lib/pkgconfig/ros2_visao.pc'
+[3.109s] Level 1:colcon.colcon_core.environment:checking '/home/aksc/WORK2-2026/install/ros2_visao/lib/python3.12/site-packages'
+[3.109s] Level 1:colcon.colcon_core.shell:create_environment_hook('ros2_visao', 'pythonpath')
+[3.109s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/aksc/WORK2-2026/install/ros2_visao/share/ros2_visao/hook/pythonpath.dsv'
+[3.110s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/aksc/WORK2-2026/install/ros2_visao/share/ros2_visao/hook/pythonpath.sh'
+[3.111s] Level 1:colcon.colcon_core.environment:checking '/home/aksc/WORK2-2026/install/ros2_visao/bin'
+[3.111s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(ros2_visao)
+[3.111s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/aksc/WORK2-2026/install/ros2_visao/share/ros2_visao/package.dsv'
+[3.113s] INFO:colcon.colcon_core.shell:Creating package script '/home/aksc/WORK2-2026/install/ros2_visao/share/ros2_visao/package.sh'
+[3.114s] INFO:colcon.colcon_core.shell:Creating package script '/home/aksc/WORK2-2026/install/ros2_visao/share/ros2_visao/package.bash'
+[3.115s] INFO:colcon.colcon_core.shell:Creating package script '/home/aksc/WORK2-2026/install/ros2_visao/share/ros2_visao/package.zsh'
+[3.115s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/aksc/WORK2-2026/install/ros2_visao/share/colcon-core/packages/ros2_visao)
+[3.158s] Level 1:colcon.colcon_core.shell:create_environment_hook('planning', 'pythonpath_develop')
+[3.159s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/aksc/WORK2-2026/build/planning/share/planning/hook/pythonpath_develop.dsv'
+[3.160s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/aksc/WORK2-2026/build/planning' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/aksc/WORK2-2026/build/planning/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/aksc/WORK2-2026/install/planning/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/aksc/WORK2-2026/build/planning/build --no-deps symlink_data
+[3.161s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/aksc/WORK2-2026/build/planning/share/planning/hook/pythonpath_develop.sh'
+[3.163s] Level 1:colcon.colcon_core.environment:checking '/home/aksc/WORK2-2026/install/planning' for CMake module files
+[3.164s] Level 1:colcon.colcon_core.environment:checking '/home/aksc/WORK2-2026/install/planning' for CMake config files
+[3.165s] Level 1:colcon.colcon_core.environment:checking '/home/aksc/WORK2-2026/install/planning/lib'
+[3.166s] Level 1:colcon.colcon_core.environment:checking '/home/aksc/WORK2-2026/install/planning/bin'
+[3.166s] Level 1:colcon.colcon_core.environment:checking '/home/aksc/WORK2-2026/install/planning/lib/pkgconfig/planning.pc'
+[3.167s] Level 1:colcon.colcon_core.environment:checking '/home/aksc/WORK2-2026/install/planning/lib/python3.12/site-packages'
+[3.167s] Level 1:colcon.colcon_core.shell:create_environment_hook('planning', 'pythonpath')
+[3.167s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/aksc/WORK2-2026/install/planning/share/planning/hook/pythonpath.dsv'
+[3.168s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/aksc/WORK2-2026/install/planning/share/planning/hook/pythonpath.sh'
+[3.169s] Level 1:colcon.colcon_core.environment:checking '/home/aksc/WORK2-2026/install/planning/bin'
+[3.169s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(planning)
+[3.170s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/aksc/WORK2-2026/install/planning/share/planning/package.dsv'
+[3.171s] INFO:colcon.colcon_core.shell:Creating package script '/home/aksc/WORK2-2026/install/planning/share/planning/package.sh'
+[3.171s] INFO:colcon.colcon_core.shell:Creating package script '/home/aksc/WORK2-2026/install/planning/share/planning/package.bash'
+[3.172s] INFO:colcon.colcon_core.shell:Creating package script '/home/aksc/WORK2-2026/install/planning/share/planning/package.zsh'
+[3.173s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/aksc/WORK2-2026/install/planning/share/colcon-core/packages/planning)
+[3.173s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:closing loop
+[3.174s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:loop closed
+[3.174s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:run_until_complete finished with '0'
+[3.174s] DEBUG:colcon.colcon_core.event_reactor:joining thread
+[3.200s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_notification.desktop_notification.terminal_notifier': Not used on non-Darwin systems
+[3.201s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_notification.desktop_notification.win32': Not used on non-Windows systems
+[3.201s] INFO:colcon.colcon_notification.desktop_notification:Sending desktop notification using 'notify2'
+[3.289s] DEBUG:colcon.colcon_core.event_reactor:joined thread
+[3.289s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/aksc/WORK2-2026/install/local_setup.sh'
+[3.291s] INFO:colcon.colcon_core.shell:Creating prefix util module '/home/aksc/WORK2-2026/install/_local_setup_util_sh.py'
+[3.296s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/aksc/WORK2-2026/install/setup.sh'
+[3.300s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/aksc/WORK2-2026/install/local_setup.bash'
+[3.302s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/aksc/WORK2-2026/install/setup.bash'
+[3.309s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/aksc/WORK2-2026/install/local_setup.zsh'
+[3.312s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/aksc/WORK2-2026/install/setup.zsh'
