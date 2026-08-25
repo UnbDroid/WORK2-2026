@@ -101,9 +101,9 @@ std_msgs__msg__String garra_msg;
 #define MS1_1 26
 
 char command_buffer[32]; //diminuir
-int slot1 = 1200;
-int slot2 = 1600;
-int slot3 = 2000;
+int slot1 = 3600;
+int slot2 = 4800;
+int slot3 = 6000;
 
 FastAccelStepperEngine engine = FastAccelStepperEngine();
 FastAccelStepper *stepper1 = NULL;
@@ -122,10 +122,10 @@ void rotacionar(int npasso) {
 #define enablePin2 25
 
 int altura_inicial = 0;
-int cinco_cm = 3200;
-int dez_cm = 6400;
-int quinze_cm = 9600;
-int shelf_cm = 12800;
+int cinco_cm = 0;
+int dez_cm = -60000;
+int quinze_cm = 12800;
+int shelf_cm = 60000;
 
 FastAccelStepper *stepper2 = NULL;
 
@@ -354,8 +354,8 @@ void setup() {
         stepper2->setAutoEnable(true);
         
         // Motion parameters
-        stepper2->setSpeedInHz(1000);       
-        stepper2->setAcceleration(1500);    
+        stepper2->setSpeedInHz(8000);       
+        stepper2->setAcceleration(6000);    
         
         // Serial.println("Stepper initialized");
     } else {
