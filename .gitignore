@@ -1,0 +1,7 @@
+build/
+install/
+log/
+**/__pycache__/
+src/robot_vision/build/
+src/robot_vision/install/
+src/robot_vision/log/

@@ -8,7 +8,7 @@ class ImagePublisher(Node):
     def __init__(self):
         super().__init__('img_pub_node')
         
-        self.cameraDevice = 2
+        self.cameraDevice = 2 
         self.camera = cv2.VideoCapture(self.cameraDevice) 
 
         if not self.camera.isOpened():
