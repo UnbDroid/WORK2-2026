@@ -2,6 +2,11 @@ package.xml
 setup.cfg
 setup.py
 resource/ros2_visao
+ros2_visao/__init__.py
+ros2_visao/img_pub_node.py
+ros2_visao/img_subpp_node.py
+ros2_visao/teste.py
+ros2_visao/testedoiscentro.py
 ros2_visao.egg-info/PKG-INFO
 ros2_visao.egg-info/SOURCES.txt
 ros2_visao.egg-info/dependency_links.txt
