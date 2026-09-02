@@ -1,4 +1,4 @@
-sssssssssssssssssssssssssssssexe(define (domain robocup-work-transport)
+(define (domain robocup-work-transport)
 
   (:requirements :strips :typing)
 

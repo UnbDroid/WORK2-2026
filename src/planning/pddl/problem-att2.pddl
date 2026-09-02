@@ -5,7 +5,7 @@
 
   (:objects
     robot1 - robot
-    start ws1 ws2 ws4 pp sh1 sh2 - location
+    start ws1 ws2 ws4 pp1 sh1 sh2 - location
     s1 s2 s3 - slot
     cont10 cont16 - container
     obj1 obj3 obj5 obj6 obj19 obj20 obj21 obj22 - object
@@ -26,30 +26,25 @@
     (obj-at obj19 ws2)
     (obj-at obj3 ws4)
     (obj-at obj6 ws4)
-    (obj-at obj5 pp)
-    (obj-at obj21 pp)
+    (obj-at obj5 pp1)
+    (obj-at obj21 pp1)
     (obj-at obj20 sh1)
     (obj-at obj22 sh2)
   )
 
   (:goal
     (and
-      ; WS_1: blue_container_10 -> [1, 3]
       (in-container obj1 cont10)
       (in-container obj3 cont10)
 
-      ; WS_2: red_container_16 -> [5, 19]
       (in-container obj5 cont16)
       (in-container obj19 cont16)
 
-      ; PP: [6, 20]
-      (obj-at obj6 pp)
-      (obj-at obj20 pp)
+      (obj-at obj6 pp1)
+      (obj-at obj20 pp1)
 
-      ; SH_1: [21]
       (obj-at obj21 sh1)
 
-      ; SH_2: [22] (já está no estado inicial, sem ação necessária)
       (obj-at obj22 sh2)
   ))
 )

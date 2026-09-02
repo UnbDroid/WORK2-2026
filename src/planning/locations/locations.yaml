@@ -1,0 +1,25 @@
+move_action_node:
+  ros__parameters:
+    locations:
+      # começo
+      start: [-1.807, -1.096, 0]
+      # áreas de serviço 
+      ws5: [0.0, 0.0, 0]
+      ws1: [0.0, 0.0, 0]
+      ws2: [0.0, 0.0, 0]
+      ws3: [0.0, 0.0, 0]
+      ws4: [0.0, 0.0, 0]
+      ws6: [0.0, 0.0, 0]
+      ws7: [0.0, 0.0, 0]
+      ws8: [0.0, 0.0, 0]
+      # prateleiras
+      sh1: [0.0, 0.0, 0]
+      sh2: [0.0, 0.0, 0]
+      # compartimentos de precisão
+      pp1: [0.0, 0.0, 0]
+      pp2: [0.0, 0.0, 0]
+      pp3: [0.0, 0.0, 0]
+      pp4: [0.0, 0.0, 0]
+      pp5: [0.0, 0.0, 0]
+      pp6: [0.0, 0.0, 0]
+      pp7: [0.0, 0.0, 0]
