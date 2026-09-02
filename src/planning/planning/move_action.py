@@ -1,6 +1,6 @@
 import rclpy
-from plansys2_executor.ActionExecutorClient import ActionExecutorClient  
-from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
+from plansys2_executor.ActionExecutorClient import ActionExecutorClient  # type: ignore
+from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult # type: ignore
 from geometry_msgs.msg import PoseStamped
 
 # dicionário mapeando os pontos do pddl para as coordenadas no mapa
