@@ -25,13 +25,13 @@ public:
 
   static BT::PortsList providedPorts()
   {
-    return {BT::InputPort<std::string>("target")}; //o valor de slot1 vai para o código através do port target
+    return {BT::InputPort<std::string>("target")}; // o valor de "slot1" vai para o código através do port target, fazendo que um mesmo nó possa ser reutilizado para várias rotacoes
   }
 
-  BT::NodeStatus onStart() override
+  BT::NodeStatus onStart() override //função que é executada quando ação começa, fica em RUNNING
   {
     std::string target;
-    if (!getInput("target", target)) {
+    if (!getInput("target", target)) { //tenta pegar valor do target e segue para vários if e else
       RCLCPP_ERROR(node_->get_logger(), "[RotateGripper] missing input [target]");
       return BT::NodeStatus::FAILURE;
     }
@@ -45,26 +45,26 @@ public:
       return BT::NodeStatus::FAILURE;
     }
 
-    std_msgs::msg::String msg;
+    std_msgs::msg::String msg; //ver de trocar msgs de string para um outro tipo melhor
     msg.data = expected_reply_;
-    pub_->publish(msg);
+    pub_->publish(msg); //cria uma msg do ros2 e publica para fazer o stepper motor atuar
 
-    done_ = false;
+    done_ = false; //seta done para false para informar que a ação não foi concluida, so sendo posta em TRUE após subscriber de feedback receber resposta
     start_time_ = node_->now();
     return BT::NodeStatus::RUNNING;
   }
 
-  BT::NodeStatus onRunning() override
+  BT::NodeStatus onRunning() override //funcao chamada enquanto RotateGripper estiver RUNNING
   {
-    // spin_some so the subscription callback actually fires
-    rclcpp::spin_some(node_);
+
+    rclcpp::spin_some(node_); // spin_some so the subscription callback actually fires
 
     if (done_) {
-      return BT::NodeStatus::SUCCESS;
+      return BT::NodeStatus::SUCCESS; // para assim que função retornar sucesso
     }
 
     // Path A fallback: hard timeout as a safety net (tune per motor)
-    if ((node_->now() - start_time_).seconds() > 5.0) {
+    if ((node_->now() - start_time_).seconds() > 10.0) {
       RCLCPP_WARN(node_->get_logger(), "[RotateGripper] timed out waiting for feedback");
       return BT::NodeStatus::FAILURE;
     }
