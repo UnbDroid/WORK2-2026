@@ -14,34 +14,16 @@
 #include "esp_system.h"
 #include <ESP32Servo.h>
 
-/*
- * TODO : Include your necessary header here
-*/
-
 #include <micro_ros_platformio.h>
 #include <rcl/rcl.h>
 #include <rcl/error_handling.h>
 #include <rclc/rclc.h>
 #include <rclc/executor.h>
 #include <rmw_microros/rmw_microros.h>
-/*
- * TODO : include your desired msg header file
-*/
+
 #include <std_msgs/msg/string.h>
 #include <std_msgs/msg/bool.h>
 
-/*
- * Optional,
- * LED pin to check connection
- * between micro-ros-agent and ESP32
-*/
-// #define LED_PIN 23
-// #define LED_PIN_TEST 18 // subscription LED
-// bool led_test_state = false;
-
-/*
- * Helper functions to help reconnect
-*/
 #define EXECUTE_EVERY_N_MS(MS, X)  do { \
     static volatile int64_t init = -1; \
     if (init == -1) { init = uxr_millis();} \
@@ -55,46 +37,19 @@ enum states {
   AGENT_DISCONNECTED
 } state;
 
-/*
- * Declare rcl object
-*/
 rclc_support_t support;
 rcl_init_options_t init_options;
 rcl_node_t node;
 rclc_executor_t executor;
 rcl_allocator_t allocator;
 
-/*
- * TODO : Declare your 
- * publisher & subscription objects below
-*/
 rcl_subscription_t garra_sub;
-// rcl_subscription_t led_sub;
-/*
- * TODO : Define your necessary Msg
- * that you want to work with below.
-*/
+rcl_publisher_t garra_status_pub; //publica status de acao para behaviour tree
+
 std_msgs__msg__String garra_msg;
-// std_msgs__msg__Bool led_msg;
+std_msgs__msg__String status_msg;
 
-// void printResetReason() {
-//   esp_reset_reason_t reason = esp_reset_reason();
-//   Serial.print("Motivo do reset: ");
-//   switch (reason) {
-//     case ESP_RST_POWERON:   Serial.println("POWERON (ligou da tomada/USB)"); break;
-//     case ESP_RST_EXT:       Serial.println("EXT (pino de reset externo)"); break;
-//     case ESP_RST_SW:        Serial.println("SW (reset por software)"); break;
-//     case ESP_RST_PANIC:     Serial.println("PANIC (crash de código / exceção)"); break;
-//     case ESP_RST_INT_WDT:   Serial.println("INT_WDT (watchdog de interrupção travada)"); break;
-//     case ESP_RST_TASK_WDT:  Serial.println("TASK_WDT (watchdog de task travada)"); break;
-//     case ESP_RST_WDT:       Serial.println("WDT (outro watchdog)"); break;
-//     case ESP_RST_BROWNOUT:  Serial.println(">>> BROWNOUT (queda de tensão) <<<"); break;
-//     case ESP_RST_SDIO:      Serial.println("SDIO"); break;
-//     default:                Serial.println("Outro / desconhecido"); break;
-//   }
-// }
-
-//Stepper Motor1 (rotacao)
+char status_buffer[16];
 
 #define stepPin1 14
 #define dirPin1 27
@@ -113,6 +68,7 @@ void rotacionar(int npasso) {
 
   // Serial.println("Moving to position 800");
   stepper1->moveTo(npasso, true);
+  publish_status("1");
 }
 
 //Stepper Motor2 (movimento vertical)
@@ -134,13 +90,7 @@ void vertical(int npasso) {
 
   // Serial.println("Moving to position 800");
   stepper2->moveTo(npasso, true);
-}
-
-void vertical_bloq(int npasso) {
-  if (!stepper2) return;
-
-  // Serial.println("Moving to position 800");
-  stepper2->moveTo(npasso, false);
+  publish_status("1");
 }
 
 //Servomotor
@@ -150,10 +100,22 @@ Servo myservo;
 
 void fechar_garra(){
   myservo.write(90);
+  delay(500);
+  publish_status("1");
 }
 
 void abrir_garra(){
   myservo.write(0);
+  delay(500);
+  publish_status("1");
+}
+
+void publish_status(const char * cmd_done) {
+  strncpy(status_buffer, cmd_done, sizeof(status_buffer));
+  status_msg.data.data = status_buffer;
+  status_msg.data.size = strlen(status_buffer);
+  status_msg.data.capacity = sizeof(status_buffer);
+  rcl_publish(&garra_status_pub, &status_msg, NULL);
 }
 
 void garra_callback(const void *msgin)
@@ -276,6 +238,9 @@ bool create_entities()
   rc = rclc_executor_add_subscription(&executor, &garra_sub, &garra_msg, &garra_callback, ON_NEW_DATA);
   if (rc != RCL_RET_OK) return false;
 
+  rc = rclc_publisher_init_default(&garra_status_pub, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, String),"/topico_garra_status");
+  if (rc != RCL_RET_OK) return false;
+
   return true;
 }
 
@@ -285,14 +250,11 @@ void destroy_entities()
   (void) rmw_uros_set_context_entity_destroy_session_timeout(rmw_context, 0);
 
   rclc_executor_fini(&executor);
-  // rcl_subscription_fini(&led_sub, &node);
   rcl_subscription_fini(&garra_sub, &node);
   rcl_node_fini(&node);
   rcl_init_options_fini(&init_options);
   rclc_support_fini(&support);
-  /*
-   * TODO : Make sure the name of publisher and subscriber are correct
-   */
+  rcl_publisher_fini(&garra_status_pub, &node);
   
 }
 
@@ -308,13 +270,6 @@ void setup() {
   set_microros_serial_transports(Serial);
   delay(2000);
   //set_microros_wifi_transports("WIFI-SSID", "WIFI-PW", "HOST_IP", 8888);
-
-  /*
-   * Optional, setup output pin for LEDs
-   */
-  // pinMode(LED_PIN, OUTPUT);
-  // pinMode(LED_PIN_TEST, OUTPUT);
-
 
   // Stepper driver 1
   pinMode(dirPin1, OUTPUT);
@@ -365,19 +320,11 @@ void setup() {
   //Servomotor
   myservo.attach(SERVO_PIN);
 
-  /*
-   * TODO : Initialze the message data variable
-   */
   // Message buffer
   garra_msg.data.data = command_buffer;
   garra_msg.data.capacity = sizeof(command_buffer);
   garra_msg.data.size = 0;
 
-  // led_msg.data = false;
-
-  /*
-   * Setup first state
-   */
   state = WAITING_AGENT;
 
 }
