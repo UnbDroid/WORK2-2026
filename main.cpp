@@ -61,10 +61,10 @@ volatile long pulsosRFD = 0;
 volatile long pulsosRTE = 0;
 volatile long pulsosRTD = 0;
 
-MotorPI RTE = {13, 25, 14, 16, &pulsosRTE, 0, 0, 1.5, 3.0, -1, 1};
-MotorPI RFD = {26, 27, 36, 39, &pulsosRFD, 0, 0, 1.5, 3.0, 1, 1};
-MotorPI RFE = {32, 33, 22, 23, &pulsosRFE, 0, 0, 1.5, 3.0, -1, 1};
-MotorPI RTD = {15, 4, 35, 34, &pulsosRTD, 0, 0, 1.5, 3.0, 1, 1};
+MotorPI RTE = {23, 22, 19, 21, &pulsosRTE, 0, 0, 1.5, 3.0, -1, 1};
+MotorPI RFD = {25, 26, 13, 12, &pulsosRFD, 0, 0, 1.5, 3.0, 1, 1};
+MotorPI RFE = {18, 15, 35, 4, &pulsosRFE, 0, 0, 1.5, 3.0, -1, 1};
+MotorPI RTD = {32, 33, 36, 39, &pulsosRTD, 0, 0, 1.5, 3.0, 1, 1};
 
 void publicarDebug(const char *texto) {
   strcpy(msg_debug.data.data, texto);
@@ -114,10 +114,10 @@ double atualizarPI(MotorPI& m, double alvoRPM, double deltaT) {
 }
 
 void movimentar(double vx, double vy, double w, double deltaT) {
-  double velRFE = (vx + vy + R * w - H * w);
-  double velRTD = (vx + vy - R * w + H * w);
-  double velRFD = (vx - vy - R * w + H * w);
-  double velRTE = (vx - vy + R * w - H * w);
+  double velRFE = (vx - vy + R * w - H * w);
+  double velRTD = (vx - vy - R * w + H * w);
+  double velRFD = (vx + vy - R * w + H * w);
+  double velRTE = (vx + vy + R * w - H * w);
 
   rpmRFE = atualizarPI(RFE, velRFE, deltaT);
   rpmRTE = atualizarPI(RTE, velRTE, deltaT);
