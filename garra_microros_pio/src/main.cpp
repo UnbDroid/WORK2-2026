@@ -44,7 +44,7 @@ rclc_executor_t executor;
 rcl_allocator_t allocator;
 
 rcl_subscription_t garra_sub;
-rcl_publisher_t garra_status_pub; //publica status de acao para behaviour tree
+rcl_publisher_t garra_status_pub; //publica status de acao para maquina de estados
 
 std_msgs__msg__String garra_msg;
 std_msgs__msg__String status_msg;
@@ -68,7 +68,6 @@ void rotacionar(int npasso) {
 
   // Serial.println("Moving to position 800");
   stepper1->moveTo(npasso, true);
-  publish_status("1");
 }
 
 //Stepper Motor2 (movimento vertical)
@@ -77,7 +76,6 @@ void rotacionar(int npasso) {
 #define dirPin2 32
 #define enablePin2 25
 
-int altura_inicial = 0;
 int cinco_cm = 0;
 int dez_cm = -60000;
 int quinze_cm = 12800;
@@ -90,7 +88,6 @@ void vertical(int npasso) {
 
   // Serial.println("Moving to position 800");
   stepper2->moveTo(npasso, true);
-  publish_status("1");
 }
 
 //Servomotor
@@ -101,13 +98,11 @@ Servo myservo;
 void fechar_garra(){
   myservo.write(90);
   delay(500);
-  publish_status("1");
 }
 
 void abrir_garra(){
   myservo.write(0);
   delay(500);
-  publish_status("1");
 }
 
 void publish_status(const char * cmd_done) {
@@ -123,84 +118,73 @@ void garra_callback(const void *msgin)
     const std_msgs__msg__String *garra_msg =
         (const std_msgs__msg__String *)msgin;
 
-    if (strcmp(garra_msg->data.data, "1") == 0)
+    if (strcmp(garra_msg->data.data, "slot1") == 0)
     {
-        // Serial.println("Comando 90 recebido!");
       rotacionar(slot1);
-        
+      publish_status("slot1");
     }
 
-    else if (strcmp(garra_msg->data.data, "2") == 0)
+    else if (strcmp(garra_msg->data.data, "slot2") == 0)
     {
-        // Serial.println("Comando 180 recebido!");
       rotacionar(slot2);
-        
+      publish_status("slot2");
     }
-    else if (strcmp(garra_msg->data.data, "3") == 0)
+    else if (strcmp(garra_msg->data.data, "slot3") == 0)
     {
-        // Serial.println("Comando 270 recebido!");
       rotacionar(slot3);
-        
+      publish_status("slot3");
     }
 
-    else if (strcmp(garra_msg->data.data, "0") == 0)
+    else if (strcmp(garra_msg->data.data, "frente") == 0)
     {
-        // Serial.println("Comando de retornar a origem recebido!");
       rotacionar(0);
-        
+      publish_status("frente");
     }
 
     else if (strcmp(garra_msg->data.data, "5cm") == 0)
     {
-        // Serial.println("Comando 180 recebido!");
       vertical(cinco_cm);
-        
+      publish_status("5cm");
     }
+
     else if (strcmp(garra_msg->data.data, "10cm") == 0)
     {
-        // Serial.println("Comando 270 recebido!");
       vertical(dez_cm);
-        
+      publish_status("10cm");
     }
 
     else if (strcmp(garra_msg->data.data, "15cm") == 0)
     {
-        // Serial.println("Comando de retornar a origem recebido!");
       vertical(quinze_cm);
-        
+      publish_status("15cm");
     }
 
     else if (strcmp(garra_msg->data.data, "shelf") == 0)
     {
-        // Serial.println("Comando de retornar a origem recebido!");
       vertical(shelf_cm);
-        
+      publish_status("shelf");
     }
 
-    else if (strcmp(garra_msg->data.data, "abre") == 0)
+    else if (strcmp(garra_msg->data.data, "inicial") == 0)
     {
-        // Serial.println("Comando de retornar a origem recebido!");
+      vertical(0);
+      publish_status("inicial");
+    }
+
+    else if (strcmp(garra_msg->data.data, "abrir") == 0)
+    {
       abrir_garra();
-        
+      publish_status("abrir");
     }
 
-    else if (strcmp(garra_msg->data.data, "fecha") == 0)
+    else if (strcmp(garra_msg->data.data, "fechar") == 0)
     {
-        // Serial.println("Comando de retornar a origem recebido!");
       fechar_garra();
-        
+      publish_status("fechar");
     }
 
-    else
-    {
-        // Serial.print("Comando desconhecido: ");
-        // Serial.println(garra_msg->data.data);
-    }
 }
 
-/*
-   Create object (Initialization)
-*/
 bool create_entities()
 {
   const char * node_name = "esp32_node";
