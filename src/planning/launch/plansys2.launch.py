@@ -31,7 +31,7 @@ def generate_launch_description():
     # declarar todos os nós de ação do robô
     actions = [
         ('move_action', 'move'),
-        ('pick_from_location_action', 'pick-from-location'),
+        #('pick_from_location_action', 'pick-from-location'),
         ('pick_from_container_action', 'pick-from-container'),
         ('place_at_location_action', 'place-at-location'),
         ('place_in_container_action', 'place-in-container'),
@@ -51,6 +51,22 @@ def generate_launch_description():
                 parameters=[{'action_name': action_name}]
             )
         )
+
+    #nó que gerencia pegar o objeto de algum local, usando bt
+
+    pick_from_location_action = Node(
+    package='plansys2_bt_actions',
+    executable='bt_action_node',
+    name='pick_from_location',
+    namespace='',
+    output='screen',
+    parameters=[
+        os.path.join(pkg_share, 'config', 'params.yaml'),
+        {
+            'action_name': 'pick_from_location',
+            'bt_xml_file': os.path.join(pkg_share, 'behaviour_trees', 'pick_from_location.xml')
+        }
+    ])
 
     # nó gerenciador que lê o problema e aciona a execução
     controller_node = Node(

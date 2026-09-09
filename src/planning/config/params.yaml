@@ -1,0 +1,6 @@
+#plugins para acesso às árvores
+
+pick_from_location:
+  ros__parameters:
+    plugins:
+      - pick_from_location_bt_nodes #(o nome pick_from_location_bt_nodes é o mesmo nome que você deu no add_library(...) do CMakeLists.txt do seu package C++)
