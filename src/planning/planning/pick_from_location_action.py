@@ -4,6 +4,9 @@ from enum import Enum, auto
 import time
 
 class PickCubeStep(Enum):
+    #quando os ultrassonicos detectarem um cobo, meio que tira uma "foto", como a torre e a camera possuem uma distância fixa
+    #o cubo detectado sempre estará na mesma posição da camera/shot, logo deve ser analisado aquele apriltag específico para inspencionar
+    #se o cubo deve ser pego, ou não, e continuar o sacneamento para próximos cubos
     START = auto()
     RECUAR_INICIAL = auto()
     GIRAR_AREA = auto()
@@ -44,7 +47,7 @@ class PickCubeFromLocationAction(GripperPrimitives):
         elif self.step == PickCubeStep.GIRAR_AREA and self.command_finished():
             self.step = PickCubeStep.VERTICAL_AREA
             self.send_feedback(0.27, 'movendo para altura da mesa')
-            self.send_command(self.height_to_cmd(args[3]))
+            self.send_command(self.height_to_cmd(args[2]))
 
         elif self.step == PickCubeStep.VERTICAL_AREA and self.command_finished():
             self.step = PickCubeStep.TRANSLADAR
@@ -81,7 +84,7 @@ class PickCubeFromLocationAction(GripperPrimitives):
         elif self.step == PickCubeStep.RECUAR_CUBO and self.command_finished():
             self.step = PickCubeStep.GIRAR_CHASSI
             self.send_feedback(0.72, 'girando para chassi')
-            self.send_command(self.slot_to_cmd(args[4]))
+            self.send_command(self.slot_to_cmd(args[3]))
 
         elif self.step == PickCubeStep.GIRAR_CHASSI and self.command_finished():
             self.step = PickCubeStep.VERTICAL_CHASSI
@@ -98,9 +101,10 @@ class PickCubeFromLocationAction(GripperPrimitives):
             self.send_feedback(0.99, 'movendo garra para posicao inicial')
             self.send_command('inicial')
 
-        elif self.step == PickCubeStep.FINISH and self.command_finished():
+        elif self.step == PickCubeStep.VERTICAL_INICIAL and self.command_finished():
+            self.step = PickCubeStep.FINISH
+            # opcionalmente já chama finish aqui direto, já que não há mais nenhum comando pendente:
             self.finish(True, 1.0, 'pick-from-location concluído')
-            self.step = 'FINISHED'
 
 
 def main(args=None):
