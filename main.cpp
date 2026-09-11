@@ -114,10 +114,10 @@ double atualizarPI(MotorPI& m, double alvoRPM, double deltaT) {
 }
 
 void movimentar(double vx, double vy, double w, double deltaT) {
-  double velRFE = (vx - vy + R * w - H * w);
-  double velRTD = (vx - vy - R * w + H * w);
-  double velRFD = (vx + vy - R * w + H * w);
-  double velRTE = (vx + vy + R * w - H * w);
+  double velRFE = (vx - vy -(+ R * w - H * w));
+  double velRTD = (vx - vy -(- R * w + H * w));
+  double velRFD = (vx + vy -(- R * w + H * w));
+  double velRTE = (vx + vy -(+ R * w - H * w));
 
   rpmRFE = atualizarPI(RFE, velRFE, deltaT);
   rpmRTE = atualizarPI(RTE, velRTE, deltaT);
