@@ -9,14 +9,15 @@ class PickCubeStep(Enum):
     #se o cubo deve ser pego, ou não, e continuar o sacneamento para próximos cubos
     START = auto()
     RECUAR_INICIAL = auto()
-    GIRAR_AREA = auto()
-    VERTICAL_AREA = auto() #podem ser simultâneos girar e vertical
+    GIRAR_AREA = auto() #gira garra para zona de pegar cubos
+    VERTICAL_AREA = auto() #podem ser simultâneos girar e vertical a partir de um determinado ângulo
     TRANSLADAR = auto()
     AVANCAR = auto()
     FECHAR = auto()
     RECUAR_CUBO = auto()
-    GIRAR_CHASSI = auto() #podem ser simultaneos girar e vertical SE ALTURA FOR MAIOR QUE DO ROBO, a
-    VERTICAL_CHASSI = auto()
+    VERTICAL_CHASSI1 = auto() #vertical para altura inicial
+    GIRAR_CHASSI = auto() #podem ser simultaneos girar e vertical_chassi2 SE ALTURA FOR MAIOR QUE DO ROBO, a
+    VERTICAL_CHASSI2 = auto()  #vertical para altura dos slots
     ABRIR = auto()
     VERTICAL_INICIAL = auto()
     FINISH = auto()
@@ -41,17 +42,17 @@ class PickCubeFromLocationAction(GripperPrimitives):
 
         elif self.step == PickCubeStep.RECUAR_INICIAL and self.command_finished():
             self.step = PickCubeStep.GIRAR_AREA
-            self.send_feedback(0.18, 'girando para area de cubo')
+            self.send_feedback(0.08, 'girando para area de cubo')
             self.send_command('frente') #mudar comando para frente
 
         elif self.step == PickCubeStep.GIRAR_AREA and self.command_finished():
             self.step = PickCubeStep.VERTICAL_AREA
-            self.send_feedback(0.27, 'movendo para altura da mesa')
+            self.send_feedback(0.16, 'movendo para altura da mesa')
             self.send_command(self.height_to_cmd(args[2]))
 
         elif self.step == PickCubeStep.VERTICAL_AREA and self.command_finished():
             self.step = PickCubeStep.TRANSLADAR
-            self.send_feedback(0.36, 'indo para a frente do cubo')
+            self.send_feedback(0.25, 'indo para a frente do cubo')
             #funcao de mover
             time.sleep(1)
             self._pending_reply = 'move'
@@ -60,7 +61,7 @@ class PickCubeFromLocationAction(GripperPrimitives):
 
         elif self.step == PickCubeStep.TRANSLADAR and self.command_finished():
             self.step = PickCubeStep.AVANCAR
-            self.send_feedback(0.45, 'avancando em direcao ao cubo')
+            self.send_feedback(0.33, 'avancando em direcao ao cubo')
             #funcao de mover
             time.sleep(1)
             self._pending_reply = 'move'
@@ -69,12 +70,12 @@ class PickCubeFromLocationAction(GripperPrimitives):
 
         elif self.step == PickCubeStep.AVANCAR and self.command_finished():
             self.step = PickCubeStep.FECHAR
-            self.send_feedback(0.54, 'fechando garra')
+            self.send_feedback(0.41, 'fechando garra')
             self.send_command('fechar') #mudar para fechar se já não for
 
         elif self.step == PickCubeStep.FECHAR and self.command_finished():
             self.step = PickCubeStep.RECUAR_CUBO
-            self.send_feedback(0.63, 'recuando')
+            self.send_feedback(0.50, 'recuando')
             #funcao de mover
             time.sleep(1)
             self._pending_reply = 'move'
@@ -82,23 +83,28 @@ class PickCubeFromLocationAction(GripperPrimitives):
             self._reply_received = True 
 
         elif self.step == PickCubeStep.RECUAR_CUBO and self.command_finished():
+            self.step = PickCubeStep.VERTICAL_CHASSI1
+            self.send_feedback(0.58, 'subindo para posição original')
+            self.send_command('inicial')
+
+        elif self.step == PickCubeStep.VERTICAL_CHASSI1 and self.command_finished():
             self.step = PickCubeStep.GIRAR_CHASSI
-            self.send_feedback(0.72, 'girando para chassi')
+            self.send_feedback(0.66, 'girando para chassi')
             self.send_command(self.slot_to_cmd(args[3]))
 
         elif self.step == PickCubeStep.GIRAR_CHASSI and self.command_finished():
-            self.step = PickCubeStep.VERTICAL_CHASSI
-            self.send_feedback(0.81, 'abaixando para altura do chassi')
-            self.send_command(self.height_to_cmd('chassi'))
+            self.step = PickCubeStep.VERTICAL_CHASSI2
+            self.send_feedback(0.75, 'abaixando para altura dos slots')
+            self.send_command('altslot')
 
-        elif self.step == PickCubeStep.VERTICAL_CHASSI and self.command_finished():
+        elif self.step == PickCubeStep.VERTICAL_CHASSI2 and self.command_finished():
             self.step = PickCubeStep.ABRIR
-            self.send_feedback(0.90, 'abrindo garra')
+            self.send_feedback(0.83, 'abrindo garra')
             self.send_command('abrir')
 
         elif self.step == PickCubeStep.ABRIR and self.command_finished():
             self.step = PickCubeStep.VERTICAL_INICIAL
-            self.send_feedback(0.99, 'movendo garra para posicao inicial')
+            self.send_feedback(0.91, 'movendo garra para posicao inicial')
             self.send_command('inicial')
 
         elif self.step == PickCubeStep.VERTICAL_INICIAL and self.command_finished():
