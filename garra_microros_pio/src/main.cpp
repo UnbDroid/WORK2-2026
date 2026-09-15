@@ -76,7 +76,8 @@ void rotacionar(int npasso) {
 #define dirPin2 32
 #define enablePin2 25
 
-int cinco_cm = 0;
+int altura_slot = -1000; //ajustado
+int cinco_cm = -3500; //ajustado
 int dez_cm = -60000;
 int quinze_cm = 12800;
 int shelf_cm = 60000;
@@ -139,6 +140,12 @@ void garra_callback(const void *msgin)
     {
       rotacionar(0);
       publish_status("frente");
+    }
+
+    else if (strcmp(garra_msg->data.data, "altslot") == 0)
+    {
+      vertical(altura_slot);
+      publish_status("altslot");
     }
 
     else if (strcmp(garra_msg->data.data, "5cm") == 0)
