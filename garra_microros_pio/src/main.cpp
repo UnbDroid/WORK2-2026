@@ -56,9 +56,9 @@ char status_buffer[16];
 #define MS1_1 26
 
 char command_buffer[32]; //diminuir
-int slot1 = 3600;
-int slot2 = 4800;
-int slot3 = 6000;
+int slot1 = 4400;
+int slot2 = 4850;
+int slot3 = 5300;
 
 FastAccelStepperEngine engine = FastAccelStepperEngine();
 FastAccelStepper *stepper1 = NULL;
@@ -76,8 +76,8 @@ void rotacionar(int npasso) {
 #define dirPin2 32
 #define enablePin2 25
 
-int altura_slot = -1000; //ajustado
-int cinco_cm = -3500; //ajustado
+int altura_slot = 17000; //ajustado c/ madeiras
+int cinco_cm = -58400; //ajustado c/ madeiras
 int dez_cm = -60000;
 int quinze_cm = 12800;
 int shelf_cm = 60000;
@@ -300,8 +300,8 @@ void setup() {
         stepper2->setAutoEnable(true);
         
         // Motion parameters
-        stepper2->setSpeedInHz(8000);       
-        stepper2->setAcceleration(6000);    
+        stepper2->setSpeedInHz(11000);       
+        stepper2->setAcceleration(10000);    
         
         // Serial.println("Stepper initialized");
     } else {
