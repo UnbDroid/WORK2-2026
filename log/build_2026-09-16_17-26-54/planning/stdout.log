@@ -1,0 +1,41 @@
+running develop
+running egg_info
+creating planning.egg-info
+writing planning.egg-info/PKG-INFO
+writing dependency_links to planning.egg-info/dependency_links.txt
+writing entry points to planning.egg-info/entry_points.txt
+writing requirements to planning.egg-info/requires.txt
+writing top-level names to planning.egg-info/top_level.txt
+writing manifest file 'planning.egg-info/SOURCES.txt'
+reading manifest file 'planning.egg-info/SOURCES.txt'
+writing manifest file 'planning.egg-info/SOURCES.txt'
+running build_ext
+Creating /home/daniel/unb/droid/WORK2-2026/install/planning/lib/python3.12/site-packages/planning.egg-link (link to .)
+Installing move_action script to /home/daniel/unb/droid/WORK2-2026/install/planning/lib/planning
+Installing pick_from_container_action script to /home/daniel/unb/droid/WORK2-2026/install/planning/lib/planning
+Installing pick_from_location_action script to /home/daniel/unb/droid/WORK2-2026/install/planning/lib/planning
+Installing place_at_location_action script to /home/daniel/unb/droid/WORK2-2026/install/planning/lib/planning
+Installing place_in_container_action script to /home/daniel/unb/droid/WORK2-2026/install/planning/lib/planning
+Installing planning_controller script to /home/daniel/unb/droid/WORK2-2026/install/planning/lib/planning
+Installing stack_action script to /home/daniel/unb/droid/WORK2-2026/install/planning/lib/planning
+Installing unstack_action script to /home/daniel/unb/droid/WORK2-2026/install/planning/lib/planning
+
+Installed /home/daniel/unb/droid/WORK2-2026/build/planning
+running symlink_data
+creating /home/daniel/unb/droid/WORK2-2026/install/planning/share/ament_index
+creating /home/daniel/unb/droid/WORK2-2026/install/planning/share/ament_index/resource_index
+creating /home/daniel/unb/droid/WORK2-2026/install/planning/share/ament_index/resource_index/packages
+symbolically linking /home/daniel/unb/droid/WORK2-2026/build/planning/resource/planning -> /home/daniel/unb/droid/WORK2-2026/install/planning/share/ament_index/resource_index/packages
+symbolically linking /home/daniel/unb/droid/WORK2-2026/build/planning/package.xml -> /home/daniel/unb/droid/WORK2-2026/install/planning/share/planning
+creating /home/daniel/unb/droid/WORK2-2026/install/planning/share/planning/launch
+symbolically linking /home/daniel/unb/droid/WORK2-2026/build/planning/launch/plansys2.launch.py -> /home/daniel/unb/droid/WORK2-2026/install/planning/share/planning/launch
+creating /home/daniel/unb/droid/WORK2-2026/install/planning/share/planning/pddl
+symbolically linking /home/daniel/unb/droid/WORK2-2026/build/planning/pddl/problem-att2.pddl -> /home/daniel/unb/droid/WORK2-2026/install/planning/share/planning/pddl
+symbolically linking /home/daniel/unb/droid/WORK2-2026/build/planning/pddl/problem-btt2.pddl -> /home/daniel/unb/droid/WORK2-2026/install/planning/share/planning/pddl
+symbolically linking /home/daniel/unb/droid/WORK2-2026/build/planning/pddl/domain.pddl -> /home/daniel/unb/droid/WORK2-2026/install/planning/share/planning/pddl
+symbolically linking /home/daniel/unb/droid/WORK2-2026/build/planning/pddl/test-pickup-from-location.pddl -> /home/daniel/unb/droid/WORK2-2026/install/planning/share/planning/pddl
+symbolically linking /home/daniel/unb/droid/WORK2-2026/build/planning/pddl/problem-btt1.pddl -> /home/daniel/unb/droid/WORK2-2026/install/planning/share/planning/pddl
+symbolically linking /home/daniel/unb/droid/WORK2-2026/build/planning/pddl/sas_plan -> /home/daniel/unb/droid/WORK2-2026/install/planning/share/planning/pddl
+symbolically linking /home/daniel/unb/droid/WORK2-2026/build/planning/pddl/problem-bmt.pddl -> /home/daniel/unb/droid/WORK2-2026/install/planning/share/planning/pddl
+symbolically linking /home/daniel/unb/droid/WORK2-2026/build/planning/pddl/problem-amt.pddl -> /home/daniel/unb/droid/WORK2-2026/install/planning/share/planning/pddl
+symbolically linking /home/daniel/unb/droid/WORK2-2026/build/planning/pddl/problem-att1.pddl -> /home/daniel/unb/droid/WORK2-2026/install/planning/share/planning/pddl
