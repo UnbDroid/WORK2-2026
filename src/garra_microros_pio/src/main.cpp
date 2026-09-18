@@ -49,7 +49,7 @@ rcl_publisher_t garra_status_pub; //publica status de acao para maquina de estad
 std_msgs__msg__String garra_msg;
 std_msgs__msg__String status_msg;
 
-char status_buffer[16];
+char status_buffer[32];
 
 #define stepPin1 14
 #define dirPin1 27
@@ -57,9 +57,9 @@ char status_buffer[16];
 
 //levando em conta slot do meio como posição 0
 char command_buffer[32]; //diminuir
-int slot1 = -450;
+int slot1 = -650;
 int slot2 = 0;
-int slot3 = 450;
+int slot3 = 650; //450 antes
 int frente = -4850;
 
 FastAccelStepperEngine engine = FastAccelStepperEngine();
@@ -67,9 +67,7 @@ FastAccelStepper *stepper1 = NULL;
 
 void rotacionar(int npasso) {
   if (!stepper1) return;
-
-  // Serial.println("Moving to position 800");
-  stepper1->moveTo(npasso, true);
+  stepper1->moveTo(npasso, false); //não-bloqueante para realizar movimentação junto com vertical
 }
 
 //Stepper Motor2 (movimento vertical)
@@ -87,11 +85,14 @@ int shelf_cm = 60000;
 
 FastAccelStepper *stepper2 = NULL;
 
+void vertical_bloq(int npasso) {
+  if (!stepper2) return;
+  stepper2->moveTo(npasso, true);
+}
+
 void vertical(int npasso) {
   if (!stepper2) return;
-
-  // Serial.println("Moving to position 800");
-  stepper2->moveTo(npasso, true);
+  stepper2->moveTo(npasso, false); //usar junto com rotação
 }
 
 //Servomotor
@@ -117,32 +118,102 @@ void publish_status(const char * cmd_done) {
   rcl_publish(&garra_status_pub, &status_msg, NULL);
 }
 
+//variáveis necessárias para executar giro com lowering
+bool aguardando_combo = false;
+char combo_reply_buffer[32];
+
+//
+int nome_para_passo_rotacao(const char* nome) {
+    if (strcmp(nome, "slot1") == 0) return slot1;
+    if (strcmp(nome, "slot2") == 0) return slot2;
+    if (strcmp(nome, "slot3") == 0) return slot3;
+    if (strcmp(nome, "frente") == 0) return frente;
+    return 0; // valor de segurança, caso o nome não seja reconhecido
+}
+
+int nome_para_passo_vertical(const char* nome) {
+    if (strcmp(nome, "alt_giro") == 0) return altura_giro;
+    if (strcmp(nome, "5cm") == 0) return cinco_cm;
+    if (strcmp(nome, "10cm") == 0) return dez_cm;
+    if (strcmp(nome, "15cm") == 0) return quinze_cm;
+    if (strcmp(nome, "shelf") == 0) return shelf_cm;
+    return 0;
+}
+
 void garra_callback(const void *msgin)
 {
-    const std_msgs__msg__String *garra_msg =
-        (const std_msgs__msg__String *)msgin;
+    const std_msgs__msg__String *garra_msg = (const std_msgs__msg__String *)msgin; //está convertendo o tipo do ponteiro msgin para um ponteiro que aponta para uma mensagem ROS 2 do tipo std_msgs/String
 
-    if (strcmp(garra_msg->data.data, "slot1") == 0)
+    if (strncmp(garra_msg->data.data, "COMBO:", 6) == 0) //pega apenas seis primeiras letras do msgin
     {
-      rotacionar(slot1);
-      publish_status("slot1");
+        // formato esperado: "COMBO:frente:5cm"
+        char buf[32];
+        strncpy(buf, garra_msg->data.data + 6, sizeof(buf)); //copia para o buffer tudo depois de 6 posições da mensagem
+        char *cmd_rot = strtok(buf, ":");  //copia para cmd_rot tudo do buffer até :
+        char *cmd_vert = strtok(NULL, ":"); //continua de onde parou até :
+
+        int passo_rot = nome_para_passo_rotacao(cmd_rot);   // sua função de mapeamento
+        int passo_vert = nome_para_passo_vertical(cmd_vert);
+
+        rotacionar(passo_rot);
+        vertical(passo_vert);
+
+        strncpy(combo_reply_buffer, garra_msg->data.data, sizeof(combo_reply_buffer));
+        aguardando_combo = true;
     }
 
-    else if (strcmp(garra_msg->data.data, "slot2") == 0)
-    {
-      rotacionar(slot2);
-      publish_status("slot2");
-    }
-    else if (strcmp(garra_msg->data.data, "slot3") == 0)
-    {
-      rotacionar(slot3);
-      publish_status("slot3");
-    }
+    // elif (strcmp(garra_msg->data.data, "slot1") == 0)
+    // {
+    //   rotacionar(slot1);
+    //   publish_status("slot1");
+    // }
 
-    else if (strcmp(garra_msg->data.data, "frente") == 0)
+    // else if (strcmp(garra_msg->data.data, "slot2") == 0)
+    // {
+    //   rotacionar(slot2);
+    //   publish_status("slot2");
+    // }
+    // else if (strcmp(garra_msg->data.data, "slot3") == 0)
+    // {
+    //   rotacionar(slot3);
+    //   publish_status("slot3");
+    // }
+
+    // else if (strcmp(garra_msg->data.data, "frente") == 0)
+    // {
+    //   rotacionar(frente);
+    //   publish_status("frente");
+    // }
+
+    // else if (strcmp(garra_msg->data.data, "5cm") == 0)
+    // {
+    //   vertical(cinco_cm);
+    //   publish_status("5cm");
+    // }
+
+    // else if (strcmp(garra_msg->data.data, "10cm") == 0)
+    // {
+    //   vertical(dez_cm);
+    //   publish_status("10cm");
+    // }
+
+    // else if (strcmp(garra_msg->data.data, "15cm") == 0)
+    // {
+    //   vertical(quinze_cm);
+    //   publish_status("15cm");
+    // }
+
+    // else if (strcmp(garra_msg->data.data, "shelf") == 0)
+    // {
+    //   vertical(shelf_cm);
+    //   publish_status("shelf");
+    // }
+
+    //nao bloquenate, ver se não da erro
+    else if (strcmp(garra_msg->data.data, "alt_giro_bloq") == 0)
     {
-      rotacionar(frente);
-      publish_status("frente");
+      vertical_bloq(altura_giro);
+      publish_status("alt_giro_bloq");
     }
 
     else if (strcmp(garra_msg->data.data, "alt_giro") == 0)
@@ -151,33 +222,9 @@ void garra_callback(const void *msgin)
       publish_status("alt_giro");
     }
 
-    else if (strcmp(garra_msg->data.data, "5cm") == 0)
-    {
-      vertical(cinco_cm);
-      publish_status("5cm");
-    }
-
-    else if (strcmp(garra_msg->data.data, "10cm") == 0)
-    {
-      vertical(dez_cm);
-      publish_status("10cm");
-    }
-
-    else if (strcmp(garra_msg->data.data, "15cm") == 0)
-    {
-      vertical(quinze_cm);
-      publish_status("15cm");
-    }
-
-    else if (strcmp(garra_msg->data.data, "shelf") == 0)
-    {
-      vertical(shelf_cm);
-      publish_status("shelf");
-    }
-
     else if (strcmp(garra_msg->data.data, "inicial") == 0)
     {
-      vertical(0);
+      vertical_bloq(0);
       publish_status("inicial");
     }
 
@@ -303,8 +350,8 @@ void setup() {
         stepper2->setAutoEnable(true);
         
         // Motion parameters
-        stepper2->setSpeedInHz(11000);       
-        stepper2->setAcceleration(10000);    
+        stepper2->setSpeedInHz(17000);       
+        stepper2->setAcceleration(14500);    
         
         // Serial.println("Stepper initialized");
     } else {
@@ -330,6 +377,7 @@ void loop() {
    * https://github.com/micro-ROS/micro_ros_arduino/blob/galactic/examples/micro-ros_reconnection_example/micro-ros_reconnection_example.ino
    * 
    */
+
   switch (state) {
     case WAITING_AGENT:
       EXECUTE_EVERY_N_MS(500, state = (RMW_RET_OK == rmw_uros_ping_agent(10, 1)) ? AGENT_AVAILABLE : WAITING_AGENT;); //mudado de 100 para 10 para evitar engasgos
@@ -343,7 +391,13 @@ void loop() {
     case AGENT_CONNECTED:
       EXECUTE_EVERY_N_MS(200, state = (RMW_RET_OK == rmw_uros_ping_agent(10, 1)) ? AGENT_CONNECTED : AGENT_DISCONNECTED;);
       if (state == AGENT_CONNECTED) {
-        rclc_executor_spin_some(&executor, RCL_MS_TO_NS(1)); //talvez 100ms seja tempo demais
+        rclc_executor_spin_some(&executor, RCL_MS_TO_NS(1));
+
+        // checa se o combo terminou
+        if (aguardando_combo && !stepper1->isRunning() && !stepper2->isRunning()) {
+          publish_status(combo_reply_buffer);
+          aguardando_combo = false;
+        }
       }
       break;
     case AGENT_DISCONNECTED:
@@ -353,6 +407,7 @@ void loop() {
     default:
       break;
   }
+
 
   // Print periódico da contagem de pulsos, sem bloquear o loop
   // EXECUTE_EVERY_N_MS(100, Serial.println(pulso_global););

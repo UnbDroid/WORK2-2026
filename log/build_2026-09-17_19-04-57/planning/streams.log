@@ -1,0 +1,24 @@
+[2.783s] Invoking command in '/home/daniel/unb/droid/WORK2-2026/build/planning': PS1=\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ PYTHONPATH=/home/daniel/unb/droid/WORK2-2026/build/planning/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/daniel/unb/droid/WORK2-2026/install/planning/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/daniel/unb/droid/WORK2-2026/build/planning/build --no-deps symlink_data
+[3.583s] running develop
+[4.088s] running egg_info
+[4.135s] writing planning.egg-info/PKG-INFO
+[4.135s] writing dependency_links to planning.egg-info/dependency_links.txt
+[4.136s] writing entry points to planning.egg-info/entry_points.txt
+[4.137s] writing requirements to planning.egg-info/requires.txt
+[4.137s] writing top-level names to planning.egg-info/top_level.txt
+[4.233s] reading manifest file 'planning.egg-info/SOURCES.txt'
+[4.236s] writing manifest file 'planning.egg-info/SOURCES.txt'
+[4.288s] running build_ext
+[4.288s] Creating /home/daniel/unb/droid/WORK2-2026/install/planning/lib/python3.12/site-packages/planning.egg-link (link to .)
+[4.290s] Installing move_action script to /home/daniel/unb/droid/WORK2-2026/install/planning/lib/planning
+[4.291s] Installing pick_from_container_action script to /home/daniel/unb/droid/WORK2-2026/install/planning/lib/planning
+[4.291s] Installing pick_from_location_action script to /home/daniel/unb/droid/WORK2-2026/install/planning/lib/planning
+[4.291s] Installing place_at_location_action script to /home/daniel/unb/droid/WORK2-2026/install/planning/lib/planning
+[4.292s] Installing place_in_container_action script to /home/daniel/unb/droid/WORK2-2026/install/planning/lib/planning
+[4.292s] Installing planning_controller script to /home/daniel/unb/droid/WORK2-2026/install/planning/lib/planning
+[4.293s] Installing stack_action script to /home/daniel/unb/droid/WORK2-2026/install/planning/lib/planning
+[4.293s] Installing unstack_action script to /home/daniel/unb/droid/WORK2-2026/install/planning/lib/planning
+[4.294s] 
+[4.294s] Installed /home/daniel/unb/droid/WORK2-2026/build/planning
+[4.294s] running symlink_data
+[4.358s] Invoked command in '/home/daniel/unb/droid/WORK2-2026/build/planning' returned '0': PS1=\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ PYTHONPATH=/home/daniel/unb/droid/WORK2-2026/build/planning/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/daniel/unb/droid/WORK2-2026/install/planning/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/daniel/unb/droid/WORK2-2026/build/planning/build --no-deps symlink_data

@@ -1,3 +1,5 @@
+import rclpy
+from rclpy.parameter import Parameter
 from plansys2_support_py.ActionExecutorClient import ActionExecutorClient
 from std_msgs.msg import String
 from rclpy.duration import Duration
@@ -5,6 +7,9 @@ from rclpy.duration import Duration
 class GripperPrimitives(ActionExecutorClient):
     def __init__(self, action_name: str):
         super().__init__(action_name, 0.25)
+        #self.set_parameters([
+        #    Parameter('action_name', Parameter.Type.STRING, action_name)
+        #]) #não entendi muito bem mas ajuda em alguma coisa de inicializar o nó executor na coversão de python para c++
         self._pub = self.create_publisher(String, '/topico_garra', 10) #cria publisher para enviar ações a serem feitas
         self._sub = self.create_subscription(
             String, '/topico_garra_status', self._status_callback, 10) #cria subscriber de forma a receber o status de conclusão das ações
