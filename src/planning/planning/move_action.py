@@ -1,5 +1,5 @@
 import rclpy
-from plansys2_executor.ActionExecutorClient import ActionExecutorClient  
+from plansys2_support_py.ActionExecutorClient import ActionExecutorClient 
 from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
 from geometry_msgs.msg import PoseStamped
 

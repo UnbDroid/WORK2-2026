@@ -24,6 +24,10 @@
 #include <std_msgs/msg/string.h>
 #include <std_msgs/msg/bool.h>
 
+#include <iostream>
+#include <unordered_map>
+#include <string>
+
 #define EXECUTE_EVERY_N_MS(MS, X)  do { \
     static volatile int64_t init = -1; \
     if (init == -1) { init = uxr_millis();} \
@@ -49,7 +53,7 @@ rcl_publisher_t garra_status_pub; //publica status de acao para maquina de estad
 std_msgs__msg__String garra_msg;
 std_msgs__msg__String status_msg;
 
-char status_buffer[16];
+char status_buffer[32];
 
 #define stepPin1 14
 #define dirPin1 27
@@ -78,21 +82,30 @@ void rotacionar(int npasso) {
 #define dirPin2 32
 #define enablePin2 25
 
-//negativo = para cima
-int altura_giro = -17000; //ajustado c/ madeiras
-int cinco_cm = 58400; //ajustado c/ madeiras
-int dez_cm = -60000;
-int quinze_cm = 12800;
-int shelf_cm = 60000;
+int alt_giro = -17000;
+int shelf = -40000;
+
+std::unordered_map<std::string, int> dict_alt = {
+    {"5cm", 58400},
+    {"10cm", 45000},
+    {"15cm", 35000},
+    {"bottom", 5000},
+    {"top", 10000}
+};
 
 FastAccelStepper *stepper2 = NULL;
 
 void vertical(int npasso) {
   if (!stepper2) return;
-
-  // Serial.println("Moving to position 800");
   stepper2->moveTo(npasso, true);
 }
+
+void empilhar(const std::string& cmd_alt, const std::string& cmd_pos) {
+  if (!stepper2) return;
+  int passo_final = dict_alt[cmd_alt] + dict_alt[cmd_pos];
+  stepper2->moveTo(passo_final, true);
+}
+
 
 //Servomotor
 
@@ -147,32 +160,45 @@ void garra_callback(const void *msgin)
 
     else if (strcmp(garra_msg->data.data, "alt_giro") == 0)
     {
-      vertical(altura_giro);
+      vertical(alt_giro);
       publish_status("alt_giro");
     }
 
     else if (strcmp(garra_msg->data.data, "5cm") == 0)
     {
-      vertical(cinco_cm);
+      vertical(dict_alt["5cm"]);
       publish_status("5cm");
     }
 
     else if (strcmp(garra_msg->data.data, "10cm") == 0)
     {
-      vertical(dez_cm);
+      vertical(dict_alt["10cm"]);
       publish_status("10cm");
     }
 
     else if (strcmp(garra_msg->data.data, "15cm") == 0)
     {
-      vertical(quinze_cm);
+      vertical(dict_alt["15cm"]);
       publish_status("15cm");
     }
 
     else if (strcmp(garra_msg->data.data, "shelf") == 0)
     {
-      vertical(shelf_cm);
+      vertical(shelf);
       publish_status("shelf");
+    }
+
+    else if (strncmp(garra_msg->data.data, "empilha:", 8) == 0)
+    {
+      char buf[32];
+      strncpy(buf, garra_msg->data.data + 8, sizeof(buf)-1);
+      buf[sizeof(buf) - 1] = '\0'; // Garante o fechamento da string
+
+      char *cmd_alt = strtok(buf, ":"); //altura da zona de empilhamento
+      char *cmd_pos = strtok(NULL, ":"); //posição do cubo sendo posicionado no empilhamento
+
+      empilhar(cmd_alt, cmd_pos);
+      publish_status(garra_msg->data.data);
     }
 
     else if (strcmp(garra_msg->data.data, "inicial") == 0)

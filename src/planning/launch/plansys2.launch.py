@@ -52,6 +52,7 @@ def generate_launch_description():
             )
         )
 
+
     # nó gerenciador que lê o problema e aciona a execução
     controller_node = Node(
         package='planning',
@@ -62,6 +63,7 @@ def generate_launch_description():
             'problem_file': LaunchConfiguration('problem_file')
         }]
     )
+
 
     return LaunchDescription([
         problem_file_arg,

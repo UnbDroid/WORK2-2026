@@ -1,6 +1,7 @@
 package.xml
 setup.cfg
 setup.py
+launch/full_test.launch.py
 launch/plansys2.launch.py
 pddl/domain.pddl
 pddl/problem-amt.pddl
@@ -11,6 +12,8 @@ pddl/problem-btt1.pddl
 pddl/problem-btt2.pddl
 pddl/sas_plan
 pddl/test-pickup-from-location.pddl
+pddl/test-stack.pddl
+pddl/teste-place-at-location.pddl
 planning/__init__.py
 planning/gripper_primitives.py
 planning/move_action.py

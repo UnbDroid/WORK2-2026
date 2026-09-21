@@ -77,17 +77,18 @@ sssssssssssssssssssssssssssssexe(define (domain robocup-work-transport)
   )
 
   (:action stack
-    :parameters (?r - robot ?top - object ?bottom - object ?l - location ?s - slot)
+    :parameters (?r - robot ?bottom - object ?top - object ?l - location ?bottomslot - slot ?topslot - slot)
     :precondition (and
       (at-robot ?r ?l)
-      (obj-at ?bottom ?l)
-      (holding ?r ?top)
-      (holding-in ?r ?top ?s))
+      (holding-in ?r ?top ?topslot)
+      (holding-in ?r ?bottom ?bottomslot))
     :effect (and
-      (not (holding ?r ?top))
-      (not (holding-in ?r ?top ?s))
-      (slot-free ?r ?s)
+      (not (holding-in ?r ?top ?topslot))
+      (not (holding-in ?r ?bottom ?bottomslot))
+      (slot-free ?r ?topslot)
+      (slot-free ?r ?bottomslot)
       (obj-at ?top ?l)
+      (obj-at ?bottom ?l)
       (on ?top ?bottom))
   )
 
