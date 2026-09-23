@@ -76,33 +76,56 @@ def generate_launch_description():
         ],
     )
 
-    # 5. SLAM Toolbox
-    slam_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(
-                get_package_share_directory('slam_toolbox'),
-                'launch', 'online_async_launch.py'
-            )
-        ),
-        launch_arguments={
-            'slam_params_file': os.path.expanduser('~/slam_config/slam.yaml'),
-            'use_sim_time': 'false',
-        }.items()
+    # --------------------------------------------------
+    # 5. MAP SERVER
+    # Carrega o mapa estático salvo
+    # --------------------------------------------------
+    map_server = Node(
+        package='nav2_map_server',
+        executable='map_server',
+        name='map_server',
+        output='screen',
+        parameters=[
+            '/home/droid/nav2_config/nav2_params.yaml',
+            {
+                'use_sim_time': False,
+                'yaml_filename': '/home/droid/mapa_teste.yaml',
+            }
+        ],
     )
 
-    # # 6. Nav2
-    # nav2_launch = IncludeLaunchDescription(
-    #     PythonLaunchDescriptionSource(
-    #         os.path.join(
-    #             get_package_share_directory('nav2_bringup'),
-    #             'launch', 'navigation_launch.py'
-    #         )
-    #     ),
-    #     launch_arguments={
-    #         'use_sim_time': 'false',
-    #         'params_file': '/home/droid/nav2_config/nav2_params.yaml',
-    #     }.items()
-    # )
+    # --------------------------------------------------
+    # 6. AMCL
+    # Localiza o robô no mapa estático
+    # --------------------------------------------------
+    amcl = Node(
+        package='nav2_amcl',
+        executable='amcl',
+        name='amcl',
+        output='screen',
+        parameters=[
+            '/home/droid/nav2_config/nav2_params.yaml',
+            {'use_sim_time': False},
+        ],
+    )
+
+    # --------------------------------------------------
+    # Lifecycle do Map Server + AMCL
+    # --------------------------------------------------
+    localization_lifecycle_manager = Node(
+        package='nav2_lifecycle_manager',
+        executable='lifecycle_manager',
+        name='lifecycle_manager_localization',
+        output='screen',
+        parameters=[{
+            'use_sim_time': False,
+            'autostart': True,
+            'node_names': [
+                'map_server',
+                'amcl',
+            ],
+        }],
+    )
 
     
 
@@ -121,13 +144,16 @@ def generate_launch_description():
             )
         ]
     )
-
+    
     return LaunchDescription([
         robo_urdf_launch,
         sllidar_launch,
         scan_filter_node,
         rf2o_node,
-        slam_launch,
- #       nav2_launch,
+
+        map_server,
+        amcl,
+        localization_lifecycle_manager,
+
         ground_truth_pub
     ])

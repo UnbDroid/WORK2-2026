@@ -8,19 +8,44 @@ scan_to_scan_filter_chain:
         # box_frame: lidar_link_1
         box_frame: base_link
         invert: false
-        min_x: -0.30
-        max_x: 0.30
-        min_y: -0.30
-        max_y: 0.30
+        min_x: -1.60  #era -0.45
+        max_x: 0.20
+        min_y: -0.40
+        max_y: 0.40
         min_z: -0.50
         max_z: 0.50
+
+    # filter1:
+    #   name: wheel_filter
+    #   type: laser_filters/LaserScanBoxFilter
+    #   params:
+    #     # box_frame: lidar_link_1
+    #     box_frame: base_link
+    #     invert: false
+    #     min_x: -0.30
+    #     max_x: 0.30
+    #     min_y: -0.25
+    #     max_y: 0.25
+    #     min_z: -0.50
+    #     max_z: 0.50
 
     filter2:
       name: range
       type: laser_filters/LaserScanRangeFilter
       params:
         use_message_range_limits: false
-        lower_threshold: 0.05
+        lower_threshold: 0.07
         upper_threshold: .inf
         lower_replacement_value: .inf
         upper_replacement_value: .inf
+
+   # filter3:
+
+    # name: speckle_filter
+    # type: laser_filters/LaserScanSpeckleFilter
+    # params:
+       # filter_type: 0          # 0 = filtro baseado em distância, 1 = baseado em raio
+       # max_angle: 0.1          # Diferença máxima de ângulo entre raios
+       # max_distance: 0.2       # Distância máxima entre pontos consecutivos para serem considerados o mesmo objeto
+       # max_distance_ratio: 1.2 # Usado para lidar com distorção de perspectiva
+       # max_pts: 3              # Se um grupo tiver menos que 3 pontos soltos, ele é considerado ruído (speckle) e removido

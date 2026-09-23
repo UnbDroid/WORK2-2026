@@ -67,7 +67,7 @@ bt_navigator:
 
 controller_server:
   ros__parameters:
-    controller_frequency: 20.0
+    controller_frequency: 10.0 #voltar para 20
     costmap_update_timeout: 0.30
     min_x_velocity_threshold: 0.001
     min_y_velocity_threshold: 0.001
@@ -81,7 +81,7 @@ controller_server:
     # Progress checker parameters
     progress_checker:
       plugin: "nav2_controller::SimpleProgressChecker"
-      required_movement_radius: 0.5
+      required_movement_radius: 0.15
       movement_time_allowance: 10.0
     # Goal checker parameters
     #precise_goal_checker:
@@ -92,13 +92,13 @@ controller_server:
     general_goal_checker:
       stateful: True
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.25
-      yaw_goal_tolerance: 0.25
+      xy_goal_tolerance: 0.2 #era 0.3
+      yaw_goal_tolerance: 0.15 #era 0.3 e depois 0.4
     FollowPath:
       plugin: "nav2_mppi_controller::MPPIController"
-      time_steps: 20
-      model_dt: 0.2
-      batch_size: 1000
+      time_steps: 60
+      model_dt: 0.1
+      batch_size: 150
       ax_max: 3.0
       ax_min: -3.0
       ay_max: 3.0
@@ -107,22 +107,22 @@ controller_server:
       vx_std: 0.2
       vy_std: 0.2
       wz_std: 0.4
-      vx_max: 0.5
-      vx_min: -0.35
-      vy_max: 0.5
-      vy_min: -0.5
+      vx_max: 0.8
+      vx_min: -0.5
+      vy_max: 0.8
+      vy_min: -0.8
       wz_max: 1.9
       iteration_count: 1
       prune_distance: 1.7
-      transform_tolerance: 01.0
+      transform_tolerance: 1.0
       temperature: 0.3
       gamma: 0.015
       motion_model: "Omni"
-      visualize: true
+      visualize: false
       regenerate_noises: true
       TrajectoryVisualizer:
         trajectory_step: 5
-        time_step: 3
+        time_step: 3      
       AckermannConstraints:
         min_turning_r: 0.2
       critics:
@@ -142,12 +142,12 @@ controller_server:
       GoalCritic:
         enabled: true
         cost_power: 1
-        cost_weight: 5.0
+        cost_weight: 5.0 #era 5
         threshold_to_consider: 1.4
       GoalAngleCritic:
         enabled: true
         cost_power: 1
-        cost_weight: 3.0
+        cost_weight: 3.0 #era 3
         threshold_to_consider: 0.5
       PreferForwardCritic:
         enabled: false
@@ -160,14 +160,14 @@ controller_server:
         cost_weight: 3.81
         near_collision_cost: 253
         critical_cost: 300.0
-        consider_footprint: false
+        consider_footprint: true # era false
         collision_cost: 1000000.0
         near_goal_distance: 1.0
         trajectory_point_step: 2
       PathAlignCritic:
         enabled: true
         cost_power: 1
-        cost_weight: 14.0
+        cost_weight: 14.0 #era 14
         max_path_occupancy_ratio: 0.05
         trajectory_point_step: 4
         threshold_to_consider: 0.5
@@ -176,7 +176,7 @@ controller_server:
       PathFollowCritic:
         enabled: true
         cost_power: 1
-        cost_weight: 5.0
+        cost_weight: 5.0 #era 5
         offset_from_furthest: 5
         threshold_to_consider: 1.4
       PathAngleCritic:
@@ -204,22 +204,21 @@ local_costmap:
       width: 3
       height: 3
       resolution: 0.05
-      robot_radius: 0.35
-      plugins: ["static_layer", "voxel_layer", "inflation_layer"]
+      #robot_radius: 0.25
+      footprint: "[[0.20, 0.20], [0.20, -0.20], [-0.20, -0.20], [-0.20, 0.20]]"
+      plugins: ["obstacle_layer", "inflation_layer"]
+      #denoise_layer:
+       # plugin: "nav2_costmap_2d::DenoiseLayer"
+       # enabled: True
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 3.0
-        inflation_radius: 0.20
-      voxel_layer:
-        plugin: "nav2_costmap_2d::VoxelLayer"
+        cost_scaling_factor: 5.0 
+        inflation_radius: 0.34
+      obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
-        publish_voxel_map: True
-        origin_z: 0.0
-        z_resolution: 0.05
-        z_voxels: 16
-        max_obstacle_height: 2.0
-        mark_threshold: 0
         observation_sources: scan
+
         scan:
           topic: /scan_filtered
           max_obstacle_height: 2.0
@@ -233,7 +232,7 @@ local_costmap:
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
         map_subscribe_transient_local: True
-      always_send_full_costmap: True
+      always_send_full_costmap: False
 
 global_costmap:
   global_costmap:
@@ -242,11 +241,12 @@ global_costmap:
       publish_frequency: 1.0
       global_frame: map
       robot_base_frame: base_link
-      robot_radius: 0.30
+      #robot_radius: 0.30
       resolution: 0.05
       transform_tolerance: 0.5
       track_unknown_space: true
-      plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
+      footprint: "[[0.20, 0.20], [0.20, -0.20], [-0.20, -0.20], [-0.20, 0.20]]"
+      plugins: ["static_layer","obstacle_layer", "inflation_layer"]  #tinha static layer tbm
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
@@ -263,12 +263,15 @@ global_costmap:
           obstacle_min_range: 0.0
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
-        map_subscribe_transient_local: True
+        map_subscribe_transient_local: True 
+      #denoise_layer:
+       # plugin: "nav2_costmap_2d::DenoiseLayer"
+        #enabled: True
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 3.0
-        inflation_radius: 0.15
-      always_send_full_costmap: True
+        inflation_radius: 0.29
+      always_send_full_costmap: False
 
 # The yaml_filename does not need to be specified since it going to be set by defaults in launch.
 # If you'd rather set it in the yaml, remove the default "map" value in the tb3_simulation_launch.py
@@ -286,7 +289,7 @@ map_saver:
 
 planner_server:
   ros__parameters:
-    expected_planner_frequency: 20.0
+    expected_planner_frequency: 1.0 #voltar para 20
     planner_plugins: ["GridBased"]
     costmap_update_timeout: 1.0
     GridBased:
@@ -372,8 +375,8 @@ velocity_smoother:
     stamp_smoothed_velocity_with_smoothing_time: False
     scale_velocities: False
     feedback: "OPEN_LOOP"
-    max_velocity: [0.5, 0.5, 2.0]
-    min_velocity: [-0.5, -0.5, -2.0]
+    max_velocity: [0.5, 0.5, 1.0]
+    min_velocity: [-0.5, -0.5, -2.0]  
     max_accel: [2.5, 2.5, 3.2]
     max_decel: [-2.5, -2.5, -3.2]
     odom_topic: "odom"
@@ -388,7 +391,7 @@ collision_monitor:
     cmd_vel_in_topic: "cmd_vel_smoothed"
     cmd_vel_out_topic: "cmd_vel"
     state_topic: "collision_monitor_state"
-    transform_tolerance: 1.0
+    transform_tolerance: 2.0
     source_timeout: 1.0
     base_shift_correction: True
     stop_pub_timeout: 2.0
@@ -403,7 +406,7 @@ collision_monitor:
       simulation_time_step: 0.1
       min_points: 6
       visualize: False
-      enabled: False
+      enabled: True #estava false
     observation_sources: ["scan"]
     scan:
       type: "scan"
