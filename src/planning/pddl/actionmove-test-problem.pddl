@@ -5,10 +5,10 @@
 )
 
 (:init
-    (robot-at robot1 start)
+    (at-robot robot1 start)
 )
 
 (:goal (and
-    (robot-at robot1 wp1)
+    (at-robot robot1 wp1)
 ))
 )

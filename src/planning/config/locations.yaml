@@ -1,4 +1,4 @@
-move_action_node:
+/**:
   ros__parameters:
     locations:
       start: [-11.570, -4.021, 0.0]

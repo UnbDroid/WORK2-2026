@@ -10,8 +10,8 @@ Lê o parâmetro 'phase' (bmt, btt1, btt2, att1, att2, amt) e:
 Uma função de setup por fase
 retorno: (lista_de_instancias, lista_de_predicados, goal)
     instancia ex: "robot1 robot"
-    predicado ex: "(robot-at robot1 start)"
-    goal ex: "(and(robot-at robot1 ws1))"
+    predicado ex: "(at-robot robot1 start)"
+    goal ex: "(and(at-robot robot1 ws1))"
 '''
 
 from enum import Enum, auto
@@ -33,6 +33,19 @@ class State(Enum):
     ERROR = auto()
 
 
+def setup_move_test(_problem_expert_):
+    instances = [
+        'robot1 robot',
+        'start location',
+        'wp1 location'
+    ]
+    predicates = [
+        '(at-robot robot1 start)'
+    ]
+    goal = '(and (at-robot robot1 wp1))'
+    return instances, predicates, goal
+
+
 def setup_bmt(_problem_expert):
     instances = [
         'robot1 robot',
@@ -52,7 +65,7 @@ def setup_bmt(_problem_expert):
         'obj7 object',
     ]
     predicates = [
-        '(robot-at robot1 start)',
+        '(at-robot robot1 start)',
         
         '(slot-free robot1 s1)',
         '(slot-free robot1 s2)',
@@ -85,7 +98,7 @@ def setup_btt1(_problem_expert):
         'obj5 object',
     ]
     predicates = [
-        '(robot-at robot1 start)',
+        '(at-robot robot1 start)',
         
         '(slot-free robot1 s1)',
         '(slot-free robot1 s2)',
@@ -100,41 +113,31 @@ def setup_btt1(_problem_expert):
 
 
 def setup_btt2(_problem_expert):
-    # TODO: preencher com base no seu problem-btt2.pddl
     instances, predicates, goal = [], [], '(and )'
     return instances, predicates, goal
 
 
 def setup_att1(_problem_expert):
-    # TODO: preencher com base no seu problem-att1.pddl
     instances, predicates, goal = [], [], '(and )'
     return instances, predicates, goal
 
 
 def setup_att2(_problem_expert):
-    # TODO: preencher com base no seu problem-att2.pddl
     instances, predicates, goal = [], [], '(and )'
     return instances, predicates, goal
 
 
 def setup_amt(_problem_expert):
-    # Fase com o modelo de cavity (pp) que vocês desenvolveram
     instances = [
-        'r1 robot',
-        'wp_start location',
-        'pp location',
-        'cav_1 cavity',
-        'obj_1 object',
     ]
     predicates = [
-        '(robot_at r1 wp_start)',
-        '(obj_in_cavity obj_1 cav_1)',
     ]
-    goal = '(and (obj_at obj_1 pp))'
+    goal = ''
     return instances, predicates, goal
 
 
 PHASE_SETUP = {
+    'move_test': setup_move_test,
     'bmt': setup_bmt,
     'btt1': setup_btt1,
     'btt2': setup_btt2,
