@@ -1,1 +1,0 @@
-/home/aksc/WORK2-2026/src/ros2_visao/setup.py

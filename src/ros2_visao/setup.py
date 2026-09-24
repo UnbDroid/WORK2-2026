@@ -25,7 +25,7 @@ setup(
     entry_points={
         'console_scripts': [   
             'talker = ros2_visao.img_pub_node:main',
-            'listener = ros2_visao.testedoiscentro:main',
+            'listener = ros2_visao.teste:main',
         ],
     },
 )
