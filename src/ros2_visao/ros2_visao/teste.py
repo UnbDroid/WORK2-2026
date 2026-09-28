@@ -174,7 +174,7 @@ class ObjectClassifier:
         return classified_objects 
 
 
-# 4. NÓ PRINCIPAL ROS 2
+
 class VisionNode(Node):
     def __init__(self):
         super().__init__('vision_node')
@@ -192,7 +192,7 @@ class VisionNode(Node):
         cv2.namedWindow("Visão do Robô", cv2.WINDOW_NORMAL)
         cv2.resizeWindow("Visão do Robô", 640, 480)
         
-    def calcular_velocidade_aproximacao(self, delta_x, delta_z):
+    def calcular_velocidade_aproximacao(self, delta_x, delta_y):
         Kp_x = 0.3
         Kp_y = 0.3 
 
@@ -233,7 +233,7 @@ class VisionNode(Node):
 
             for item in results:
                 
-                # 1. Desenha as caixas na tela (para TODOS os objetos que ele ver)
+                # 1. Desenha as caixas na tela 
                 x, y, w, h = item["bbox"]
                 cor_bgr = (0, 0, 255) if item["color"] == "vermelho" else (255, 0, 0) if item["color"] == "azul" else (255, 255, 255)
                 
@@ -241,7 +241,7 @@ class VisionNode(Node):
                 label = f"{item['waypoint'].upper()} | ID:{item['id']} | {item['color']}"
                 cv2.putText(display_frame, label, (x, max(y - 10, 15)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, cor_bgr, 2)
 
-                # 2. Verifica se esse item específico é o nosso alvo (Agora exigindo a COR certa!)
+                # 2. Verifica se esse item específico é o nosso alvo 
                 if item["id"] == ALVO_ID and item["waypoint"] == ALVO_TIPO and item["color"] == ALVO_COR:
                     alvo_encontrado = item
 
@@ -274,7 +274,7 @@ class VisionNode(Node):
             self.get_logger().error(f'Erro no processamento da imagem: {e}')
 
 
-# PONTO DE ENTRADA DO SCRIPT
+
 def main(args=None):
     rclpy.init(args=args)
     node = VisionNode()
