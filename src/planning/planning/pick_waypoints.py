@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-python3 ~/WORK2-2026/src/planning/planning/pick_waypoints.py ~/WORK2-2026/src/planning/planning/mapa.yaml
+python3 ~/WORK2-2026/src/planning/planning/pick_waypoints.py ~/WORK2-2026/src/planning/planning/mapasalateste.yaml
 
 world_x = origin_x + px * resolution
 world_y = origin_y + (altura_da_imagem - py) * resolution
