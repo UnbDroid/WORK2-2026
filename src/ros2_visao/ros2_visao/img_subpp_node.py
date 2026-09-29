@@ -95,8 +95,8 @@ class ImageSubscriber(Node):
             frame = self.brigeObject.imgmsg_to_cv2(img, desired_encoding='bgr8')
             vamover = detectar_cores(frame) 
             
-            cv2.imshow("Detecção de cores", vamover)
-            cv2.waitKey(1)
+           # cv2.imshow("Detecção de cores", vamover)
+           # cv2.waitKey(1)
         except Exception as e:
             self.get_logger().error(f'Erro na conversão do frame: {e}')
         

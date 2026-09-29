@@ -14,7 +14,6 @@ ros2_visao/__init__.py
 ros2_visao/img_pub_node.py
 ros2_visao/img_subpp_node.py
 ros2_visao/teste.py
-ros2_visao/testedoiscentro.py
 ros2_visao/trackbar.py
 test/test_copyright.py
 test/test_flake8.py

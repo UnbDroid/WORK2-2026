@@ -196,11 +196,11 @@ class VisionNode(Node):
         Kp_x = 0.3
         Kp_y = 0.3 
 
-        distancia_alvo_z = 0.20  
+        distancia_alvo_y = 0.20  
         distancia_alvo_x = 0.20  
         tolerancia = 0.02
 
-        erro_frontal = delta_z - distancia_alvo_z
+        erro_frontal = delta_y - distancia_alvo_y
         erro_lateral = delta_x - distancia_alvo_x
        
         if abs(erro_frontal) < tolerancia and abs(erro_lateral) < tolerancia:
