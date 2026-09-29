@@ -82,15 +82,16 @@ void rotacionar(int npasso) {
 #define dirPin2 32
 #define enablePin2 25
 
-int alt_giro = -17000;
+//negativo = para cima
+int alt_giro = -20000;
 int shelf = -40000;
 
 std::unordered_map<std::string, int> dict_alt = {
     {"5cm", 58400},
     {"10cm", 45000},
     {"15cm", 35000},
-    {"bottom", 5000},
-    {"top", 10000}
+    {"bottom", 0},
+    {"top", -19000}
 };
 
 FastAccelStepper *stepper2 = NULL;

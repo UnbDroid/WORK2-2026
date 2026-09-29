@@ -31,7 +31,6 @@
     (:goal (and
 
             (holding robot1 cube1)
-            (holding robot1 cube2)
 
         ) 
     )

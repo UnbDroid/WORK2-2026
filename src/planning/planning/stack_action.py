@@ -77,7 +77,7 @@ class StackAction(GripperPrimitives):
             self.send_feedback(0.38, 'girando para a area de empilhamento')
             self.send_command('frente')
 
-        elif self.step == StackStep.GIRAR_AREA1 and self.command_finished():
+        elif self.step == StackStep.GIRAR_AREA1 and self.command_finished(): #para aqui, acho que não está mandando o comando para a main corretamente
             self.step = StackStep.STACK1
             self.send_feedback(0.44, 'abaixando para empilhar cubo 1')
             self.send_command(f'empilha:{self.height_to_cmd(args[3])}:bottom')

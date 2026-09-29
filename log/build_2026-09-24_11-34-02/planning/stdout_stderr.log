@@ -1,0 +1,22 @@
+running develop
+running egg_info
+writing planning.egg-info/PKG-INFO
+writing dependency_links to planning.egg-info/dependency_links.txt
+writing entry points to planning.egg-info/entry_points.txt
+writing requirements to planning.egg-info/requires.txt
+writing top-level names to planning.egg-info/top_level.txt
+reading manifest file 'planning.egg-info/SOURCES.txt'
+writing manifest file 'planning.egg-info/SOURCES.txt'
+running build_ext
+Creating /home/daniel/unb/droid/WORK2-2026/install/planning/lib/python3.12/site-packages/planning.egg-link (link to .)
+Installing move_action script to /home/daniel/unb/droid/WORK2-2026/install/planning/lib/planning
+Installing pick_from_container_action script to /home/daniel/unb/droid/WORK2-2026/install/planning/lib/planning
+Installing pick_from_location_action script to /home/daniel/unb/droid/WORK2-2026/install/planning/lib/planning
+Installing place_at_location_action script to /home/daniel/unb/droid/WORK2-2026/install/planning/lib/planning
+Installing place_in_container_action script to /home/daniel/unb/droid/WORK2-2026/install/planning/lib/planning
+Installing planning_controller script to /home/daniel/unb/droid/WORK2-2026/install/planning/lib/planning
+Installing stack_action script to /home/daniel/unb/droid/WORK2-2026/install/planning/lib/planning
+Installing unstack_action script to /home/daniel/unb/droid/WORK2-2026/install/planning/lib/planning
+
+Installed /home/daniel/unb/droid/WORK2-2026/build/planning
+running symlink_data

@@ -19,20 +19,20 @@
 
     (:init
     
+        (gripper-free robot1)
         (at-robot robot1 loc1)
         (holding robot1 cube1)
-        (holding-in robot1 cube1 slot1)
+        (holding-in robot1 cube1 slot2)
         (holding robot1 cube2)
-        (holding-in robot1 cube2 slot2)
+        (holding-in robot1 cube2 slot3)
         (holding robot1 cube3)
-        (holding-in robot1 cube3 slot3)
+        (holding-in robot1 cube3 slot1)
 
     )
 
     (:goal (and
 
-            (obj-at cube1 loc1)
-            (obj-at cube2 loc1)
+            (on cube1 cube2 loc1)
             (obj-at cube3 loc1)
 
         ) 

@@ -36,9 +36,9 @@ def generate_launch_description():
         #('move_action', 'move'),
         ('pick_from_location_action', 'pick-from-location'),
         #('pick_from_container_action', 'pick-from-container'),
-        #('place_at_location_action', 'place-at-location'),
+        ('place_at_location_action', 'place-at-location'),
         #('place_in_container_action', 'place-in-container'),
-        #('stack_action', 'stack'),
+        ('stack_action', 'stack'),
         #('unstack_action', 'unstack'),
     ]
 

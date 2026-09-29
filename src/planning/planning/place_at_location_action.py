@@ -19,7 +19,6 @@ class PlaceCubeAtLocationStep(Enum):
     ABRIR = auto()
     VERTICAL_AREA2 = auto() 
     GIRAR_CHASSI2 = auto() #ao final dessa ação deve-se analisar se temos outros cubos para depositar, se sim, já deve-se girar a garra para em cima do próximo cubo a ser pedo
-    FINISH = auto()
 
 
 class PlaceCubeAtLocationAction(GripperPrimitives):
@@ -82,7 +81,7 @@ class PlaceCubeAtLocationAction(GripperPrimitives):
         elif self.step == PlaceCubeAtLocationStep.ABRIR and self.command_finished():
             self.step = PlaceCubeAtLocationStep.VERTICAL_AREA2
             self.send_feedback(0.81, 'subindo para altura de giro')
-            self.send_command('abrir')
+            self.send_command('alt_giro')
 
         elif self.step == PlaceCubeAtLocationStep.VERTICAL_AREA2 and self.command_finished():
             self.step = PlaceCubeAtLocationStep.GIRAR_CHASSI2
@@ -90,13 +89,13 @@ class PlaceCubeAtLocationAction(GripperPrimitives):
             self.send_command('slot2')
 
         elif self.step == PlaceCubeAtLocationStep.GIRAR_CHASSI2 and self.command_finished():
-            self.step = PlaceCubeAtLocationStep.FINISH
+            self.step = PlaceCubeAtLocationStep.START #cria um loop para próxima ação da garra
             self.finish(True, 1.0, 'pick-from-location concluído')     
 
 
 def main(args=None):
     rclpy.init(args=args)
-    node = PickCubeFromLocationAction()
+    node = PlaceCubeAtLocationAction()
     node.trigger_configure()
     rclpy.spin(node)
     node.destroy_node()
