@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 entrar na rasp com 'ssh -X droid@(ip do momento), para conseguir testar este arquivo com interface gráfica!
 python3 ~/WORK2-2026/src/planning/planning/pick_waypoints.py ~/WORK2-2026/src/planning/planning/mapa.yaml
@@ -15,10 +14,21 @@ matplotlib = pip install matplotlib --break-system-packages
 import argparse
 import os
 import sys
-import yaml
-from PIL import Image
-import matplotlib.pyplot as plt
 
+try:
+    import yaml
+except ImportError:
+    sys.exit("Falta a lib 'pyyaml'.")
+try:
+    from PIL import Image
+except ImportError:
+    sys.exit("Falta a lib 'pillow'.")
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    sys.exit("Falta a lib 'matplotlib'.")
+
+    
 def load_map(yaml_path):
     with open(yaml_path, 'r') as f:
         map_yaml = yaml.safe_load(f)
