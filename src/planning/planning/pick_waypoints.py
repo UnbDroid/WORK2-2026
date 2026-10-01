@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """
+entrar na rasp com 'ssh -X droid@(ip do momento), para conseguir testar este arquivo com interface gráfica!
 python3 ~/WORK2-2026/src/planning/planning/pick_waypoints.py ~/WORK2-2026/src/planning/planning/mapa.yaml
 
 world_x = origin_x + px * resolution
