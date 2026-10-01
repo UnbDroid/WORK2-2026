@@ -66,16 +66,6 @@ def generate_launch_description():
         }]
     )
 
-
-    # abre o terminal interativo numa janela separada
-    plansys2_terminal_cmd = Node(
-        package='plansys2_terminal',
-        executable='plansys2_terminal',
-        name='plansys2_terminal',
-        output='screen',
-        prefix='xterm -hold -e'
-    )
-
     ld = LaunchDescription() #objeto vazio que armazena ações do launch
     ld.add_action(declare_domain_cmd) # adiciona ação domain_file:=
     ld.add_action(declare_problem_cmd) # adiciona ação problem_file:=
@@ -83,7 +73,5 @@ def generate_launch_description():
 
     for action in action_nodes: #adiciona nós de ação
         ld.add_action(action)
-
-    ld.add_action(plansys2_terminal_cmd)
 
     return ld
