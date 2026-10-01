@@ -18,6 +18,17 @@ def generate_launch_description():
         description='fase a ser executada (bmt, btt1, btt1, amt, att1, att2, move_test)'
     )
 
+    # arquivo PPDL só para inicializar o Problem Expert oficial do plansys2
+    # o arquivo de problema real será lido pelo nó planning_ontroller
+    problem_file_arg = DeclareLaunchArgument(
+        'problem_file',
+        default_value='actionmove-test-problem.yaml',
+        description='arquivo de problema PDDL usado só pra inicializar o Problem Expert'
+    )
+    problem_file_path = PathJoinSubstitution(
+        [pkg_share, 'pddl', LaunchConfiguration('problem_file')
+    ])
+
     # incluir o launch base oficial do plansys2
     plansys2_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
@@ -28,9 +39,18 @@ def generate_launch_description():
         }.items()
     )
 
-    # declarar todos os nós de ação do robô
+    move_action_node = LifecycleNode(
+        package='planning',
+        executable='move_action',
+        name='action_move_action',
+        namespace='',
+        output='screen',
+        parameters=[{'action_name': 'move'},
+                    os.path.join(pkg_share, 'config', 'locations.yaml')]
+    )
+
+    # demais ações do robô
     actions = [
-        #('move_action', 'move'),
         ('pick_from_location_action', 'pick-from-location'),
         ('pick_from_container_action', 'pick-from-container'),
         ('place_at_location_action', 'place-at-location'),
@@ -39,7 +59,7 @@ def generate_launch_description():
         ('unstack_action', 'unstack'),
     ]
 
-    action_nodes = []
+    action_nodes = [move_action_node]
     for exec_name, action_name in actions:
         action_nodes.append(
             LifecycleNode(
@@ -52,18 +72,24 @@ def generate_launch_description():
             )
         )
 
-    move_action_node = LifecycleNode(
-        package='planning',
-            executable='move_action',
-            name='actio_move_action',
-            namespace='',
-            output='screen',
-            parameters=[{'action_name': 'move'},
-                        os.path.join(pkg_share, 'config', 'locations.yaml')]
+    # nó que gerenia pegar o objeto de algu loal, usando bt
+    pick_from__loation_action = Node(
+        package='plansys2_bt_actions',
+        executable='pick_from_location',
+        name='',
+        namespace='',
+        output='screen',
+        parameters=[
+            os.path.join(pkg_share, 'config', 'params.yaml'),
+            {
+                'action_name': 'pick-from-location',
+                'bt_xml_file': os.path.join(pkg_share, 'behavior_trees', 'pick_from_location.xml'),
+            }
+        ]
     )
 
 
-    # nó gerenciador que lê o problema e aciona a execução
+    # nó gerenciador que lê o problema e aciona a execução do plano
     controller_node = Node(
         package='planning',
         executable='planning_controller',
