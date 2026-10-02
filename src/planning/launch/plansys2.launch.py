@@ -50,14 +50,14 @@ def generate_launch_description():
                     os.path.join(pkg_share, 'config', 'locations.yaml')]
     )
 
-    # demais acoes do robo
+    '''# demais acoes do robo
     actions = [
         ('pick_from_container_action', 'pick-from-container'),
         ('place_at_location_action', 'place-at-location'),
         ('place_in_container_action', 'place-in-container'),
         ('stack_action', 'stack'),
         ('unstack_action', 'unstack'),
-    ]
+    ]'''
 
     action_nodes = [move_action_node]
     for exec_name, action_name in actions:
@@ -104,5 +104,5 @@ def generate_launch_description():
         problem_file_arg,
         plansys2_cmd,
         *action_nodes,
-        controller_node
+        #controller_node
     ])
