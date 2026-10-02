@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 '''
 Lê o parâmetro 'phase' (bmt, btt1, btt2, att1, att2, amt) e:
   1. Limpa o conhecimento do Problem Expert.
@@ -33,7 +32,7 @@ class State(Enum):
     ERROR = auto()
 
 
-def setup_move_test(_problem_expert_):
+def setup_move_test(_problem_expert):
     instances = [
         'robot1 robot',
         'start location',
@@ -201,7 +200,7 @@ class PlanningController(Node):
 
     def _do_plan(self):
         self.get_logger().info('Calculando plano...')
-        # Confira a assinatura exata: pode ser get_plan() sem argumentos
+        # conferir a assinatura exata: pode ser get_plan() sem argumentos
         # (pega domínio/problema atuais do Problem/Domain Expert) ou pedir
         # domain/problem como string, dependendo da versão instalada.
         self.plan = self.planner_client.get_plan()
