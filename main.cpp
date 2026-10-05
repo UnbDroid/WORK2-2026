@@ -62,8 +62,8 @@ volatile long pulsosRTE = 0;
 volatile long pulsosRTD = 0;
 
 MotorPI RTE = {23, 22, 19, 21, &pulsosRTE, 0, 0, 1.5, 3.0, -1, 1};
-MotorPI RFD = {25, 26, 13, 12, &pulsosRFD, 0, 0, 1.5, 3.0, 1, 1};
-MotorPI RFE = {18, 15, 35, 4, &pulsosRFE, 0, 0, 1.5, 3.0, -1, 1};
+MotorPI RFD = {25, 26, 13, 27, &pulsosRFD, 0, 0, 1.5, 3.0, 1, 1};
+MotorPI RFE = {18, 16, 35, 4, &pulsosRFE, 0, 0, 1.5, 3.0, -1, 1};
 MotorPI RTD = {32, 33, 36, 39, &pulsosRTD, 0, 0, 1.5, 3.0, 1, 1};
 
 void publicarDebug(const char *texto) {
