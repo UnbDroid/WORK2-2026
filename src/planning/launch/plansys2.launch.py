@@ -1,6 +1,7 @@
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
+from launch import actions
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
@@ -37,6 +38,7 @@ def generate_launch_description():
         launch_arguments={
             'model_file': os.path.join(pkg_share, 'pddl', 'domain.pddl'),
             'problem_file': problem_file_path,
+            'autostart': 'true',
         }.items()
     )
 
@@ -46,18 +48,20 @@ def generate_launch_description():
         name='action_move_action',
         namespace='',
         output='screen',
-        parameters=[{'action_name': 'move'},
-                    os.path.join(pkg_share, 'config', 'locations.yaml')]
-    )
+        parameters=[
+            os.path.join(pkg_share, 'config', 'locations.yaml'),
+            {'action_name': 'move'}
+    ]
+)
 
-    '''# demais acoes do robo
+    # demais acoes do robo
     actions = [
         ('pick_from_container_action', 'pick-from-container'),
         ('place_at_location_action', 'place-at-location'),
         ('place_in_container_action', 'place-in-container'),
         ('stack_action', 'stack'),
         ('unstack_action', 'unstack'),
-    ]'''
+    ]
 
     action_nodes = [move_action_node]
     for exec_name, action_name in actions:
