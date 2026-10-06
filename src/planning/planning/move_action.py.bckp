@@ -24,6 +24,9 @@ class MoveAction(ActionExecutorClient):
 
         # carrega 'locations' definido em locations.yaml
         # o node tem que ter sido iniciado com os parâmetros de locations.yaml
+
+        self.declare_parameter('locations.start', [0.0, 0.0, 0.0])
+        self.declare_parameter('locations.wp1', [0.0, 0.0, 0.0])
         self._locations = {}
         self._load_locations()
 

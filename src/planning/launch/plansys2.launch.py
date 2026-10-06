@@ -42,55 +42,28 @@ def generate_launch_description():
         }.items()
     )
 
+    locations_yaml = os.path.join(
+        pkg_share,
+        'config',
+        'locations.yaml'
+    )
+
     move_action_node = LifecycleNode(
         package='planning',
         executable='move_action',
         name='action_move_action',
         namespace='',
         output='screen',
-        parameters=[
-            os.path.join(pkg_share, 'config', 'locations.yaml'),
-            {'action_name': 'move'}
-    ]
+        parameters=[{
+            'action_name': 'move',
+            'locations_file': os.path.join(
+                pkg_share,
+                'config',
+                'locations.yaml'
+            ),
+    }]
 )
 
-    # demais acoes do robo
-    actions = [
-        ('pick_from_container_action', 'pick-from-container'),
-        ('place_at_location_action', 'place-at-location'),
-        ('place_in_container_action', 'place-in-container'),
-        ('stack_action', 'stack'),
-        ('unstack_action', 'unstack'),
-    ]
-
-    action_nodes = [move_action_node]
-    for exec_name, action_name in actions:
-        action_nodes.append(
-            LifecycleNode(
-                package='planning',
-                executable=exec_name,
-                name=f'action_{exec_name}',
-                namespace='',
-                output='screen',
-                parameters=[{'action_name': action_name}]
-            )
-        )
-
-    # no que gerencia pegar o objeto de algum local, usando bt
-    pick_from_location_action = Node(
-        package='plansys2_bt_actions',
-        executable='bt_action_node',
-        name='pick_from_location',
-        namespace='',
-        output='screen',
-        parameters=[
-            os.path.join(pkg_share, 'config', 'params.yaml'),
-            {
-                'action_name': 'pick-from-location',
-                'bt_xml_file': os.path.join(pkg_share, 'behaviour_trees', 'pick_from_location.xml'),
-            }
-        ]
-    )
 
     # no gerenciador que popula o problema e aciona a execucao do plano
     controller_node = Node(
@@ -104,9 +77,9 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        phase_arg,
-        problem_file_arg,
-        plansys2_cmd,
-        *action_nodes,
-        #controller_node
-    ])
+    phase_arg,
+    problem_file_arg,
+    plansys2_cmd,
+    move_action_node,
+    # controller_node,
+])

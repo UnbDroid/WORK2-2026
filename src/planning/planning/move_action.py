@@ -5,7 +5,7 @@ as coordenadas de cada 'location' vêm de locations.yaml, carregado como parâme
 '''
 
 import math
-
+import yaml
 import rclpy
 from rclpy.action import ActionClient
 from geometry_msgs.msg import PoseStamped
@@ -22,31 +22,54 @@ class MoveAction(ActionExecutorClient):
     def __init__(self):
         super().__init__('move', 0.5)
 
-        # carrega 'locations' definido em locations.yaml
-        # o node tem que ter sido iniciado com os parâmetros de locations.yaml
         self._locations = {}
         self._load_locations()
 
-        self._nav_client = ActionClient(self, NavigateToPose, 'navigate_to_pose')
+        self._nav_client = ActionClient(
+            self,
+            NavigateToPose,
+            'navigate_to_pose'
+        )
         self._nav_done = False
         self._nav_success = False
 
     def _load_locations(self):
+        self.declare_parameter('locations_file', '')
+
+        locations_file = self.get_parameter(
+            'locations_file'
+        ).get_parameter_value().string_value
+
+        if not locations_file:
+            self.get_logger().error(
+                "Parâmetro 'locations_file' não informado."
+            )
+            return
+
+        self.get_logger().info(
+            f'Carregando localizações de: {locations_file}'
+        )
+
         try:
-            params = self.get_parameters_by_prefix('locations')
-        except Exception:
-            params = {}
+            with open(locations_file, 'r') as f:
+                data = yaml.safe_load(f)
 
-        for name, param in params.items():
-            value = param.value
-            if isinstance(value, (list, tuple)) and len(value) == 3:
-                self._locations[name] = tuple(float(v) for v in value)
+            locations = data['/**']['ros__parameters']['locations']
 
-        if not self._locations:
-            self.get_logger().warn(
-                "Nenhuma localização carregada de 'locations.yaml'. "
-                "Confira se o launch está passando esse arquivo em "
-                "'parameters=[...]' para este nó.")
+            for name, value in locations.items():
+                if isinstance(value, (list, tuple)) and len(value) == 3:
+                    self._locations[name] = tuple(
+                        float(v) for v in value
+                    )
+
+            self.get_logger().info(
+                f'Localizações carregadas: {list(self._locations.keys())}'
+            )
+
+        except Exception as e:
+            self.get_logger().error(
+                f'Erro ao carregar locations.yaml: {e}'
+            )
 
     def on_activate(self, state):
         self._nav_done = False
@@ -116,9 +139,18 @@ class MoveAction(ActionExecutorClient):
 
 def main(args=None):
     rclpy.init(args=args)
+
     node = MoveAction()
-    node.trigger_configure()
+
+    result = node.trigger_configure()
+
+    node.get_logger().info(
+        f'Resultado do configure: {result}'
+    )
+
     rclpy.spin(node)
+
+    node.destroy_node()
     rclpy.shutdown()
 
 
