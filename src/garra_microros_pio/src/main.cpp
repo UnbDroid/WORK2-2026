@@ -272,10 +272,10 @@ void destroy_entities()
 
   rclc_executor_fini(&executor);
   rcl_subscription_fini(&garra_sub, &node);
+  rcl_publisher_fini(&garra_status_pub, &node);
   rcl_node_fini(&node);
   rcl_init_options_fini(&init_options);
   rclc_support_fini(&support);
-  rcl_publisher_fini(&garra_status_pub, &node);
   
 }
 
@@ -359,7 +359,7 @@ void loop() {
    */
   switch (state) {
     case WAITING_AGENT:
-      EXECUTE_EVERY_N_MS(500, state = (RMW_RET_OK == rmw_uros_ping_agent(10, 1)) ? AGENT_AVAILABLE : WAITING_AGENT;); //mudado de 100 para 10 para evitar engasgos
+      EXECUTE_EVERY_N_MS(500, state = (RMW_RET_OK == rmw_uros_ping_agent(100, 1)) ? AGENT_AVAILABLE : WAITING_AGENT;); //mudado de 100 para 10 para evitar engasgos
       break;
     case AGENT_AVAILABLE:
       state = (true == create_entities()) ? AGENT_CONNECTED : WAITING_AGENT;
@@ -368,7 +368,7 @@ void loop() {
       };
       break;
     case AGENT_CONNECTED:
-      EXECUTE_EVERY_N_MS(200, state = (RMW_RET_OK == rmw_uros_ping_agent(10, 1)) ? AGENT_CONNECTED : AGENT_DISCONNECTED;);
+      EXECUTE_EVERY_N_MS(200, state = (RMW_RET_OK == rmw_uros_ping_agent(100, 1)) ? AGENT_CONNECTED : AGENT_DISCONNECTED;);
       if (state == AGENT_CONNECTED) {
         rclc_executor_spin_some(&executor, RCL_MS_TO_NS(1)); //talvez 100ms seja tempo demais
       }
