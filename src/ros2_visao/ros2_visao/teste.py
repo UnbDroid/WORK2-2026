@@ -153,21 +153,22 @@ class VisionNode(Node):
         cv2.resizeWindow("Visão do Robô", 640, 480)
         
     def calcular_velocidade_aproximacao(self, delta_x, delta_z):
-        Kp_x = 1.0
-        Kp_z = 1.0
+        Kp_x = 2.0
+        Kp_z = 2.0
 
-        distancia_alvo_z = 0.0529
-        distancia_alvo_x = -0.01533
-        tolerancia = 0.02
+        distancia_alvo_x = 0.08214
+        distancia_alvo_z = 0.39953
+        tolerancia_x = 0.01
+        tolerancia_z= 0.1
 
         erro_frontal = delta_z - distancia_alvo_z
         erro_lateral = delta_x - distancia_alvo_x
         
-        if abs(erro_frontal) < tolerancia and abs(erro_lateral) < tolerancia:
+        if abs(erro_frontal) < tolerancia_z and abs(erro_lateral) < tolerancia_x:
             return 0.0, 0.0
         
-        vx = Kp_x * erro_frontal
-        vy = Kp_z * erro_lateral
+        vx = Kp_x * erro_lateral 
+        vy = Kp_z * erro_frontal
 
         vx = max(min(vx, 0.2), -0.2)
         vy = max(min(vy, 0.2), -0.2)
@@ -217,7 +218,7 @@ class VisionNode(Node):
                 cam_y = alvo_encontrado["pose_3d"][1]
                 cam_z = alvo_encontrado["pose_3d"][2]
                 
-                vx, vy = self.calcular_velocidade_aproximacao(cam_y, cam_x)
+                vx, vy = self.calcular_velocidade_aproximacao(cam_x, cam_z)
                 twist.linear.x = float(vx)
                 twist.linear.y = float(vy)
                 print(f'coordenadas x e z: {cam_x,cam_y,cam_z},velocidades : {twist}') 
