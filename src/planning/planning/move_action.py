@@ -20,16 +20,16 @@ NAV2_STATUS_SUCCEEDED = 4  # action_msgs/msg/GoalStatus.STATUS_SUCCEEDED
 class MoveAction(ActionExecutorClient):
 
     def __init__(self):
+        print('>>> MoveAction.__init__ COMEÇOU', flush=True)
         super().__init__('move', 0.5)
+        print('>>> super().__init__ TERMINOU', flush=True)
 
         self._locations = {}
         self._load_locations()
+        print('>>> _load_locations TERMINOU', flush=True)
 
-        self._nav_client = ActionClient(
-            self,
-            NavigateToPose,
-            'navigate_to_pose'
-        )
+        self._nav_client = ActionClient(self, NavigateToPose, 'navigate_to_pose')
+        print('>>> ActionClient criado', flush=True)
         self._nav_done = False
         self._nav_success = False
 
@@ -156,6 +156,3 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
-
-
-

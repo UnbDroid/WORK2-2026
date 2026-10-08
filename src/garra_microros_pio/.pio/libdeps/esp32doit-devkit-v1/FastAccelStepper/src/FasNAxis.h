@@ -1,0 +1,1343 @@
+#ifndef FAS_NAXIS_H
+#define FAS_NAXIS_H
+
+#include <stdint.h>
+
+#include "fas_arch/common.h"
+#include "fas_naxis/overshoot.h"
+#include "fas_naxis/ramp_law.h"
+#include "fas_naxis/ramp_map.h"
+#include "fas_naxis/remaining.h"
+
+// The default stepper and engine types. Only their names are needed to parse
+// the template (tests supply SimPort/TestFastAccelStepperEngine; production
+// supplies the real FastAccelStepper/FastAccelStepperEngine from
+// <FastAccelStepper.h>, which this header deliberately does not include).
+class FastAccelStepper;
+class FastAccelStepperEngine;
+
+// FasNAxis — a multi-axis planner that drives N FastAccelStepper queues from
+// one polyline so the axes stay time-synchronized (whitepaper
+// extras/doc/n_axes_whitepaper.md). Header-only: no new src/*.cpp, and it is
+// NOT included from FastAccelStepper.h (the stepper has no dependency on the
+// planner). The hot path performs no float, double, integer division, or
+// 64-bit integer type; ramp math lives in fas_naxis/ramp_map.h
+// (log2_value_t) and RampCalculator.
+//
+// Step 7 is the Linear lookahead planner: addWaypoint() commits points into a
+// block ring of up to HORIZON n-dim points, and pump() feeds the committed
+// Linear path through addQueueEntry(). The DDA master is the longest |delta| of
+// the current block; R is Remaining-style remaining master steps to the next
+// Linear path-stop: a master-sense reversal or the path end. P carries across
+// every other joint, including a master-role change (section 6.3/8.5); the 2
+// deg collinear test is diagnostic only. The last buffered point of an open
+// path is rest, so the ramp always stops there.
+//
+// Step 8 makes the feeder fault-tolerant: feed_one() stores a held command per
+// axis (one slice) and flush_held() sends it, retrying on a retryable
+// addQueueEntry result on the next pump() without re-planning the slice, and
+// reserving QUEUE_LEN - 2 slots so a pause-stuffed entry always fits.
+//
+// Step 13 adds dwells and the lookahead diagnostics: addDwellTicks() commits a
+// zero-motion block whose pauses run on every axis from rest to rest (a
+// path-stop, whitepaper section 8.1), isSpeedLimitedByLookahead() reports the
+// live R < P_stop cap of an open path (F11/F19, never an error), and
+// lookaheadHint() fills the diagnostic outs.
+
+// PumpStatus is the result of a pump() tick. Deliberately NO LookaheadTooShort:
+// a short lookahead slows the track (speed cap, G4/F11/F19) instead of
+// erroring.
+enum class PumpStatus : int {
+  Idle = 0,      // no block pending, queue settled
+  Running = 1,   // a block is being planned / fed
+  Underrun = 2,  // queue ran dry after a kick-off (F13)
+  Error = 3,     // a contract violation the caller must fix
+  Stopped = 4    // a member axis was stopped outside the planner (stopMove /
+                 // forceStop / e-stop); the plan is aborted, positions
+                 // untrusted. Recover with syncFromSteppers().
+};
+
+// Configuration. Default member initializers make FasNAxisConfig{} a valid
+// Linear config. The constructor recovers 0 to the default so a raw zeroed
+// struct still means "default slice / default threshold", not a zero-duration
+// slice or a zero diagnostic threshold.
+struct FasNAxisConfig {
+  enum Mode {
+    Linear,    // snaps to every vertex; path speed 0 at a non-collinear vertex
+    Overshoot  // may leave the chord within overshoot_max (Step 11+)
+  };
+
+  uint32_t dt_ticks = 32000;      // 2 ms at 16 MHz; 0 means this default
+  uint16_t kappa_stop_q8 = 320;   // 1.25 in Q8; 0 means this default
+  uint16_t overshoot_max = 8;     // steps; ignored in Linear
+  uint16_t dir_before_ticks = 0;  // 0 = use stepper getDirChangeBeforeTicks()
+  uint16_t dir_after_ticks = 0;   // 0 = use stepper getDirChangeAfterTicks()
+  Mode mode = Linear;
+};
+
+// Per-axis frozen limits, read from the stepper at addAxis (and on
+// setLimitsFromSteppers). ticks_cfg is the configured period; P_stop is the
+// performed ramp-up steps (calculate_ramp_steps(ticks_cfg)).
+struct AxisLimits {
+  uint32_t ticks_cfg = 0;
+  uint32_t P_stop = 0;
+  uint32_t accel = 0;  // steps/s^2, read from the stepper at addAxis
+  // DIR pause budget (whitepaper section 4.4), read from the stepper:
+  // n_before entries of dir_before ticks (old DIR), then dir_after (new DIR).
+  uint16_t dir_before = 0;
+  uint8_t dir_n_before = 0;
+  uint16_t dir_after = 0;
+};
+
+template <uint8_t NAXES, uint16_t HORIZON = 64,
+          typename Stepper = FastAccelStepper,
+          typename Engine = FastAccelStepperEngine>
+class FasNAxis {
+ public:
+  explicit FasNAxis(const FasNAxisConfig& cfg, Engine& engine)
+      : _engine(&engine), _law(1, 1, 0) {
+    FasNAxisConfig c = cfg;  // copy so the default recovery is observable
+    if (c.dt_ticks == 0) {
+      c.dt_ticks = 32000;
+    }
+    if (c.kappa_stop_q8 == 0) {
+      c.kappa_stop_q8 = 320;
+    }
+    for (uint8_t i = 0; i < NAXES; i++) {
+      _s[i] = NULL;
+      _registered[i] = false;
+      _lim[i].ticks_cfg = 0;
+      _lim[i].P_stop = 0;
+      _lim[i].accel = 0;
+      _lim[i].dir_before = 0;
+      _lim[i].dir_n_before = 0;
+      _lim[i].dir_after = 0;
+      _tick_cfg[i] = 0;
+      _p[i] = 0;
+      _dir[i] = true;
+      _err[i] = 0;
+      _held[i].waiting = false;
+      _held[i].ticks = 0;
+      _held[i].steps = 0;
+      _held[i].count_up = true;
+      _carve_axis[i].active = false;
+      _carve_axis[i].phase = 0;
+      _carve_axis[i].step_left = 0;
+      _carve_axis[i].n_before = 0;
+      _carve_axis[i].before = 0;
+      _carve_axis[i].after = 0;
+      _carve_axis[i].old_up = true;
+      _carve_axis[i].new_up = true;
+      for (uint16_t b = 0; b < HORIZON; b++) {
+        _blk[b][i] = 0;
+        _dwell[b] = 0;
+      }
+    }
+    _cfg = c;
+    _position_synced = false;
+    _block_count = 0;
+    _n_blk = 0;
+    _head = 0;
+    _path_closed = false;
+    _feeding = false;
+    _done = true;
+    _kicked_off = false;
+    _underrun = false;
+    _slice_open = false;
+    _error = false;
+    _fault = false;
+    _carve_then_advance = false;
+    _master = 0;
+    _abs_master = 0;
+    _block_left = 0;
+    _pause_left = 0;
+    _ticks_law = 1;
+    _Pramp = 0;
+    _Rstop = 0;
+    _ticks_last = 0;
+  }
+
+  // Read-back of the recovered config defaults.
+  uint32_t dt_ticks() const { return _cfg.dt_ticks; }
+  uint16_t kappa_stop_q8() const { return _cfg.kappa_stop_q8; }
+
+  // Register axis i to stepper s. Fails (returns false, no state change) when
+  // i is out of range, the pointer is null, or the stepper's ramp generator is
+  // active or the stepper is running — the feeder must never race a prior
+  // moveTo / manageSteppers. A small HORIZON relative to P_stop is NOT a
+  // failure: HORIZON only caps the planned ramp later (F19).
+  bool addAxis(uint8_t i, Stepper* s) {
+    if (i >= NAXES) {
+      return false;
+    }
+    if (s == NULL) {
+      return false;
+    }
+    if (s->isRampGeneratorActive() || s->isRunning()) {
+      return false;
+    }
+    // Discard any stop cause left over from pre-registration use (e.g. the
+    // homing stopMove), so pump() does not fault on it.
+    s->takeStopCause();
+    _s[i] = s;
+    _registered[i] = true;
+    _lim[i].ticks_cfg = s->getMaxSpeedInTicks();
+    _lim[i].accel = s->getAcceleration();
+    read_dir_budget(i);
+    _tick_cfg[i] = _lim[i].ticks_cfg;
+    RampMap map(_lim[i].ticks_cfg, _lim[i].accel);
+    _lim[i].P_stop = map.P_coast();
+    return true;
+  }
+
+  // Re-read ticks_cfg / accel from every registered stepper and refresh P_stop.
+  void setLimitsFromSteppers() {
+    for (uint8_t i = 0; i < NAXES; i++) {
+      if (_s[i] != NULL) {
+        _lim[i].ticks_cfg = _s[i]->getMaxSpeedInTicks();
+        _lim[i].accel = _s[i]->getAcceleration();
+        read_dir_budget(i);
+        _tick_cfg[i] = _lim[i].ticks_cfg;
+        RampMap map(_lim[i].ticks_cfg, _lim[i].accel);
+        _lim[i].P_stop = map.P_coast();
+      }
+    }
+  }
+
+  // Set the current position from the steppers and open addWaypoint.
+  void syncFromSteppers() {
+    for (uint8_t i = 0; i < NAXES; i++) {
+      if (_s[i] != NULL) {
+        _p[i] = _s[i]->getCurrentPosition();
+      }
+    }
+    clear_path();
+    _position_synced = true;
+  }
+
+  // Set the current position from a caller-supplied array and open addWaypoint.
+  void setCurrentPosition(const int32_t p[NAXES]) {
+    for (uint8_t i = 0; i < NAXES; i++) {
+      _p[i] = p[i];
+    }
+    clear_path();
+    _position_synced = true;
+  }
+
+  // Queue an absolute target position (steps) by appending its delta to the
+  // block ring. Illegal (returns false) before the position is synced or when
+  // the ring is full (HORIZON points committed but not yet executed). A target
+  // equal to the current position (every delta 0) is a no-op that records no
+  // block and returns true. Appending after the plan already caught up with
+  // the buffer re-opens the plan (R may grow; section 8.7).
+  bool addWaypoint(const int32_t p[NAXES]) {
+    if (!_position_synced) {
+      return false;
+    }
+    bool any = false;
+    for (uint8_t i = 0; i < NAXES; i++) {
+      if (p[i] != _p[i]) {
+        any = true;
+      }
+    }
+    if (!any) {
+      return true;  // L = 0: dwell of 0 ticks, no block recorded
+    }
+    if (_n_blk >= (int)HORIZON) {
+      compact_ring();  // drop executed blocks so the ring slides
+      if (_n_blk >= (int)HORIZON) {
+        return false;  // ring full: backpressure until pump() drains
+      }
+    }
+    for (uint8_t i = 0; i < NAXES; i++) {
+      _blk[_n_blk][i] = p[i] - _p[i];
+      _p[i] = p[i];
+    }
+    _dwell[_n_blk] = 0;
+    _n_blk++;
+    _block_count++;
+    // A plan that had caught up to the buffer now has more path: feed the
+    // unexecuted tail on the next pump() (replan, section 8.7).
+    _done = false;
+    return true;
+  }
+
+  // Number of motion blocks recorded by addWaypoint (0 after a no-op / a sync).
+  uint32_t block_count() const { return _block_count; }
+
+  // Queue a dwell: a zero-motion block that issues pauses totalling `ticks`
+  // (split at 65535 like any long period) on every axis, from rest to rest
+  // (P is 0 on the way in and on the way out; the next addWaypoint starts from
+  // rest). It is a planned stop-and-wait, not a pause stuffed into a moving
+  // slice. Legal only when the position is synced; ticks == 0 is a no-op.
+  bool addDwellTicks(uint32_t ticks) {
+    if (!_position_synced) {
+      return false;
+    }
+    if (ticks == 0) {
+      return true;
+    }
+    if (_n_blk >= (int)HORIZON) {
+      compact_ring();  // drop executed blocks so the ring slides
+      if (_n_blk >= (int)HORIZON) {
+        return false;  // ring full: backpressure until pump() drains
+      }
+    }
+    for (uint8_t i = 0; i < NAXES; i++) {
+      _blk[_n_blk][i] = 0;
+    }
+    _dwell[_n_blk] = ticks;
+    _n_blk++;
+    _block_count++;
+    _done = false;
+    return true;
+  }
+
+  // Close the path: the last committed point is rest and R will not grow
+  // (section 10.3).
+  void endPath() { _path_closed = true; }
+
+  // Plan and feed the committed Linear path (section 10.4). Prefill every axis
+  // with start=false, then kick off with the engine's synchronized start
+  // (FastAccelStepperEngine::synchronizedStart()): all active queues are
+  // released in one engine operation instead of one addQueueEntry(NULL, true)
+  // per axis. Later commands use start=true. An empty queue during prefill is
+  // expected and is not underrun; after kick-off an empty queue while the plan
+  // still moves is underrun (section 10.5).
+  PumpStatus pump() {
+    // An external stop of a member axis (manual stopMove, forceStop, e-stop)
+    // invalidates the coordinated plan: abort and report Stopped. Positions
+    // are untrusted until the caller re-homes and syncFromSteppers().
+    for (uint8_t i = 0; i < NAXES; i++) {
+      if (_registered[i] && _s[i]->takeStopCause() != StepperStopCause::None) {
+        _fault = true;
+        _feeding = false;
+      }
+    }
+    if (_fault) {
+      return PumpStatus::Stopped;
+    }
+    if (!_feeding && _head < _n_blk) {
+      feeder_start();
+      feed_loop();
+      if (!_error) {
+        Stepper* active[NAXES];
+        uint8_t n_active = 0;
+        for (uint8_t i = 0; i < NAXES; i++) {
+          if (_registered[i] && !_s[i]->isQueueEmpty()) {
+            active[n_active++] = _s[i];
+          }
+        }
+        AqeResultCode rc = _engine->synchronizedStart(active, n_active);
+        _kicked_off = (n_active > 0);
+        if (rc != AqeResultCode::OK) {
+          _error = true;
+        }
+      }
+    }
+    if (!_error && _kicked_off && !_done) {
+      for (uint8_t i = 0; i < NAXES; i++) {
+        if (_registered[i] && _s[i]->isQueueEmpty()) {
+          _underrun = true;
+        }
+      }
+    }
+    feed_loop();
+    if (_error) {
+      return PumpStatus::Error;
+    }
+    if (_underrun) {
+      return PumpStatus::Underrun;
+    }
+    if (_done && !any_queue_nonempty()) {
+      _feeding = false;
+      _n_blk = 0;
+      _head = 0;
+      _path_closed = false;
+      _slice_open = false;
+      return PumpStatus::Idle;
+    }
+    if (!_feeding && !any_queue_nonempty()) {
+      return PumpStatus::Idle;
+    }
+    return PumpStatus::Running;
+  }
+
+  bool isBusy() const {
+    if (_head < _n_blk || !_done) {
+      return true;
+    }
+    return any_queue_nonempty();
+  }
+
+  bool hasUnderrun() const {
+    if (_underrun) {
+      return true;
+    }
+    if (!_kicked_off || _done) {
+      return false;  // prefill empty or plan settled: not an underrun
+    }
+    for (uint8_t i = 0; i < NAXES; i++) {
+      if (_registered[i] && _s[i]->isQueueEmpty()) {
+        return true;  // starved after kick-off with the plan still moving
+      }
+    }
+    return false;
+  }
+
+  // True after a detected external stop (pump() returned Stopped) until the
+  // caller re-syncs (syncFromSteppers()/setCurrentPosition()/clearFault()).
+  bool isFaulted() const { return _fault; }
+
+  // Clear the fault without re-syncing positions. Use only when the caller is
+  // certain of the axis positions; otherwise prefer syncFromSteppers().
+  void clearFault() {
+    _fault = false;
+    _underrun = false;
+    _error = false;
+    for (uint8_t i = 0; i < NAXES; i++) {
+      if (_registered[i]) {
+        _s[i]->takeStopCause();
+      }
+    }
+  }
+
+  // Group emergency stop: forceStop() every member immediately, abort the plan
+  // and mark positions untrusted. Re-entrancy safe: it does not call pump().
+  void emergencyStop() {
+    _fault = true;
+    _feeding = false;
+    _kicked_off = false;
+    for (uint8_t i = 0; i < NAXES; i++) {
+      if (_registered[i]) {
+        _s[i]->forceStop();
+      }
+    }
+  }
+
+  // Section 8.2 / 14.7: short lookahead is a speed cap, not an error. True
+  // while the path is still open (!_path_closed, executing head not past the
+  // buffer) and the live remaining-to-stop of the DDA master is below its
+  // P_stop (the configured max is unreachable from this buffer). False on a
+  // closed path and when R is large enough to coast.
+  bool isSpeedLimitedByLookahead() const {
+    if (_path_closed || _head >= _n_blk) {
+      return false;
+    }
+    uint8_t m = (uint8_t)_master;
+    return _Rstop < _lim[m].P_stop;
+  }
+
+  // Diagnostic outs (no string, no heap): the DDA master axis, its live
+  // remaining-to-stop R, its P_stop, and the template HORIZON.
+  void lookaheadHint(uint8_t* axis, uint32_t* R, uint32_t* P_stop,
+                     uint16_t* horizon) const {
+    if (axis != NULL) {
+      *axis = (uint8_t)_master;
+    }
+    if (R != NULL) {
+      *R = _Rstop;
+    }
+    if (P_stop != NULL) {
+      *P_stop = _lim[_master].P_stop;
+    }
+    if (horizon != NULL) {
+      *horizon = HORIZON;
+    }
+  }
+
+  // Performed ramp-up steps of the current segment's DDA master (section 7.1).
+  uint32_t performedRampUp() const { return _Pramp; }
+  // Live remaining-to-stop of the master in path steps (section 8.2).
+  uint32_t remainingToStop() const { return _Rstop; }
+  // Per-axis diagnostics for the plots. Overshoot keeps one persistent P per
+  // axis (section 8.6), so two axes can differ at the same instant and a single
+  // scalar is only the binder's; Linear's P is the shared path ramp, so every
+  // axis reports the same value.
+  uint32_t performedRampUpAxis(uint8_t i) const {
+    if (i >= NAXES) {
+      return 0;
+    }
+    return overshoot_mode() ? _ovs.P[i] : _law.P;
+  }
+  uint32_t remainingToStopAxis(uint8_t i) const {
+    if (i >= NAXES) {
+      return 0;
+    }
+    return overshoot_mode() ? _ovs.R[i] : _law.R;
+  }
+  // Period (ticks) of the last issued step entry.
+  uint32_t lastTicks() const { return _ticks_last; }
+  // DDA master axis of the current block (longest |delta|).
+  uint8_t masterAxis() const { return (uint8_t)_master; }
+  // Number of blocks committed but not yet fully executed.
+  int pendingBlocks() const { return _n_blk - _head; }
+
+ private:
+  bool any_queue_nonempty() const {
+    for (uint8_t i = 0; i < NAXES; i++) {
+      if (_registered[i] && !_s[i]->isQueueEmpty()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Reserve two slots on every queue (QUEUE_LEN - 2) so a coordinated slice --
+  // and the pause-stuffed entry a long period may split into -- always fits.
+  // isQueueFull() alone allows QUEUE_LEN - 1 and cannot express this reserve.
+  bool all_have_room() const {
+    for (uint8_t i = 0; i < NAXES; i++) {
+      if (_registered[i] &&
+          ((uint32_t)_s[i]->queueEntries() + 2) >= (uint32_t)QUEUE_LEN) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // Drop blocks the feeder has fully executed, rebasing the executing head to
+  // 0 so the block array is a sliding window of at most HORIZON *pending*
+  // points (whitepaper section 8). Without this the array only grows,
+  // addWaypoint backpressures once HORIZON points have *ever* been appended,
+  // and a path longer than HORIZON runs in chunks that each ramp to rest. Live
+  // state indexes _blk[_head] / _blk[_head + 1] by the rebased head, so it
+  // stays valid across the shift.
+  void compact_ring() {
+    if (_head <= 0) {
+      return;
+    }
+    int pending = _n_blk - _head;
+    for (int b = 0; b < pending; b++) {
+      for (uint8_t i = 0; i < NAXES; i++) {
+        _blk[b][i] = _blk[_head + b][i];
+      }
+      _dwell[b] = _dwell[_head + b];
+    }
+    _n_blk = pending;
+    _head = 0;
+  }
+
+  // Read the DIR pause budget from the stepper (whitepaper section 4.4). The
+  // config override is applied at use time in reverse_budget(), not here.
+  void read_dir_budget(uint8_t i) {
+    _lim[i].dir_before = _s[i]->getDirChangeBeforeTicks();
+    _lim[i].dir_n_before = _s[i]->getDirChangeBeforePauseCount();
+    _lim[i].dir_after = _s[i]->getDirChangeAfterTicks();
+  }
+
+  // Resolve the reverse budget for axis i: config override when non-zero, else
+  // the stepper getter. n_before defaults to 1 when the config supplies a
+  // before period but the getter count is 0.
+  void reverse_budget(uint8_t i, uint16_t* before, uint8_t* n_before,
+                      uint16_t* after) const {
+    if (_cfg.dir_before_ticks != 0) {
+      *before = _cfg.dir_before_ticks;
+      *n_before = _lim[i].dir_n_before != 0 ? _lim[i].dir_n_before : 1;
+    } else {
+      *before = _lim[i].dir_before;
+      *n_before = _lim[i].dir_n_before;
+    }
+    *after =
+        _cfg.dir_after_ticks != 0 ? _cfg.dir_after_ticks : _lim[i].dir_after;
+  }
+
+  uint32_t reverse_tau(uint8_t i) const {
+    uint16_t before = 0;
+    uint8_t n = 0;
+    uint16_t after = 0;
+    reverse_budget(i, &before, &n, &after);
+    return (uint32_t)n * before + (uint32_t)after;
+  }
+
+  // Axis i reverses between block b and the next buffered block.
+  bool reverses_at_end(int b, uint8_t i) const {
+    if (b + 1 >= _n_blk) {
+      return false;
+    }
+    int32_t cur = _blk[b][i];
+    int32_t nxt = _blk[b + 1][i];
+    if (cur == 0 || nxt == 0) {
+      return false;
+    }
+    return (cur > 0) != (nxt > 0);
+  }
+
+  // One axis's pending DIR carve: a shortened last step (old DIR) plus n_before
+  // before-pauses (old DIR) plus one after-pause (new DIR), tick sum unchanged.
+  struct Carve {
+    bool active;
+    uint8_t phase;       // 0 shortened step, 1 before-pauses, 2 after-pause
+    uint32_t step_left;  // remaining wait of the shortened step
+    uint8_t n_before;    // remaining before-pauses
+    uint16_t before;
+    uint16_t after;
+    bool old_up;
+    bool new_up;
+  };
+
+  bool any_carve() const {
+    for (uint8_t i = 0; i < NAXES; i++) {
+      if (_carve_axis[i].active) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Arm the carve on axis i for the last old-direction step of period T. The
+  // step keeps its period T and the DIR pause (tau) is inserted after it, so
+  // the period never jumps and the reversing axis's timeline grows by tau. This
+  // matches the normal ramp generator (which injects a DIR pause rather than
+  // shortening a step). Section 4.4.2.
+  void start_carve(uint8_t i, uint32_t T, bool new_up) {
+    uint16_t before = 0;
+    uint8_t n_before = 0;
+    uint16_t after = 0;
+    reverse_budget(i, &before, &n_before, &after);
+    uint32_t tau = (uint32_t)n_before * before + (uint32_t)after;
+    if (tau == 0) {
+      return;
+    }
+    Carve& c = _carve_axis[i];
+    c.active = true;
+    c.phase = 0;
+    c.step_left = T;
+    c.n_before = n_before;
+    c.before = before;
+    c.after = after;
+    c.old_up = _dir[i];
+    c.new_up = new_up;
+  }
+
+  // Emit one command of axis i's carve (at most one per call). `held` reports
+  // whether a command was placed in the slice.
+  void carve_emit(uint8_t i, bool* held) {
+    Carve& c = _carve_axis[i];
+    if (!c.active) {
+      return;
+    }
+    if (c.phase == 0) {
+      uint32_t left = c.step_left;
+      uint16_t t;
+      if (left > 65535) {
+        uint32_t half = left >> 1;
+        if (half > 65535) {
+          half = 65535;
+        }
+        if (half < _ticks_law) {
+          half = _ticks_law;
+        }
+        if (half > 65535) {
+          half = 65535;
+        }
+        t = (uint16_t)half;
+      } else {
+        t = (uint16_t)left;
+      }
+      hold(i, t, 1, c.old_up);
+      c.step_left -= t;
+      if (c.step_left == 0) {
+        c.phase = 1;
+      }
+      *held = true;
+      return;
+    }
+    if (c.phase == 1) {
+      if (c.n_before > 0) {
+        hold(i, c.before, 0, c.old_up);
+        c.n_before--;
+        *held = true;
+        return;
+      }
+      c.phase = 2;
+    }
+    if (c.phase == 2) {
+      if (c.after > 0) {
+        hold(i, c.after, 0, c.new_up);
+        c.after = 0;
+        *held = true;
+        return;
+      }
+      c.phase = 3;
+    }
+    if (c.phase >= 3) {
+      _dir[i] = c.new_up;
+      c.active = false;
+    }
+  }
+
+  // Drive every active carve one command per pass until at least one command is
+  // held. Only the carving axes are sent; every other axis keeps the command it
+  // was already given for those ticks.
+  void feed_carve() {
+    bool held = false;
+    for (uint8_t guard = 0; guard < 8; guard++) {
+      bool any = false;
+      for (uint8_t i = 0; i < NAXES; i++) {
+        if (_carve_axis[i].active) {
+          any = true;
+          carve_emit(i, &held);
+        }
+      }
+      if (!any || held) {
+        break;
+      }
+    }
+    if (!any_carve() && _carve_then_advance) {
+      _carve_then_advance = false;
+      advance_block();
+    }
+    _slice_open = held;
+  }
+
+  void clear_path() {
+    _n_blk = 0;
+    _head = 0;
+    _path_closed = false;
+    _feeding = false;
+    _done = true;
+    _kicked_off = false;
+    _underrun = false;
+    _block_count = 0;
+    _block_left = 0;
+    _pause_left = 0;
+    _Pramp = 0;
+    _Rstop = 0;
+    _ticks_last = 0;
+    _slice_open = false;
+    _error = false;
+    _fault = false;
+    _carve_then_advance = false;
+    for (uint8_t i = 0; i < NAXES; i++) {
+      _held[i].waiting = false;
+      _carve_axis[i].active = false;
+    }
+  }
+
+  // Store one axis's slot of the slice currently being emitted (Step 8). The
+  // command is not sent until flush_held(); that lets the paired axes re-send a
+  // held command without re-planning the slice.
+  void hold(uint8_t i, uint16_t ticks, uint8_t steps, bool count_up) {
+    _held[i].ticks = ticks;
+    _held[i].steps = steps;
+    _held[i].count_up = count_up;
+    _held[i].waiting = true;
+  }
+
+  bool any_waiting() const {
+    for (uint8_t i = 0; i < NAXES; i++) {
+      if (_registered[i] && _held[i].waiting) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Send the held slice to every axis still waiting. AQE_OK clears waiting; a
+  // retryable code (QueueFull / DirPinIsBusy / WaitForEnablePinActive /
+  // DeviceNotReady) leaves it set so the next pump() re-sends the same command.
+  // The error codes are terminal: set _error and report it.
+  AqeResultCode flush_held() {
+    AqeResultCode retry = AqeResultCode::OK;
+    for (uint8_t i = 0; i < NAXES; i++) {
+      if (!_registered[i] || !_held[i].waiting) {
+        continue;
+      }
+      struct stepper_command_s cmd = {_held[i].ticks, _held[i].steps,
+                                      _held[i].count_up};
+      AqeResultCode rc = _s[i]->addQueueEntry(&cmd, _kicked_off);
+      if (rc == AqeResultCode::OK) {
+        _held[i].waiting = false;
+      } else if (aqeIsPauseInjected(rc)) {
+        // Injected DIR pause: planner failure (whitepaper §4.4.3).
+        _error = true;
+      } else if (aqeRetry(rc)) {
+        retry = rc;
+      } else {
+        _error = true;  // TicksTooLow and any other terminal code
+      }
+    }
+    if (!any_waiting()) {
+      _slice_open = false;
+    }
+    return retry;
+  }
+
+  // Emit slices while there is room and the path is live. Building is one
+  // feed_one() per open slice; flushing is one flush_held() per slice. A
+  // retryable flush stops this pump() call (the held slice is retried on the
+  // next call) so a single pump never plans past an unaccepted command.
+  void feed_loop() {
+    while (!_error) {
+      if (!_slice_open) {
+        if (_done || !all_have_room()) {
+          break;
+        }
+        feed_one();
+        if (!_slice_open) {
+          break;
+        }
+      }
+      AqeResultCode rc = flush_held();
+      if (rc != AqeResultCode::OK || _done) {
+        break;
+      }
+    }
+  }
+
+  // Remaining master steps from `head` to the next Linear hard stop
+  // (section 8.5): master-sense reversal, outgoing master that was idle,
+  // dwell, or the last buffered point. P carries across every other joint.
+  uint32_t remaining_path_steps(int head) const {
+    uint32_t acc[NAXES];
+    for (uint8_t i = 0; i < NAXES; i++) {
+      acc[i] = _lim[i].accel;
+    }
+    return Remaining::linear_remaining<NAXES>(head, _n_blk, NAXES, _tick_cfg,
+                                              acc, 0xFFFFFFFFU, _blk);
+  }
+
+  // Section 8.6 per-axis scan from `head`: sum |delta_i| while axis i keeps its
+  // sign, stopping at the first axis reversal or idle-after-moving, or at the
+  // last buffered block. This is the Overshoot R_i (remaining steps in the
+  // current direction), independent of the other axes.
+  uint32_t remaining_axis_steps(int axis, int head) const {
+    uint32_t s = 0;
+    int sign = 0;
+    for (int b = head; b < _n_blk; b++) {
+      int32_t d = _blk[b][axis];
+      if (d == 0) {
+        if (sign != 0) {
+          break;  // axis went idle after moving
+        }
+        continue;
+      }
+      int sg = d > 0 ? 1 : -1;
+      if (sign == 0) {
+        sign = sg;
+      }
+      if (sg != sign) {
+        break;  // reversal
+      }
+      s += fas_abs(d);
+    }
+    return s;
+  }
+
+  // Set up the ramp law and DDA state for block `b`. `reset_P` is false when
+  // the joint is not a hard stop (P carries); R is recomputed from `b`.
+  void start_block(int b, bool reset_P) {
+    _head = b;
+    _master = Remaining::longest_axis(_blk[b], _tick_cfg, NAXES);
+    uint32_t t_law = Remaining::ticks_floor(_blk[b], _tick_cfg, NAXES);
+    if (t_law == 0) {
+      t_law = _tick_cfg[_master] != 0 ? _tick_cfg[_master] : 1;
+    }
+    _ticks_law = t_law;
+    int binder = Remaining::binder_axis(_blk[b], _tick_cfg, NAXES);
+    // The DIR pause is inserted *after* the last step (like the normal ramp
+    // generator), not carved out of it, so no acceleration cap is needed: the
+    // step keeps the period the ramp reaches and the pause is added (§4.4.2).
+    uint32_t accel = _lim[binder].accel;
+    uint32_t R_new = remaining_path_steps(b);
+    if (R_new == 0) {
+      R_new = fas_abs(_blk[b][_master]);
+    }
+    uint32_t carry = reset_P ? 0 : _law.P;
+    _law = RampLaw(t_law, accel, R_new);
+    uint32_t coast = _law.map.P_coast();
+    if (carry > coast) {
+      carry = coast;
+    }
+    if (carry > R_new) {
+      carry = R_new;
+    }
+    _law.P = carry;
+    _abs_master = fas_abs(_blk[b][_master]);
+    _block_left = fas_abs(_blk[b][_master]);
+    for (uint8_t i = 0; i < NAXES; i++) {
+      _err[i] = 0;
+    }
+    _pause_left = _dwell[b];  // a dwell block emits its pauses, then advances
+    _Pramp = _law.P;
+    _Rstop = _law.R;
+    _ticks_last = 0;
+  }
+
+  // Overshoot is selected only for the explicit mode with a non-zero cap
+  // (overshoot_max == 0 is the Linear limit, whitepaper section 6.5).
+  bool overshoot_mode() const {
+    return _cfg.mode == FasNAxisConfig::Overshoot && _cfg.overshoot_max != 0;
+  }
+
+  // Set up an Overshoot block from `b`: per-axis ramps decide the binding axis
+  // (largest T_opt) and every command lasts one of its periods. P carries
+  // across a continuing vertex and resets at a reversal/idle (section 8.6);
+  // the non-binding axes ride along on the same tick sum (sections 6.4 / 7.3).
+  void start_overshoot(int b) {
+    int32_t d[NAXES] = {0};
+    uint32_t rr[NAXES] = {0};
+    for (uint8_t i = 0; i < NAXES; i++) {
+      d[i] = _blk[b][i];
+      rr[i] = remaining_axis_steps(i, b);
+    }
+    _ovs.start_block(d, rr);
+    _head = b;
+    _master = _ovs.binder;
+    _ticks_law = Remaining::ticks_floor(_blk[b], _tick_cfg, NAXES);
+    if (_ticks_law == 0) {
+      _ticks_law = _tick_cfg[_master] != 0 ? _tick_cfg[_master] : 1;
+    }
+    _pause_left = 0;
+    _Pramp = _ovs.P[_ovs.binder];
+    _Rstop = _ovs.R[_ovs.binder];
+    _ticks_last = 0;
+    for (uint8_t i = 0; i < NAXES; i++) {
+      _err[i] = 0;
+    }
+  }
+
+  // The current block's walk is exhausted.
+  bool block_done() const {
+    if (_dwell[_head] > 0) {
+      return _pause_left == 0;  // dwell: done once its pauses are emitted
+    }
+    if (overshoot_mode()) {
+      return _ovs.done();
+    }
+    return _block_left == 0;
+  }
+
+  // Move to the next committed block. Overshoot carries P per axis
+  // (section 8.6). Linear resets P only at a hard stop (section 8.5) and
+  // carries it across every other joint, including a master-role change.
+  void advance_block() {
+    int prev = _head;
+    _head++;
+    if (_head >= _n_blk) {
+      _done = true;  // last buffered point is rest
+      return;
+    }
+    if (overshoot_mode()) {
+      start_overshoot(_head);
+      if (_dwell[_head] > 0) {
+        _pause_left = _dwell[_head];
+      }
+      return;
+    }
+    bool stop = Remaining::linear_joint_stops(_blk[prev], _blk[_head],
+                                              _tick_cfg, NAXES);
+    start_block(_head, stop);
+  }
+
+  void feeder_start() {
+    _feeding = true;
+    _done = false;
+    _underrun = false;
+    for (uint8_t i = 0; i < NAXES; i++) {
+      _dir[i] = true;
+    }
+    if (overshoot_mode()) {
+      uint32_t ac[NAXES] = {0};
+      for (uint8_t i = 0; i < NAXES; i++) {
+        ac[i] = _lim[i].accel;
+      }
+      _ovs.configure(NAXES, _tick_cfg, ac, _cfg.overshoot_max);
+      start_overshoot(_head);
+      if (_dwell[_head] > 0) {
+        _pause_left = _dwell[_head];
+      }
+      return;
+    }
+    start_block(_head, true);
+  }
+
+  // True when a DIR carve must keep the block's last master step as its own
+  // one-step command.
+  bool leave_last_for_carve() const {
+    if (_block_left <= 1) {
+      return false;
+    }
+    for (uint8_t i = 0; i < NAXES; i++) {
+      if (!_registered[i] || !reverses_at_end(_head, i)) {
+        continue;
+      }
+      if (reverse_tau(i) > 0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Per-axis per-step ticks for a batch of `n` master steps at period `T`
+  // with signed net `net[i]`. Idle axes get one pause of `n * T`. A moving
+  // axis gets `ticks * |net| == n * T` exactly (multiply check, no `/`).
+  // Returns false when that product is not exact or does not fit in 16 bits.
+  bool linear_batch_ticks(const int32_t* net, uint32_t n, uint32_t T,
+                          uint16_t* ticks_out) const {
+    uint32_t total = n * T;
+    if (n == 0 || total == 0 || total > 65535u) {
+      return false;
+    }
+    for (uint8_t i = 0; i < NAXES; i++) {
+      if (!_registered[i]) {
+        continue;
+      }
+      int32_t v = net[i];
+      if (v == 0) {
+        ticks_out[i] = (uint16_t)total;
+        continue;
+      }
+      uint32_t k = v > 0 ? (uint32_t)v : (uint32_t)(-v);
+      if (k > 255u) {
+        return false;
+      }
+      uint32_t ts = T;
+      if (k != n) {
+        ts = log2_to_u32(log2_divide(log2_from(total), log2_from(k)));
+        if (ts == 0 || ts * k != total) {
+          return false;
+        }
+      }
+      if (ts > 65535u || ts < _tick_cfg[i]) {
+        return false;
+      }
+      ticks_out[i] = (uint16_t)ts;
+    }
+    return true;
+  }
+
+  // One Bresenham step of the current block, applied to `err` / `net`.
+  void linear_dda_step(int32_t* err, int32_t* net) const {
+    int master_sign = _blk[_head][_master] > 0 ? 1 : -1;
+    net[_master] += master_sign;
+    for (uint8_t i = 0; i < NAXES; i++) {
+      if (i == (uint8_t)_master) {
+        continue;
+      }
+      uint32_t ad = fas_abs(_blk[_head][i]);
+      if (ad == 0) {
+        continue;
+      }
+      err[i] += (int32_t)ad;
+      if (err[i] > 0 &&
+          Remaining::u32_twice_ge((uint32_t)err[i], _abs_master)) {
+        net[i] += _blk[_head][i] > 0 ? 1 : -1;
+        err[i] -= (int32_t)_abs_master;
+      }
+    }
+  }
+
+  void law_restore(uint32_t p, uint32_t r, uint32_t total) {
+    _law.P = p;
+    _law.R = r;
+    _law.total_ticks = total;
+  }
+
+  // Ramp-generator batch: when the step period is under 1 ms, pack equal
+  // periods into one command of about 2 ms (TICKS_PER_S / 500), and stop
+  // before a DIR carve or a period change. Returns 0 when fewer than two
+  // steps fit, leaving the law and the DDA untouched. The law is stepped
+  // and rolled back; there is no second copy of the ramp state.
+  uint32_t plan_linear_batch(int st[NAXES], uint16_t* ticks_out,
+                             uint32_t* period_out) {
+    if (_block_left < 2) {
+      return 0;
+    }
+    uint32_t p0 = _law.P;
+    uint32_t r0 = _law.R;
+    uint32_t tot0 = _law.total_ticks;
+    uint32_t T = _law.step();
+    law_restore(p0, r0, tot0);
+    uint32_t one_ms = (uint32_t)(TICKS_PER_S / 1000);
+    if (T == 0 || T >= one_ms || T > 65535u) {
+      return 0;
+    }
+    uint32_t budget = (uint32_t)(TICKS_PER_S / 500);
+    if (budget > 65535u) {
+      budget = 65535u;
+    }
+    uint32_t room = _block_left;
+    if (leave_last_for_carve() && room > 0) {
+      room--;
+    }
+    if (room < 2) {
+      return 0;
+    }
+    uint32_t max_n = 1;
+    uint32_t acc_ticks = T;
+    while (max_n < room && max_n < 255u && acc_ticks + T <= budget) {
+      max_n++;
+      acc_ticks += T;
+    }
+    if (max_n < 2) {
+      return 0;
+    }
+
+    int32_t err[NAXES];
+    int32_t net[NAXES];
+    uint16_t ticks_ok[NAXES];
+    for (uint8_t i = 0; i < NAXES; i++) {
+      err[i] = _err[i];
+      net[i] = 0;
+      ticks_ok[i] = 0;
+    }
+    uint32_t n_ok = 0;
+    for (uint32_t s = 0; s < max_n; s++) {
+      uint32_t ps = _law.P;
+      uint32_t rs = _law.R;
+      uint32_t ts = _law.total_ticks;
+      uint32_t t = _law.step();
+      if (t != T) {
+        law_restore(ps, rs, ts);
+        break;
+      }
+      int32_t err_try[NAXES];
+      int32_t net_try[NAXES];
+      uint16_t ticks_try[NAXES];
+      for (uint8_t i = 0; i < NAXES; i++) {
+        err_try[i] = err[i];
+        net_try[i] = net[i];
+      }
+      linear_dda_step(err_try, net_try);
+      if (!linear_batch_ticks(net_try, s + 1, T, ticks_try)) {
+        law_restore(ps, rs, ts);
+        break;
+      }
+      for (uint8_t i = 0; i < NAXES; i++) {
+        err[i] = err_try[i];
+        net[i] = net_try[i];
+        ticks_ok[i] = ticks_try[i];
+      }
+      n_ok = s + 1;
+    }
+    if (n_ok < 2) {
+      law_restore(p0, r0, tot0);
+      return 0;
+    }
+    for (uint8_t i = 0; i < NAXES; i++) {
+      _err[i] = err[i];
+      st[i] = net[i];
+      ticks_out[i] = ticks_ok[i];
+    }
+    _block_left -= n_ok;
+    *period_out = T;
+    return n_ok;
+  }
+
+  // Emit at most one queue entry per registered axis per call, so the axes stay
+  // in lockstep. A fast coast is one multi-step command (section 4.3.1). A
+  // master step with a period above 65535 is a half-period step entry followed
+  // by pause entries covering the remainder (sections 4.2 / 9.3).
+  void feed_one() {
+    if (_done || _slice_open) {
+      return;
+    }
+    if (any_carve()) {
+      feed_carve();
+      return;
+    }
+    if (_pause_left > 0) {
+      uint32_t chunk = _pause_left;
+      if (chunk > 65535) {
+        chunk >>= 1;
+        if (chunk > 65535) {
+          chunk = 65535;
+        }
+      }
+      for (uint8_t i = 0; i < NAXES; i++) {
+        if (_registered[i]) {
+          hold(i, (uint16_t)chunk, 0, _dir[i]);
+        }
+      }
+      _slice_open = true;
+      _pause_left -= chunk;
+      if (_pause_left == 0 && block_done()) {
+        advance_block();
+      }
+      return;
+    }
+    if (block_done()) {
+      advance_block();
+      if (_done) {
+        return;
+      }
+    }
+
+    uint32_t T;
+    int st[NAXES];
+    uint16_t batch_ticks[NAXES];
+    bool batched = false;
+    for (uint8_t i = 0; i < NAXES; i++) {
+      st[i] = 0;
+      batch_ticks[i] = 0;
+    }
+    if (overshoot_mode()) {
+      // Overshoot: one command per binding RampLaw step; the non-binding axes
+      // ride along on the same tick sum (whitepaper sections 6.4 / 7.3).
+      T = _ovs.step(st);
+      if (T == 0) {
+        _done = true;
+        return;
+      }
+      _Pramp = _ovs.P[_ovs.binder];
+      _Rstop = _ovs.R[_ovs.binder];
+      _ticks_last = T;
+    } else if (plan_linear_batch(st, batch_ticks, &T) >= 2) {
+      batched = true;
+      _Pramp = _law.P;
+      _Rstop = _law.R;
+      _ticks_last = T;
+    } else {
+      T = _law.step();
+      _Pramp = _law.P;
+      _Rstop = _law.R;
+      _ticks_last = T;
+      int32_t net[NAXES];
+      for (uint8_t i = 0; i < NAXES; i++) {
+        net[i] = 0;
+      }
+      linear_dda_step(_err, net);
+      for (uint8_t i = 0; i < NAXES; i++) {
+        st[i] = net[i];
+      }
+    }
+
+    uint32_t t_step = T;
+    if (T > 65535) {
+      t_step = T >> 1;
+      if (t_step > 65535) {
+        t_step = 65535;
+      }
+      if (t_step < _ticks_law) {
+        t_step = _ticks_law;  // keep the step entry at or above the envelope
+        if (t_step > 65535) {
+          t_step = 65535;
+        }
+      }
+      _pause_left = T - t_step;
+    }
+
+    // At the last binder step before a reversal with a DIR budget, carve the
+    // pause out of the reversing axis's own last step (whitepaper section 4.4).
+    // Only the 16-bit-representable tail is carved here; a longer tail keeps
+    // the §9.3 stuffing path unchanged.
+    bool last_cmd =
+        batched ? false
+                : (overshoot_mode() ? _ovs.last_command() : (_block_left == 1));
+    bool carving = false;
+    if (last_cmd && T <= 65535) {
+      for (uint8_t i = 0; i < NAXES; i++) {
+        if (!_registered[i] || st[i] == 0 || !reverses_at_end(_head, i)) {
+          continue;
+        }
+        if (reverse_tau(i) == 0) {
+          continue;
+        }
+        if (overshoot_mode() && (st[i] > 1 || st[i] < -1)) {
+          continue;  // a carve is a one-step split
+        }
+        start_carve(i, T, _blk[_head + 1][i] > 0);
+        carving = true;
+      }
+    }
+
+    for (uint8_t i = 0; i < NAXES; i++) {
+      if (!_registered[i]) {
+        continue;
+      }
+      if (_carve_axis[i].active) {
+        bool h = false;
+        carve_emit(i, &h);
+        continue;
+      }
+      uint8_t steps = st[i] > 0 ? (uint8_t)st[i] : (uint8_t)(-st[i]);
+      bool up = st[i] != 0 ? (st[i] > 0) : _dir[i];
+      if (st[i] != 0) {
+        _dir[i] = up;
+      }
+      // Overshoot catch-up: `steps` pulses in this slice must span the same
+      // t_step ticks as every other axis, so each pulse is t_step / steps
+      // (log2 divide, section 9.3), floored to the axis envelope.
+      uint16_t ticks_i = batched ? batch_ticks[i] : (uint16_t)t_step;
+      if (overshoot_mode() && steps > 1) {
+        uint32_t tt = log2_to_u32(
+            log2_divide(log2_from((uint32_t)t_step), log2_from(steps)));
+        if (tt < _tick_cfg[i]) {
+          tt = _tick_cfg[i];
+        }
+        if (tt < (uint32_t)MIN_CMD_TICKS) {
+          tt = (uint32_t)MIN_CMD_TICKS;
+        }
+        if (tt > 65535) {
+          tt = 65535;
+        }
+        ticks_i = (uint16_t)tt;
+      }
+      hold(i, ticks_i, steps, up);
+    }
+    _slice_open = true;
+    if (!overshoot_mode() && !batched) {
+      _block_left--;
+    }
+    if (carving) {
+      // The carve sequence is flushed over the next feed_one() calls; the next
+      // block only starts once every carving axis has finished.
+      _carve_then_advance = true;
+      return;
+    }
+    if (_pause_left == 0 && block_done()) {
+      advance_block();
+    }
+  }
+
+  // One held command per axis (Step 8): the slice being emitted. waiting stays
+  // set until addQueueEntry returns AQE_OK, so a retryable fault re-sends the
+  // same command on the next pump without re-planning the slice.
+  struct Held {
+    bool waiting;
+    uint16_t ticks;
+    uint8_t steps;
+    bool count_up;
+  };
+
+  Stepper* _s[NAXES];
+  AxisLimits _lim[NAXES];
+  uint32_t _tick_cfg[NAXES];
+  int32_t _p[NAXES];
+  int32_t _err[NAXES];
+  bool _dir[NAXES];
+  int32_t _blk[HORIZON][NAXES];
+  uint32_t _dwell[HORIZON];
+  FasNAxisConfig _cfg;
+  bool _registered[NAXES];
+  bool _position_synced;
+  uint32_t _block_count;
+  int _n_blk;
+  int _head;
+  bool _path_closed;
+  bool _feeding;
+  bool _done;
+  bool _kicked_off;
+  Engine* _engine;
+  bool _underrun;
+  bool _slice_open;
+  bool _error;
+  bool _fault;
+  Held _held[NAXES];
+  Carve _carve_axis[NAXES];
+  bool _carve_then_advance;
+  int _master;
+  uint32_t _abs_master;
+  uint32_t _block_left;
+  uint32_t _pause_left;
+  uint32_t _ticks_law;
+  uint32_t _Pramp;
+  uint32_t _Rstop;
+  uint32_t _ticks_last;
+  RampLaw _law;
+  OvershootRun<NAXES> _ovs;
+};
+
+#endif /* FAS_NAXIS_H */
