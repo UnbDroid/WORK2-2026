@@ -136,20 +136,17 @@ class MoveAction(ActionExecutorClient):
         else:
             self.finish(False, 0.0, 'Move falhou (Nav2)')
 
-
 def main(args=None):
     rclpy.init(args=args)
-
     node = MoveAction()
 
     result = node.trigger_configure()
+    node.get_logger().info(f'Resultado do configure: {result}')
 
-    node.get_logger().info(
-        f'Resultado do configure: {result}'
-    )
+    result = node.trigger_activate()
+    node.get_logger().info(f'Resultado do activate: {result}')
 
     rclpy.spin(node)
-
     node.destroy_node()
     rclpy.shutdown()
 
