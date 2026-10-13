@@ -10,22 +10,48 @@ from geometry_msgs.msg import Twist
 # 1. CLASSE DE DETECÇÃO DE CORES
 class ColorDetector:
     def __init__(self):
-        self.red_lower1 = np.array([0, 120, 70])
+        #limites para o vermelho 
+        self.red_lower = np.array([0, 136, 85])
+        self.red_upper = np.array([5,255, 255])
+
+       
+        #Fixa a segunda parte do vermelho no final do espectro
+        self.red_lower2 = np.array([170, self.red_lower[1], self.red_lower[2]])
+        self.red_upper2 = np.array([179, self.red_upper[1], self.red_upper[2]])
+
+
+        #limites para o azul 
+        self.blue_lower = np.array([90, 50, 50])
+        self.blue_upper = np.array([130, 255, 255])
+
+                
+        '''self.red_lower1 = np.array([0, 120, 70])
         self.red_upper1 = np.array([10, 255, 255])
         
         self.red_lower2 = np.array([170, 120, 70])
         self.red_upper2 = np.array([180, 255, 255])
         
         self.blue_lower = np.array([90, 50, 50])
-        self.blue_upper = np.array([130, 255, 255])
+        self.blue_upper = np.array([130, 255, 255])'''
         
         self.kernel = np.ones((3, 3), np.uint8)
 
     def detect(self, frame):
         suave = cv2.GaussianBlur(frame, (7, 7), 0)
         img_hsv = cv2.cvtColor(suave, cv2.COLOR_BGR2HSV)
+        red_mask1 = cv2.inRange(img_hsv, self.red_lower, self.red_upper)
+        red_mask2 = cv2.inRange(img_hsv, self.red_lower2, self.red_upper2)
 
-        red_mask1 = cv2.inRange(img_hsv, self.red_lower1, self.red_upper1)
+        red_mask = cv2.bitwise_or(red_mask1, red_mask2)
+        red_dilate = cv2.dilate(red_mask, self.kernel, iterations=1)
+
+        
+        blue_mask = cv2.inRange(img_hsv, self.blue_lower, self.blue_upper)
+
+        blue_dilate = cv2.dilate(blue_mask, self.kernel, iterations=1)
+
+
+        '''red_mask1 = cv2.inRange(img_hsv, self.red_lower1, self.red_upper1)
         red_mask2 = cv2.inRange(img_hsv, self.red_lower2, self.red_upper2)
         red_mask = cv2.bitwise_or(red_mask1, red_mask2)
         red_erode = cv2.erode(red_mask, self.kernel, iterations=1)
@@ -33,7 +59,7 @@ class ColorDetector:
 
         blue_mask = cv2.inRange(img_hsv, self.blue_lower, self.blue_upper)
         blue_erode = cv2.erode(blue_mask, self.kernel, iterations=1)
-        blue_dilate = cv2.dilate(blue_erode, self.kernel, iterations=1)
+        blue_dilate = cv2.dilate(blue_erode, self.kernel, iterations=1)'''
 
         color_objects = []
         for mask, color_name in [(red_dilate, "vermelho"), (blue_dilate, "azul")]:
@@ -57,7 +83,7 @@ class AprilTagDetector:
         self.detector = apriltag.Detector(self.options)
         # Parâmetros padrão excelentes para Webcams Logitech em 640x480
         self.camera_params = [753.64,755.34,315.52,243.88]
-        self.tag_size = 0.04
+        self.tag_size = 0.06
 
     def detect(self, frame):
         if frame is None:
@@ -153,27 +179,56 @@ class VisionNode(Node):
         cv2.resizeWindow("Visão do Robô", 640, 480)
         
     def calcular_velocidade_aproximacao(self, delta_x, delta_z):
-        Kp_x = 2.0
-        Kp_z = 2.0
+      Kp_x = 8.0
+      Kp_z = 2.0
 
-        distancia_alvo_x = 0.08214
-        distancia_alvo_z = 0.39953
-        tolerancia_x = 0.01
-        tolerancia_z= 0.1
+      distancia_alvo_x = 0.114278
+      distancia_alvo_z = 0.602245
+      tolerancia_x = 0.01
+      tolerancia_z = 0.01
 
-        erro_frontal = delta_z - distancia_alvo_z
-        erro_lateral = delta_x - distancia_alvo_x
+      erro_frontal = delta_z - distancia_alvo_z
+      erro_lateral = delta_x - distancia_alvo_x
+
+      if abs(erro_lateral) > tolerancia_x:
+        print(f"Estamos no X, A coordenada X é: {delta_x:4f}   O erro lateral é:{erro_lateral:4f}   Velocidade calculada X:{Kp_x * erro_lateral:4f}")
+        vx = Kp_x * erro_lateral
+        vy = 0
+        vx = max(min(vx, 0.5), -0.5)
         
-        if abs(erro_frontal) < tolerancia_z and abs(erro_lateral) < tolerancia_x:
-            return 0.0, 0.0
+
+
+        if abs(vx) < 0.1:
+            vx = 0.1 if vx > 0 else -0.1
+        '''if(abs(vx) < 0.2):
+            if(vx > 0):
+                vx = 0.2
+            else:
+                vx = -0.2'''
+
+      elif abs(erro_frontal) > tolerancia_z:
         
-        vx = Kp_x * erro_lateral 
+        print(f"Estamos no Y, A coordenada Y é: {delta_z:4f}   O erro frontal é:{erro_frontal:4f}   Velocidade calculada Y:{Kp_z * erro_frontal:4f}, ")
         vy = Kp_z * erro_frontal
+        vx = 0
+        vy = max(min(vy, 0.5), -0.5)
+        
 
-        vx = max(min(vx, 0.2), -0.2)
-        vy = max(min(vy, 0.2), -0.2)
+        '''if(abs(vy) < 0.2):
+            if(vy > 0):
+                vy = 0.2
+            else:
+                vy = -0.2'''
 
-        return -vx, vy
+        if abs(vy) < 0.1:
+            vy = 0.1 if vy > 0 else -0.1
+
+      else:
+        vx = 0
+        vy = 0
+
+     # print(f'                        ---------------Velocidade final: vx={vx:3f} e vy={vy:f}  A coordenada X atual: {delta_x:3f}, o erro lateral atual é:{erro_lateral:3f} , A coordenada Y atual: {delta_z:3f}, O erro frontal atual é:{erro_frontal:3f} ')
+      return vy,-vx
     
     def image_callback(self, msg):
         try:
@@ -192,10 +247,6 @@ class VisionNode(Node):
                 ALVO_ID = -1
                 ALVO_TIPO = "conteiner"
                 ALVO_COR = "vermelho" # A cor do seu conteiner
-            else:
-                ALVO_ID = None
-                ALVO_TIPO = None
-                ALVO_COR = None 
 
             alvo_encontrado = None
 
@@ -221,7 +272,7 @@ class VisionNode(Node):
                 vx, vy = self.calcular_velocidade_aproximacao(cam_x, cam_z)
                 twist.linear.x = float(vx)
                 twist.linear.y = float(vy)
-                print(f'coordenadas x e z: {cam_x,cam_y,cam_z},velocidades : {twist}') 
+                #print(f'coordenadas x e z: {cam_x:4f,cam_y,cam_z},velocidades : {twist}') 
 
                 # --- TRANSIÇÃO DE ESTADOS ---
                 # Se a velocidade calculada for zero, é porque o robô chegou na distância certa (20cm)

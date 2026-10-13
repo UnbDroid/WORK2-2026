@@ -1,3 +1,4 @@
+
 import cv2 
 import rclpy
 from sensor_msgs.msg import Image
@@ -44,7 +45,7 @@ class ImagePublisher(Node):
             #ROS2ImageMessage.header.frame_id = 'camera_frame'               # Identificador do sensor
 
             self.publisher.publish(ROS2ImageMessage)
-            self.get_logger().info('Publishing image number %d' % self.i)
+           # self.get_logger().info('Publishing image number %d' % self.i)
             self.i += 1
         else:
             self.get_logger().warn('Aguardando imagem da câmera...')
