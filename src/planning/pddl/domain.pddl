@@ -12,6 +12,7 @@
 
   (:predicates
     (at-robot ?r - robot ?l - location)
+    (visited ?l - location)
     (obj-at ?o - object ?l - location)                 ; objeto solto em uma localização
     (container-at ?c - container ?l - location)        ; container fixo em uma localização
     (in-container ?o - object ?c - container)           ; objeto dentro de um container
@@ -25,7 +26,7 @@
   (:action move
     :parameters (?r - robot ?from - location ?to - location)
     :precondition (at-robot ?r ?from)
-    :effect (and (not (at-robot ?r ?from)) (at-robot ?r ?to))
+    :effect (and (not (at-robot ?r ?from)) (at-robot ?r ?to) (visited ?to))
   )
 
   (:action pick-from-location

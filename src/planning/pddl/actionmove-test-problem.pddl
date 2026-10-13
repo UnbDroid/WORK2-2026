@@ -1,14 +1,18 @@
-(define (problem actionmove-test) (:domain robocup-work-transport)
-(:objects
-    robot1 - robot
-    start wp1 - location
-)
+(define (problem actionmove-test)
+    (:domain robocup-work-transport)
 
-(:init
-    (at-robot robot1 start)
-)
+    (:objects
+        robot1 - robot
+        start wp1 wp2 - location
+    )
 
-(:goal (and
-    (at-robot robot1 wp1)
-))
+    (:init
+        (at-robot robot1 start)
+    )
+
+    (:goal
+        (and
+            (at-robot robot1 wp2)
+        )
+    )
 )
