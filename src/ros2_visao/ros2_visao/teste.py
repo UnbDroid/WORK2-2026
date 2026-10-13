@@ -5,40 +5,61 @@ import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
-from robot_vision.msg import Cube, CubeArray
+from geometry_msgs.msg import Twist
 
-
-# ==============================================================================
 # 1. CLASSE DE DETECÇÃO DE CORES
-# ==============================================================================
 class ColorDetector:
     def __init__(self):
-        self.red_lower1 = np.array([0, 120, 70])
+        #limites para o vermelho 
+        self.red_lower = np.array([0, 136, 85])
+        self.red_upper = np.array([5,255, 255])
+
+       
+        #Fixa a segunda parte do vermelho no final do espectro
+        self.red_lower2 = np.array([170, self.red_lower[1], self.red_lower[2]])
+        self.red_upper2 = np.array([179, self.red_upper[1], self.red_upper[2]])
+
+
+        #limites para o azul 
+        self.blue_lower = np.array([90, 50, 50])
+        self.blue_upper = np.array([130, 255, 255])
+
+                
+        '''self.red_lower1 = np.array([0, 120, 70])
         self.red_upper1 = np.array([10, 255, 255])
         
         self.red_lower2 = np.array([170, 120, 70])
         self.red_upper2 = np.array([180, 255, 255])
         
         self.blue_lower = np.array([90, 50, 50])
-        self.blue_upper = np.array([130, 255, 255])
+        self.blue_upper = np.array([130, 255, 255])'''
         
         self.kernel = np.ones((3, 3), np.uint8)
 
     def detect(self, frame):
         suave = cv2.GaussianBlur(frame, (7, 7), 0)
         img_hsv = cv2.cvtColor(suave, cv2.COLOR_BGR2HSV)
+        red_mask1 = cv2.inRange(img_hsv, self.red_lower, self.red_upper)
+        red_mask2 = cv2.inRange(img_hsv, self.red_lower2, self.red_upper2)
 
-        # Filtro Vermelho
-        red_mask1 = cv2.inRange(img_hsv, self.red_lower1, self.red_upper1)
+        red_mask = cv2.bitwise_or(red_mask1, red_mask2)
+        red_dilate = cv2.dilate(red_mask, self.kernel, iterations=1)
+
+        
+        blue_mask = cv2.inRange(img_hsv, self.blue_lower, self.blue_upper)
+
+        blue_dilate = cv2.dilate(blue_mask, self.kernel, iterations=1)
+
+
+        '''red_mask1 = cv2.inRange(img_hsv, self.red_lower1, self.red_upper1)
         red_mask2 = cv2.inRange(img_hsv, self.red_lower2, self.red_upper2)
         red_mask = cv2.bitwise_or(red_mask1, red_mask2)
         red_erode = cv2.erode(red_mask, self.kernel, iterations=1)
         red_dilate = cv2.dilate(red_erode, self.kernel, iterations=1)
 
-        # Filtro Azul
         blue_mask = cv2.inRange(img_hsv, self.blue_lower, self.blue_upper)
         blue_erode = cv2.erode(blue_mask, self.kernel, iterations=1)
-        blue_dilate = cv2.dilate(blue_erode, self.kernel, iterations=1)
+        blue_dilate = cv2.dilate(blue_erode, self.kernel, iterations=1)'''
 
         color_objects = []
         for mask, color_name in [(red_dilate, "vermelho"), (blue_dilate, "azul")]:
@@ -53,19 +74,16 @@ class ColorDetector:
                         "bbox": cv2.boundingRect(cnt),
                         "processed": False
                     })
-
         return color_objects
 
-
-# ==============================================================================
 # 2. CLASSE DE DETECÇÃO DE APRILTAGS
-# ==============================================================================
 class AprilTagDetector:
     def __init__(self):
         self.options = apriltag.DetectorOptions(families="tag36h11")
         self.detector = apriltag.Detector(self.options)
-        self.camera_params = [1121.40, 118.81, 649.17, 364.85]
-        self.tag_size = 0.04
+        # Parâmetros padrão excelentes para Webcams Logitech em 640x480
+        self.camera_params = [753.64,755.34,315.52,243.88]
+        self.tag_size = 0.06
 
     def detect(self, frame):
         if frame is None:
@@ -78,94 +96,69 @@ class AprilTagDetector:
         for r in results:
             pose, _, _ = self.detector.detection_pose(r, self.camera_params, self.tag_size)
             corners = r.corners.astype(int)
-
             tags.append({
                 "id": int(r.tag_id),
                 "center": (float(r.center[0]), float(r.center[1])),
                 "bbox": cv2.boundingRect(corners),
                 "pose_3d": (float(pose[0][3]), float(pose[1][3]), float(pose[2][3]))
             })
-
         return tags
 
-
-# ==============================================================================
 # 3. MOTOR DE CLASSIFICAÇÃO
-# ==============================================================================
 class ObjectClassifier:
-    @staticmethod
-    def is_tag_inside_color(contour, tag_center, tag_bbox, color_bbox, margin=15):
+    def __init__(self):
+        # Sem mapa de tags fixo! Agora aceitamos qualquer uma.
+        pass
+
+    def is_tag_inside_color(self, contour, tag_center, tag_bbox, color_bbox, margin=15):
         pt = (int(tag_center[0]), int(tag_center[1]))
-        
         if cv2.pointPolygonTest(contour, pt, False) >= 0:
             return True
-
         x, y, w, h = color_bbox
         tx, ty, tw, th = tag_bbox
-        
-        tx_min, ty_min = tx - margin, ty - margin
-        tx_max, ty_max = tx + tw + margin, ty + th + margin
-
-        return (x < tx_max and x + w > tx_min and y < ty_max and y + h > ty_min)
+        return (x < tx + tw + margin and x + w > tx - margin and 
+                y < ty + th + margin and y + h > ty - margin)
 
     def classify(self, tags, color_objects):
         classified_objects = []
 
-        # 1. Associa Tags a Cores (Cubos ou Zonas)
+        # 1. PROCESSA TODAS AS TAGS
         for tag in tags:
-            matched = False
+            classified_objects.append({
+                "id": tag["id"],
+                "color": "qualquer",
+                "waypoint": "tag", 
+                "bbox": tag["bbox"],
+                "pose_3d": tag["pose_3d"]
+            })
+
+            # Marca a mancha de cor atrás da tag como processada
             for color_obj in color_objects:
-                if color_obj["processed"]:
-                    continue
+                if not color_obj["processed"]:
+                    if self.is_tag_inside_color(color_obj["contour"], tag["center"], tag["bbox"], color_obj["bbox"]):
+                        color_obj["processed"] = True 
+                        break 
 
-                if self.is_tag_inside_color(
-                    color_obj["contour"], 
-                    tag["center"], 
-                    tag["bbox"], 
-                    color_obj["bbox"]
-                ):
-                    color_obj["processed"] = True
-                    matched = True
-                    classified_objects.append({
-                        "id": tag["id"],
-                        "color": color_obj["color"],
-                        "waypoint": "cubo",
-                        "bbox": color_obj["bbox"],
-                        "pose_3d": tag["pose_3d"]
-                    })
-                    break
-
-            if not matched:
-                classified_objects.append({
-                    "id": tag["id"],
-                    "color": "sem_cor",
-                    "waypoint": "zona",
-                    "bbox": tag["bbox"],
-                    "pose_3d": tag["pose_3d"]
-                })
-
-        # 2. Registra Cores Restantes sem Tag (Contêineres)
+        # 2. PROCESSA O QUE SOBROU (Contêineres)
         for color_obj in color_objects:
             if not color_obj["processed"]:
                 x, y, w, h = color_obj["bbox"]
                 cx, cy = x + w // 2, y + h // 2
+                
                 pos_x = (cx - 320) / 500.0
                 pos_y = (cy - 240) / 500.0
+                estimativa_z = 80.0 / (w + 0.1) # Profundidade baseada na largura
 
                 classified_objects.append({
                     "id": -1,
                     "color": color_obj["color"],
                     "waypoint": "conteiner",
                     "bbox": color_obj["bbox"],
-                    "pose_3d": (pos_x, pos_y, 1.0)
-                })
-
+                    "pose_3d": (pos_x, pos_y, estimativa_z)
+                })                
         return classified_objects
 
-
-# ==============================================================================
-# 4. NÓ PRINCIPAL ROS 2
-# ==============================================================================
+# 4. NÓ ROS 2 (O CÉREBRO)
 class VisionNode(Node):
     def __init__(self):
         super().__init__('vision_node')
@@ -176,12 +169,61 @@ class VisionNode(Node):
         self.classifier = ObjectClassifier()
 
         self.sub = self.create_subscription(Image, '/cam/image_raw', self.image_callback, 10)
-        self.pub = self.create_publisher(CubeArray, '/detected_objects', 10)
+        self.pub_cmd_vel = self.create_publisher(Twist, '/cmd_vel', 10) 
+        
+    
+        self.estado_atual = "BUSCAR_CUBO" 
 
-        # Cria a janela de exibição com tamanho ajustável para evitar travamentos gráficos
+        # Janelas comentadas para não dar erro de Display no SSH
         cv2.namedWindow("Visão do Robô", cv2.WINDOW_NORMAL)
         cv2.resizeWindow("Visão do Robô", 640, 480)
+        
+    def calcular_velocidade_aproximacao(self, delta_x, delta_z):
+      Kp_x = 2.0
+      Kp_z = 2.0
 
+      distancia_alvo_x = 0.056092
+      distancia_alvo_z = 0.920084
+      tolerancia_x = 0.01
+      tolerancia_z = 0.01
+
+      erro_frontal = delta_z - distancia_alvo_z
+      erro_lateral = delta_x - distancia_alvo_x
+
+      if abs(erro_lateral) > tolerancia_x:
+        print(f"Estamos no X, A coordenada X é: {delta_x:4f}   O erro lateral é:{erro_lateral:4f}   Velocidade calculada X:{Kp_x * erro_lateral:4f}")
+        vx = Kp_x * erro_lateral
+        vy = 0
+        vx = max(min(vx, 0.5), -0.5)
+
+        '''if(abs(vx) < 0.2):
+            if(vx > 0):
+                vx = 0.2
+            else:
+                vx = -0.2'''
+
+      elif abs(erro_frontal) > tolerancia_z:
+        
+        print(f"Estamos no Y, A coordenada Y é: {delta_z:4f}   O erro frontal é:{erro_frontal:4f}   Velocidade calculada Y:{Kp_z * erro_frontal:4f}, ")
+        vy = Kp_z * erro_frontal
+        vx = 0
+        vy = max(min(vy, 0.5), -0.5)
+        
+
+        '''if(abs(vy) < 0.2):
+            if(vy > 0):
+                vy = 0.2
+            else:
+                vy = -0.2'''
+
+      else:
+        vx = 0
+        vy = 0
+
+      print(f'---------------Velocidade final: vx={vx:3f} e vy={vy:f}')
+      ''' A coordenada X atual: {delta_x:3f}, o erro lateral atual é:{erro_lateral:3f} , A coordenada Y atual: {delta_z:3f}, O erro frontal atual é:{erro_frontal:3f} ')'''
+      return vx, vy
+    
     def image_callback(self, msg):
         try:
             frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
@@ -191,43 +233,69 @@ class VisionNode(Node):
             tags = self.tag_detector.detect(frame)
             results = self.classifier.classify(tags, color_objects)
 
-            array_msg = CubeArray()
-            array_msg.header.stamp = self.get_clock().now().to_msg()
-            array_msg.header.frame_id = 'camera_link'
+            if self.estado_atual == "BUSCAR_CUBO":
+                ALVO_ID = 3           # O ID da tag que você quer ir primeiro
+                ALVO_TIPO = "tag"     
+                ALVO_COR = "qualquer" 
+            elif self.estado_atual == "BUSCAR_CONTEINER":
+                ALVO_ID = -1
+                ALVO_TIPO = "conteiner"
+                ALVO_COR = "vermelho" # A cor do seu conteiner
+
+            alvo_encontrado = None
 
             for item in results:
-                # Preenche a mensagem do ROS
-                cube = Cube()
-                cube.id = item["id"]
-                cube.color = item["color"]
-                cube.waypoint = item["waypoint"]
-                cube.position_relative_to_camera.x = float(item["pose_3d"][0])
-                cube.position_relative_to_camera.y = float(item["pose_3d"][1])
-                cube.position_relative_to_camera.z = float(item["pose_3d"][2])
-                array_msg.cubes.append(cube)
-
-                # Desenha o objeto detectado no frame de visualização
+                # Opcional: Desenha na imagem (mesmo invisível, útil se gravar em bag depois)
                 x, y, w, h = item["bbox"]
                 cor_bgr = (0, 0, 255) if item["color"] == "vermelho" else (255, 0, 0) if item["color"] == "azul" else (255, 255, 255)
-                
                 cv2.rectangle(display_frame, (x, y), (x + w, y + h), cor_bgr, 2)
                 label = f"{item['waypoint'].upper()} | ID:{item['id']} | {item['color']}"
                 cv2.putText(display_frame, label, (x, max(y - 10, 15)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, cor_bgr, 2)
 
-            if len(array_msg.cubes) > 0:
-                self.pub.publish(array_msg)
+                # Verifica se o item da vez bate com o que o cérebro quer
+                if item["id"] == ALVO_ID and item["waypoint"] == ALVO_TIPO and item["color"] == ALVO_COR:
+                    alvo_encontrado = item
 
-            # Exibe o frame processado e atualiza os eventos gráficos
+            twist = Twist()
+
+            if alvo_encontrado is not None and self.estado_atual != "PARADO":
+                cam_x = alvo_encontrado["pose_3d"][0]
+                cam_y = alvo_encontrado["pose_3d"][1]
+                cam_z = alvo_encontrado["pose_3d"][2]
+                
+                vx, vy = self.calcular_velocidade_aproximacao(cam_x, cam_z)
+                twist.linear.x = float(vx)
+                twist.linear.y = float(vy)
+                #print(f'coordenadas x e z: {cam_x:4f,cam_y,cam_z},velocidades : {twist}') 
+
+                # --- TRANSIÇÃO DE ESTADOS ---
+                # Se a velocidade calculada for zero, é porque o robô chegou na distância certa (20cm)
+                if vx == 0.0 and vy == 0.0:
+                    if self.estado_atual == "BUSCAR_CUBO":
+                        self.get_logger().info("=========================================")
+                        self.get_logger().info(" CHEGOU NA TAG! Mudando alvo para contêiner...")
+                        self.get_logger().info("=========================================")
+                        #self.estado_atual = "BUSCAR_CUBO"
+                        
+                    elif self.estado_atual == "BUSCAR_CONTEINER":
+                        self.get_logger().info("=========================================")
+                        self.get_logger().info(" CHEGOU NO CONTÊINER! Parando o robô.")
+                        self.get_logger().info("=========================================")
+                        self.estado_atual = "PARADO"
+            else:
+                twist.linear.x = 0.0
+                twist.linear.y = 0.0
+
+            # print(f"ESTADO: {self.estado_atual} | Twist: X={twist.linear.x:.2f} Y={twist.linear.y:.2f}")
+            self.pub_cmd_vel.publish(twist)
+            
+            # Telas desativadas
             cv2.imshow("Visão do Robô", display_frame)
             cv2.waitKey(1)
 
         except Exception as e:
             self.get_logger().error(f'Erro no processamento da imagem: {e}')
 
-
-# ==============================================================================
-# PONTO DE ENTRADA DO SCRIPT
-# ==============================================================================
 def main(args=None):
     rclpy.init(args=args)
     node = VisionNode()
@@ -236,12 +304,10 @@ def main(args=None):
     except KeyboardInterrupt:
         pass
     finally:
-        # Garante que as janelas sejam fechadas ao pressionar Ctrl+C no terminal
         cv2.destroyAllWindows()
         node.destroy_node()
         if rclpy.ok():
             rclpy.shutdown()
-
 
 if __name__ == '__main__':
     main()
