@@ -112,26 +112,189 @@ def setup_btt1(_problem_expert):
 
 
 def setup_btt2(_problem_expert):
-    instances, predicates, goal = [], [], '(and )'
+    instances = [ 
+        'robot1 - robot',
+        'start - location',
+        'ws1 - location',
+        'ws2 - location',
+        'ws3 - location',
+        'ws7 - location'
+        's1 - slot',
+        's2 - slot',
+        's3 - slot',
+        'obj1 - object',
+        'obj3 - object',
+        'obj5 - object',
+        'obj20 - object',
+        'obj22 - object'
+    ]
+    predicates = [
+        '(at-robot robot1 start)',
+
+        '(slot-free robot1 s1)',
+        '(slot-free robot1 s2)',
+        '(slot-free robot1 s3)',
+
+        '(obj-at obj1 ws1)',
+        '(obj-at obj20 ws1)',
+
+        '(obj-at obj5 ws3)',
+
+        '(obj-at obj3 ws7)',
+        '(obj-at obj22 ws7)'
+    ]
+    goal = '(and (obj-at obj3 ws1)(obj-at obj1 ws2)(obj-at obj20 ws3)(obj-at obj22 ws3)(obj-at obj5 ws7)))'
     return instances, predicates, goal
 
 
 def setup_att1(_problem_expert):
-    instances, predicates, goal = [], [], '(and )'
+    instances = [
+        'robot1 - robot',
+
+        'start - location',
+        'ws1 - location',
+        'ws3 - location',
+        'ws4 - location',
+        'ws6 - location',
+        'ws8 - location',
+        'sh2 - location',
+
+        'cont10 - container',
+        'cont16 - container',
+
+        'obj20 - object',
+        'obj21 - object',
+        'obj22 - object',
+        'obj23 - object',
+        'obj24 - object',
+        'obj25 - object',
+
+        'obj12 - object',
+        'obj15 - object',
+        'obj16 - object'
+    ]
+    predicates = [
+        '(at-robot robot1 start)',
+        '(slot-free robot1 s1)',
+        '(slot-free robot1 s2)',
+        '(slot-free robot1 s3)',
+
+        '(container-at cont10 ws1)',
+        '(container-at cont16 ws8)',
+        
+        '(obj-at obj12 ws1)',
+        '(obj-at obj20 ws1)',
+        '(obj-at obj22 ws1)',
+
+        '(obj-at obj15 ws3)',
+
+        '(obj-at obj21 ws4)',
+        '(obj-at obj23 ws4)',
+        '(obj-at obj24 ws4)',
+
+        '(obj-at obj16 ws4)',
+        '(obj-at obj25 ws6)'
+    ]
+    goal = '(and (in-container obj21 cont10)(in-container obj23 cont16)(obj-at obj24 sh2)(obj-at obj20 ws3)(obj-at obj22 ws3)(on obj22 obj20)(obj-at obj25 ws1))'
     return instances, predicates, goal
 
 
 def setup_att2(_problem_expert):
-    instances, predicates, goal = [], [], '(and )'
+    instances = [
+        'robot1 - robot',
+
+        'start - location',
+        'ws1 - location',
+        'ws2 - location',
+        'ws4 - location',
+        'pp1 - location',
+        'sh1 - location',
+        'sh2 - location',
+
+        's1 - slot',
+        's2 - slot',
+        's3 - slot',
+
+        'cont10 - container',
+        'cont16 - container',
+
+        'obj1 - object',
+        'obj3 - object',
+        'obj5 - object',
+        'obj6 - object',
+        'obj19 - object',
+        'obj20 - object',
+        'obj21 - object',
+        'obj22 - object',
+    ]
+    predicates = [
+        '(at-robot robot1 start)',
+        '(slot-free robot1 s1)',
+        '(slot-free robot1 s2)',
+        '(slot-free robot1 s3)',
+
+        '(container-at cont10 ws1)',
+        '(container-at cont16 ws2)',
+
+        '(obj-at' ' obj1 ws2)',
+        '(obj-at obj19 ws2)',
+
+        '(obj-at obj3 ws4)',
+        '(obj-at obj6 ws4)',
+
+        '(obj-at obj5 pp1)',
+        '(obj-at obj21 pp1)',
+
+        '(obj-at obj20 sh1)',
+        '(obj-at obj22 sh2)'
+    ]
+    goal = '(and (in-container obj1 cont10)(in-container obj3 cont10)(in-container obj5 cont16)(in-container obj19 cont16)(obj-at obj6 pp1)(obj-at obj20 pp1)(obj-at obj21 sh1)(obj-at obj22 sh2))'
     return instances, predicates, goal
 
 
 def setup_amt(_problem_expert):
     instances = [
+        'robot1 - robot',
+        
+        'start - location',
+        'pp1 - location',
+        'pp2 - location',
+        'pp3 - location',
+        'pp4 - location',
+        'pp5 - location',
+        'pp6 - location',
+        'pp7 - location',
+
+        's1 - slot',
+        's2 - slot',
+        's3 - slot',
+
+        'tag1 - object',
+        'tag2 - object',
+        'tag3 - object',
+        'tag4 - object',
+        'tag5 - object',
+        'tag6 - object'
     ]
     predicates = [
+        '(at-robot robot1 start)',
+        '(slot-free robot1 s1)',
+        '(slot-free robot1 s2)',
+        '(slot-free robot1 s3)',
+
+        '(obj-at tag4 pp1)',
+
+        '(obj-at tag1 pp2)',
+
+        '(obj-at tag6 pp4)',
+
+        '(obj-at tag2 pp5)',
+        
+        '(obj-at tag5 pp6)',
+
+        '(obj-at tag3 pp7)',
     ]
-    goal = ''
+    goal = '(and (obj-at tag1 pp1)(obj-at tag2 pp2)(obj-at tag3 pp3)(obj-at tag4 pp4)(obj-at tag5 pp5)(obj-at tag6 pp6))'
     return instances, predicates, goal
 
 

@@ -32,7 +32,7 @@
   (:action pick-from-location
     :parameters (?r - robot ?o - object ?l - location ?s - slot)
     :precondition (and (at-robot ?r ?l) (obj-at ?o ?l) (slot-free ?r ?s))
-    :effect (and
+    :effect (and0000000000000
       (not (obj-at ?o ?l))
       (holding ?r ?o)
       (not (slot-free ?r ?s))
