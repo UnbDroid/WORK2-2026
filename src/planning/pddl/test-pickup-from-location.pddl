@@ -10,7 +10,7 @@
         cube1 - object
         cube2 - object
         cube3 - object
-        loc1 - location
+        loc2 - location
         slot1 - slot
         slot2 - slot
         slot3 - slot
@@ -19,9 +19,9 @@
 
     (:init
     
-        (at-robot robot1 loc1)
-        (obj-at cube1 loc1)
-        (obj-at cube2 loc1)
+        (at-robot robot1 loc2)
+        (obj-at cube1 loc2)
+        (obj-at cube2 loc2)
         (gripper-free robot1)
         (slot-free robot1 slot1)
         (slot-free robot1 slot2)
