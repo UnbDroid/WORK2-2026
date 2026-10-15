@@ -20,6 +20,7 @@
     (:init
     
         (at-robot robot1 loc1)
+        (gripper-free robot1)
         (holding-in robot1 cube1 slot1)
         (holding-in robot1 cube2 slot2)
 

@@ -22,6 +22,7 @@
         (at-robot robot1 loc1)
         (obj-at cube1 loc1)
         (obj-at cube2 loc1)
+        (gripper-free robot1)
         (slot-free robot1 slot1)
         (slot-free robot1 slot2)
         (slot-free robot1 slot3)
@@ -30,7 +31,7 @@
 
     (:goal (and
 
-            (holding robot1 cube1)
+            (holding-in robot1 cube1 slot1)
 
         ) 
     )

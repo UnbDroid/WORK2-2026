@@ -65,6 +65,8 @@ int slot1 = -450;
 int slot2 = 0;
 int slot3 = 450;
 int frente = -4850;
+int pos1 = -4350;
+int pos3 = -5350;
 
 FastAccelStepperEngine engine = FastAccelStepperEngine();
 FastAccelStepper *stepper1 = NULL;
@@ -83,13 +85,13 @@ void rotacionar(int npasso) {
 #define enablePin2 25
 
 //negativo = para cima
-int alt_giro = -20000;
+int alt_giro = -25000;
 int shelf = -40000;
 
 std::unordered_map<std::string, int> dict_alt = {
-    {"5cm", 58400},
-    {"10cm", 45000},
-    {"15cm", 35000},
+    {"5cm", 60000},
+    {"10cm", 40000},
+    {"15cm", 20000},
     {"bottom", 0},
     {"top", -19000}
 };
@@ -157,6 +159,18 @@ void garra_callback(const void *msgin)
     {
       rotacionar(frente);
       publish_status("frente");
+    }
+
+    else if (strcmp(garra_msg->data.data, "pos1") == 0)
+    {
+      rotacionar(pos1);
+      publish_status("pos1");
+    }
+    
+    else if (strcmp(garra_msg->data.data, "pos3") == 0)
+    {
+      rotacionar(pos3);
+      publish_status("pos3");
     }
 
     else if (strcmp(garra_msg->data.data, "alt_giro") == 0)

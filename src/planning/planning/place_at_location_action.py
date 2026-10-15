@@ -27,16 +27,16 @@ class PlaceCubeAtLocationAction(GripperPrimitives):
         self.step = PlaceCubeAtLocationStep.START
 
     def do_work(self):
-        args = self.current_arguments  # [robot, cube, location, slot] guarda os parâmetros mandados pela ação
+        args = self.current_arguments  # [robot, cube, location, slot, position] guarda os parâmetros mandados pela ação
 
         if self.step == PlaceCubeAtLocationStep.START:
             self.step = PlaceCubeAtLocationStep.TRANSLADAR
             self.send_feedback(0.01, 'posicionando em frente ao cubo')
-            #incluir aqui funcao que faz o robo recuar, ver questão de feedback para concluir, já que isso é realizado por send_commands(), que publica no tópico da garra que não tange as rodas e sua movimentação
-            time.sleep(1)
-            self._pending_reply = 'move' #temp
-            self._current_reply = 'move' 
-            self._reply_received = True 
+            self.send_command(f'transladar:{args[1]}') #indica que comando de transladar deve iniciar
+            #time.sleep(1)
+            #self._pending_reply = 'move' #temp
+            #self._current_reply = 'move' 
+            #self._reply_received = True 
 
         elif self.step == PlaceCubeAtLocationStep.TRANSLADAR and self.command_finished():
             self.step = PlaceCubeAtLocationStep.VERTICAL_CHASSI1
@@ -66,7 +66,7 @@ class PlaceCubeAtLocationAction(GripperPrimitives):
         elif self.step == PlaceCubeAtLocationStep.VERTICAL_CHASSI3 and self.command_finished():
             self.step = PlaceCubeAtLocationStep.GIRAR_AREA
             self.send_feedback(0.54, 'girando para área')
-            self.send_command('frente')
+            self.send_command(self.slot_to_cmd(args[4])) #manda para diferentes posições em vez de apenas para frente
 
         elif self.step == PlaceCubeAtLocationStep.GIRAR_AREA and self.command_finished():
             self.step = PlaceCubeAtLocationStep.VERTICAL_AREA1
