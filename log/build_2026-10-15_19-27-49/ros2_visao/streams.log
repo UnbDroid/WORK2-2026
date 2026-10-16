@@ -1,0 +1,23 @@
+[0.675s] Invoking command in '/home/daniel/unb/droid/WORK2-2026/src/ros2_visao': PS1=\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ PYTHONPATH=/home/daniel/unb/droid/WORK2-2026/build/ros2_visao/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/daniel/unb/droid/WORK2-2026/install/ros2_visao/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/ros2_visao build --build-base /home/daniel/unb/droid/WORK2-2026/build/ros2_visao/build install --record /home/daniel/unb/droid/WORK2-2026/build/ros2_visao/install.log --install-scripts $base/lib/ros2_visao --single-version-externally-managed install_data
+[0.887s] running egg_info
+[0.902s] writing ../../build/ros2_visao/ros2_visao.egg-info/PKG-INFO
+[0.902s] writing dependency_links to ../../build/ros2_visao/ros2_visao.egg-info/dependency_links.txt
+[0.902s] writing entry points to ../../build/ros2_visao/ros2_visao.egg-info/entry_points.txt
+[0.902s] writing requirements to ../../build/ros2_visao/ros2_visao.egg-info/requires.txt
+[0.903s] writing top-level names to ../../build/ros2_visao/ros2_visao.egg-info/top_level.txt
+[0.934s] reading manifest file '../../build/ros2_visao/ros2_visao.egg-info/SOURCES.txt'
+[0.934s] adding license file 'LICENSE'
+[0.935s] writing manifest file '../../build/ros2_visao/ros2_visao.egg-info/SOURCES.txt'
+[0.935s] running build
+[0.935s] running build_py
+[0.935s] running install
+[0.940s] running install_lib
+[0.956s] running install_data
+[0.956s] running install_egg_info
+[0.972s] removing '/home/daniel/unb/droid/WORK2-2026/install/ros2_visao/lib/python3.12/site-packages/ros2_visao-0.0.0-py3.12.egg-info' (and everything under it)
+[0.972s] Copying ../../build/ros2_visao/ros2_visao.egg-info to /home/daniel/unb/droid/WORK2-2026/install/ros2_visao/lib/python3.12/site-packages/ros2_visao-0.0.0-py3.12.egg-info
+[0.973s] running install_scripts
+[1.082s] Installing listener script to /home/daniel/unb/droid/WORK2-2026/install/ros2_visao/lib/ros2_visao
+[1.082s] Installing talker script to /home/daniel/unb/droid/WORK2-2026/install/ros2_visao/lib/ros2_visao
+[1.082s] writing list of installed files to '/home/daniel/unb/droid/WORK2-2026/build/ros2_visao/install.log'
+[1.108s] Invoked command in '/home/daniel/unb/droid/WORK2-2026/src/ros2_visao' returned '0': PS1=\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ PYTHONPATH=/home/daniel/unb/droid/WORK2-2026/build/ros2_visao/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/daniel/unb/droid/WORK2-2026/install/ros2_visao/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/ros2_visao build --build-base /home/daniel/unb/droid/WORK2-2026/build/ros2_visao/build install --record /home/daniel/unb/droid/WORK2-2026/build/ros2_visao/install.log --install-scripts $base/lib/ros2_visao --single-version-externally-managed install_data

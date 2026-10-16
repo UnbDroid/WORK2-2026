@@ -1,0 +1,61 @@
+[0.000000] (-) TimerEvent: {}
+[0.000582] (-) JobUnselected: {'identifier': 'planning'}
+[0.000618] (-) JobUnselected: {'identifier': 'robot_vision'}
+[0.000647] (ros2_visao) JobQueued: {'identifier': 'ros2_visao', 'dependencies': OrderedDict()}
+[0.000662] (ros2_visao) JobStarted: {'identifier': 'ros2_visao'}
+[0.099850] (-) TimerEvent: {}
+[0.200087] (-) TimerEvent: {}
+[0.300345] (-) TimerEvent: {}
+[0.400625] (-) TimerEvent: {}
+[0.468530] (ros2_visao) Command: {'cmd': ['/usr/bin/python3', '-W', 'ignore:setup.py install is deprecated', '-W', 'ignore:easy_install command is deprecated', 'setup.py', 'egg_info', '--egg-base', '../../build/ros2_visao', 'build', '--build-base', '/home/daniel/unb/droid/WORK2-2026/build/ros2_visao/build', 'install', '--record', '/home/daniel/unb/droid/WORK2-2026/build/ros2_visao/install.log', '--single-version-externally-managed', 'install_data'], 'cwd': '/home/daniel/unb/droid/WORK2-2026/src/ros2_visao', 'env': {'LESSOPEN': '| /usr/bin/lesspipe %s', 'USER': 'daniel', 'LC_TIME': 'pt_BR.UTF-8', 'XDG_SESSION_TYPE': 'wayland', 'SHLVL': '1', 'HOME': '/home/daniel', 'OLDPWD': '/home/daniel', 'DESKTOP_SESSION': 'ubuntu', 'GNOME_SHELL_SESSION_MODE': 'ubuntu', 'GTK_MODULES': 'gail:atk-bridge', 'LC_MONETARY': 'pt_BR.UTF-8', 'LC_CTYPE': 'pt_BR.UTF-8', 'SYSTEMD_EXEC_PID': '200246', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/run/user/1000/bus', 'COLORTERM': 'truecolor', 'IM_CONFIG_PHASE': '1', 'WAYLAND_DISPLAY': 'wayland-0', 'LOGNAME': 'daniel', '_': '/usr/bin/colcon', 'XDG_SESSION_CLASS': 'user', 'USERNAME': 'daniel', 'TERM': 'xterm-256color', 'GNOME_DESKTOP_SESSION_ID': 'this-is-deprecated', 'PATH': '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin', 'SESSION_MANAGER': 'local/comp-daniel:@/tmp/.ICE-unix/1932,unix/comp-daniel:/tmp/.ICE-unix/1932', 'XDG_MENU_PREFIX': 'gnome-', 'LC_ADDRESS': 'pt_BR.UTF-8', 'GNOME_TERMINAL_SCREEN': '/org/gnome/Terminal/screen/fc4941d6_5f9d_49a6_9c50_5fd0191f2716', 'GNOME_SETUP_DISPLAY': ':1', 'XDG_RUNTIME_DIR': '/run/user/1000', 'DISPLAY': ':0', 'LANG': 'en_US.UTF-8', 'XDG_CURRENT_DESKTOP': 'ubuntu:GNOME', 'LC_TELEPHONE': 'pt_BR.UTF-8', 'XMODIFIERS': '@im=ibus', 'XDG_SESSION_DESKTOP': 'ubuntu', 'XAUTHORITY': '/run/user/1000/.mutter-Xwaylandauth.681VW3', 'LS_COLORS': 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:', 'GNOME_TERMINAL_SERVICE': ':1.218', 'SSH_AGENT_LAUNCHER': 'gnome-keyring', 'SSH_AUTH_SOCK': '/run/user/1000/keyring/ssh', 'SHELL': '/bin/bash', 'LC_NAME': 'pt_BR.UTF-8', 'QT_ACCESSIBILITY': '1', 'GDMSESSION': 'ubuntu', 'LESSCLOSE': '/usr/bin/lesspipe %s %s', 'LC_MEASUREMENT': 'pt_BR.UTF-8', 'LC_IDENTIFICATION': 'pt_BR.UTF-8', 'QT_IM_MODULE': 'ibus', 'PWD': '/home/daniel/unb/droid/WORK2-2026/build/ros2_visao', 'LC_ALL': 'en_US.UTF-8', 'XDG_CONFIG_DIRS': '/etc/xdg/xdg-ubuntu:/etc/xdg', 'XDG_DATA_DIRS': '/usr/share/ubuntu:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop', 'LC_NUMERIC': 'pt_BR.UTF-8', 'LC_PAPER': 'pt_BR.UTF-8', 'COLCON': '1', 'VTE_VERSION': '6800', 'PYTHONPATH': '/home/daniel/unb/droid/WORK2-2026/build/ros2_visao/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/daniel/unb/droid/WORK2-2026/install/ros2_visao/lib/python3.10/site-packages:'}, 'shell': False}
+[0.500735] (-) TimerEvent: {}
+[0.600994] (-) TimerEvent: {}
+[0.611492] (ros2_visao) StdoutLine: {'line': b'running egg_info\n'}
+[0.611937] (ros2_visao) StdoutLine: {'line': b'creating ../../build/ros2_visao/ros2_visao.egg-info\n'}
+[0.612116] (ros2_visao) StdoutLine: {'line': b'writing ../../build/ros2_visao/ros2_visao.egg-info/PKG-INFO\n'}
+[0.612264] (ros2_visao) StdoutLine: {'line': b'writing dependency_links to ../../build/ros2_visao/ros2_visao.egg-info/dependency_links.txt\n'}
+[0.612424] (ros2_visao) StdoutLine: {'line': b'writing entry points to ../../build/ros2_visao/ros2_visao.egg-info/entry_points.txt\n'}
+[0.612593] (ros2_visao) StdoutLine: {'line': b'writing requirements to ../../build/ros2_visao/ros2_visao.egg-info/requires.txt\n'}
+[0.612703] (ros2_visao) StdoutLine: {'line': b'writing top-level names to ../../build/ros2_visao/ros2_visao.egg-info/top_level.txt\n'}
+[0.612774] (ros2_visao) StdoutLine: {'line': b"writing manifest file '../../build/ros2_visao/ros2_visao.egg-info/SOURCES.txt'\n"}
+[0.613801] (ros2_visao) StdoutLine: {'line': b"reading manifest file '../../build/ros2_visao/ros2_visao.egg-info/SOURCES.txt'\n"}
+[0.613911] (ros2_visao) StdoutLine: {'line': b"adding license file 'LICENSE'\n"}
+[0.614311] (ros2_visao) StdoutLine: {'line': b"writing manifest file '../../build/ros2_visao/ros2_visao.egg-info/SOURCES.txt'\n"}
+[0.614396] (ros2_visao) StdoutLine: {'line': b'running build\n'}
+[0.614444] (ros2_visao) StdoutLine: {'line': b'running build_py\n'}
+[0.614531] (ros2_visao) StdoutLine: {'line': b'creating /home/daniel/unb/droid/WORK2-2026/build/ros2_visao/build\n'}
+[0.614596] (ros2_visao) StdoutLine: {'line': b'creating /home/daniel/unb/droid/WORK2-2026/build/ros2_visao/build/lib\n'}
+[0.614666] (ros2_visao) StdoutLine: {'line': b'creating /home/daniel/unb/droid/WORK2-2026/build/ros2_visao/build/lib/ros2_visao\n'}
+[0.614729] (ros2_visao) StdoutLine: {'line': b'copying ros2_visao/teste.py -> /home/daniel/unb/droid/WORK2-2026/build/ros2_visao/build/lib/ros2_visao\n'}
+[0.614813] (ros2_visao) StdoutLine: {'line': b'copying ros2_visao/img_pub_node.py -> /home/daniel/unb/droid/WORK2-2026/build/ros2_visao/build/lib/ros2_visao\n'}
+[0.614915] (ros2_visao) StdoutLine: {'line': b'copying ros2_visao/trackbar.py -> /home/daniel/unb/droid/WORK2-2026/build/ros2_visao/build/lib/ros2_visao\n'}
+[0.615020] (ros2_visao) StdoutLine: {'line': b'copying ros2_visao/__init__.py -> /home/daniel/unb/droid/WORK2-2026/build/ros2_visao/build/lib/ros2_visao\n'}
+[0.615116] (ros2_visao) StdoutLine: {'line': b'copying ros2_visao/img_subpp_node.py -> /home/daniel/unb/droid/WORK2-2026/build/ros2_visao/build/lib/ros2_visao\n'}
+[0.615288] (ros2_visao) StdoutLine: {'line': b'running install\n'}
+[0.615500] (ros2_visao) StdoutLine: {'line': b'running install_lib\n'}
+[0.615896] (ros2_visao) StdoutLine: {'line': b'creating /home/daniel/unb/droid/WORK2-2026/install/ros2_visao/lib/python3.10/site-packages/ros2_visao\n'}
+[0.615973] (ros2_visao) StdoutLine: {'line': b'copying /home/daniel/unb/droid/WORK2-2026/build/ros2_visao/build/lib/ros2_visao/teste.py -> /home/daniel/unb/droid/WORK2-2026/install/ros2_visao/lib/python3.10/site-packages/ros2_visao\n'}
+[0.616106] (ros2_visao) StdoutLine: {'line': b'copying /home/daniel/unb/droid/WORK2-2026/build/ros2_visao/build/lib/ros2_visao/img_pub_node.py -> /home/daniel/unb/droid/WORK2-2026/install/ros2_visao/lib/python3.10/site-packages/ros2_visao\n'}
+[0.616210] (ros2_visao) StdoutLine: {'line': b'copying /home/daniel/unb/droid/WORK2-2026/build/ros2_visao/build/lib/ros2_visao/trackbar.py -> /home/daniel/unb/droid/WORK2-2026/install/ros2_visao/lib/python3.10/site-packages/ros2_visao\n'}
+[0.616334] (ros2_visao) StdoutLine: {'line': b'copying /home/daniel/unb/droid/WORK2-2026/build/ros2_visao/build/lib/ros2_visao/__init__.py -> /home/daniel/unb/droid/WORK2-2026/install/ros2_visao/lib/python3.10/site-packages/ros2_visao\n'}
+[0.616427] (ros2_visao) StdoutLine: {'line': b'copying /home/daniel/unb/droid/WORK2-2026/build/ros2_visao/build/lib/ros2_visao/img_subpp_node.py -> /home/daniel/unb/droid/WORK2-2026/install/ros2_visao/lib/python3.10/site-packages/ros2_visao\n'}
+[0.616796] (ros2_visao) StdoutLine: {'line': b'byte-compiling /home/daniel/unb/droid/WORK2-2026/install/ros2_visao/lib/python3.10/site-packages/ros2_visao/teste.py to teste.cpython-310.pyc\n'}
+[0.618990] (ros2_visao) StdoutLine: {'line': b'byte-compiling /home/daniel/unb/droid/WORK2-2026/install/ros2_visao/lib/python3.10/site-packages/ros2_visao/img_pub_node.py to img_pub_node.cpython-310.pyc\n'}
+[0.619388] (ros2_visao) StdoutLine: {'line': b'byte-compiling /home/daniel/unb/droid/WORK2-2026/install/ros2_visao/lib/python3.10/site-packages/ros2_visao/trackbar.py to trackbar.cpython-310.pyc\n'}
+[0.620618] (ros2_visao) StdoutLine: {'line': b'byte-compiling /home/daniel/unb/droid/WORK2-2026/install/ros2_visao/lib/python3.10/site-packages/ros2_visao/__init__.py to __init__.cpython-310.pyc\n'}
+[0.620766] (ros2_visao) StdoutLine: {'line': b'byte-compiling /home/daniel/unb/droid/WORK2-2026/install/ros2_visao/lib/python3.10/site-packages/ros2_visao/img_subpp_node.py to img_subpp_node.cpython-310.pyc\n'}
+[0.621310] (ros2_visao) StdoutLine: {'line': b'running install_data\n'}
+[0.621400] (ros2_visao) StdoutLine: {'line': b'creating /home/daniel/unb/droid/WORK2-2026/install/ros2_visao/share/ament_index\n'}
+[0.621487] (ros2_visao) StdoutLine: {'line': b'creating /home/daniel/unb/droid/WORK2-2026/install/ros2_visao/share/ament_index/resource_index\n'}
+[0.621561] (ros2_visao) StdoutLine: {'line': b'creating /home/daniel/unb/droid/WORK2-2026/install/ros2_visao/share/ament_index/resource_index/packages\n'}
+[0.621612] (ros2_visao) StdoutLine: {'line': b'copying resource/ros2_visao -> /home/daniel/unb/droid/WORK2-2026/install/ros2_visao/share/ament_index/resource_index/packages\n'}
+[0.621685] (ros2_visao) StdoutLine: {'line': b'copying package.xml -> /home/daniel/unb/droid/WORK2-2026/install/ros2_visao/share/ros2_visao\n'}
+[0.621744] (ros2_visao) StdoutLine: {'line': b'running install_egg_info\n'}
+[0.622790] (ros2_visao) StdoutLine: {'line': b'Copying ../../build/ros2_visao/ros2_visao.egg-info to /home/daniel/unb/droid/WORK2-2026/install/ros2_visao/lib/python3.10/site-packages/ros2_visao-0.0.0-py3.10.egg-info\n'}
+[0.623583] (ros2_visao) StdoutLine: {'line': b'running install_scripts\n'}
+[0.638355] (ros2_visao) StdoutLine: {'line': b'Installing listener script to /home/daniel/unb/droid/WORK2-2026/install/ros2_visao/lib/ros2_visao\n'}
+[0.638536] (ros2_visao) StdoutLine: {'line': b'Installing talker script to /home/daniel/unb/droid/WORK2-2026/install/ros2_visao/lib/ros2_visao\n'}
+[0.638727] (ros2_visao) StdoutLine: {'line': b"writing list of installed files to '/home/daniel/unb/droid/WORK2-2026/build/ros2_visao/install.log'\n"}
+[0.657533] (ros2_visao) CommandEnded: {'returncode': 0}
+[0.667061] (ros2_visao) JobEnded: {'identifier': 'ros2_visao', 'rc': 0}
+[0.667612] (-) EventReactorShutdown: {}

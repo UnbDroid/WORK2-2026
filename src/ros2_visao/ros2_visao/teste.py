@@ -185,7 +185,7 @@ class VisionNode(Node):
 
         # Parâmetros ajustáveis sem editar o código, ex:
         #   ros2 run <pacote> <executavel> --ros-args -p search_vy:=-0.15
-        self.declare_parameter('search_vy', 0.2)         # VELOCIDADE da translação na busca (m/s); o sinal define o sentido do 1º trecho
+        self.declare_parameter('search_vy', -0.1)         # VELOCIDADE da translação na busca (m/s); o sinal define o sentido do 1º trecho
         self.declare_parameter('search_sweep_time', 15.0)  # TEMPO (s) de cada trecho da busca; ao esgotar, inverte o sentido
         self.declare_parameter('search_max_legs', 3)      # nº máximo de trechos antes de desistir e parar (0 = varre para sempre)
         self.declare_parameter('stable_frames', 5)        # frames seguidos dentro da tolerância para considerar o alinhamento concluído

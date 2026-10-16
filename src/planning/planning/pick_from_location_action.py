@@ -31,12 +31,12 @@ class PickCubeFromLocationAction(GripperPrimitives):
         if self.step == PickCubeStep.START:
             self.step = PickCubeStep.TRANSLADAR
             self.send_feedback(0.01, 'posicionando em frente ao cubo')
-            # self.send_command(f'transladar:{args[1]}') #indica que comando de transladar deve iniciar
+            self.send_command(f'transladar:{args[1]}') #indica que comando de transladar deve iniciar
             #incluir aqui funcao que faz o robo recuar, ver questão de feedback para concluir, já que isso é realizado por send_commands(), que publica no tópico da garra que não tange as rodas e sua movimentação
-            time.sleep(1)
-            self._pending_reply = 'move' #temp
-            self._current_reply = 'move' 
-            self._reply_received = True 
+            # time.sleep(1)
+            # self._pending_reply = 'move' #temp
+            # self._current_reply = 'move' 
+            # self._reply_received = True 
 
         elif self.step == PickCubeStep.TRANSLADAR and self.command_finished():
             self.step = PickCubeStep.VERTICAL_AREA1
