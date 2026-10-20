@@ -27,7 +27,7 @@ class ColorDetector:
 
         #limites para o azul 
         self.blue_lower = np.array([90, 50, 50])
-        self.blue_upper = np.array([130, 255, 255])
+        self.blue_upper = np.array([130, 255, 0])
 
                 
         '''self.red_lower1 = np.array([0, 120, 70])
@@ -169,6 +169,7 @@ class ObjectClassifier:
 # 4. FASES DO COMPORTAMENTO (máquina de estados do nó)
 class Fase(Enum):
     IDLE = auto()       # aguardando comando da garra; NÃO publica nada em /cmd_vel
+    #AJUSTE = auto()     # ajusta a 20 cm da location após chegar no WP
     BUSCANDO = auto()   # fase 1: translada de lado, de frente para a mesa, procurando a tag
     ALINHANDO = auto()  # fase 2: tag avistada, alinhamento fino com o cubo
 
@@ -185,7 +186,7 @@ class VisionNode(Node):
 
         # Parâmetros ajustáveis sem editar o código, ex:
         #   ros2 run <pacote> <executavel> --ros-args -p search_vy:=-0.15
-        self.declare_parameter('search_vy', -0.1)         # VELOCIDADE da translação na busca (m/s); o sinal define o sentido do 1º trecho
+        self.declare_parameter('search_vy', -0.15)         # VELOCIDADE da translação na busca (m/s); o sinal define o sentido do 1º trecho
         self.declare_parameter('search_sweep_time', 15.0)  # TEMPO (s) de cada trecho da busca; ao esgotar, inverte o sentido
         self.declare_parameter('search_max_legs', 3)      # nº máximo de trechos antes de desistir e parar (0 = varre para sempre)
         self.declare_parameter('stable_frames', 5)        # frames seguidos dentro da tolerância para considerar o alinhamento concluído
@@ -247,7 +248,7 @@ class VisionNode(Node):
 
         eco = String()
         eco.data = self.comando_atual
-        self.pub_status.publish(eco)  # mesmo texto recebido: é o que o pick_from_location espera
+        self.pub_status.publish(eco)  # mcd ~/unb//droid/garra_microros/uros_ws/ mesmo texto recebido: é o que o pick_from_location espera
         self.get_logger().info(f'Alinhado. Eco enviado em /topico_garra_status: {eco.data}')
 
     # ------------------------------------------------------------------
@@ -257,8 +258,8 @@ class VisionNode(Node):
       Kp_x = 8.0
       Kp_z = 2.0
 
-      distancia_alvo_x = 0.114278
-      distancia_alvo_z = 0.602245
+      distancia_alvo_x = 0.133336  
+      distancia_alvo_z = 0.630304
       tolerancia_x = 0.01
       tolerancia_z = 0.01
 
@@ -302,7 +303,7 @@ class VisionNode(Node):
         vx = 0
         vy = 0
 
-     # print(f'                        ---------------Velocidade final: vx={vx:3f} e vy={vy:f}  A coordenada X atual: {delta_x:3f}, o erro lateral atual é:{erro_lateral:3f} , A coordenada Y atual: {delta_z:3f}, O erro frontal atual é:{erro_frontal:3f} ')
+      #print(f'                        ---------------Velocidade final: vx={vx:3f} e vy={vy:f}  A coordenada X atual: {delta_x:3f}, o erro lateral atual é:{erro_lateral:3f} , A coordenada Y atual: {delta_z:3f}, O erro frontal atual é:{erro_frontal:3f} ')
       return vy,-vx
 
     # ------------------------------------------------------------------
@@ -321,6 +322,7 @@ class VisionNode(Node):
         max_trechos = self.get_parameter('search_max_legs').value
         decorrido = (self.get_clock().now() - self.inicio_trecho).nanoseconds / 1e9
 
+        # aqui é a lógica do tempo para inverter, caso seja utilizado 
         if decorrido >= tempo_trecho:
             self.trechos_feitos += 1
             if max_trechos > 0 and self.trechos_feitos >= max_trechos:
