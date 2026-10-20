@@ -1,0 +1,5 @@
+[0.000000] (-) TimerEvent: {}
+[0.000596] (-) JobUnselected: {'identifier': 'planning'}
+[0.000649] (-) JobUnselected: {'identifier': 'robot_vision'}
+[0.000772] (-) JobUnselected: {'identifier': 'ros2_visao'}
+[0.000963] (-) EventReactorShutdown: {}
