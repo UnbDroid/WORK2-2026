@@ -1,3 +1,0 @@
-version: "1.4.0"
-description: "Fast acceleration stepper motor control for ESP-IDF"
-dependencies: {}
