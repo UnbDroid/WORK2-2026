@@ -74,7 +74,7 @@ class MoveAction(ActionExecutorClient):
     def on_activate(self, state):
         try:
             self._nav_done = False
-       	    self._nav_success = False
+            self._nav_success = False
 
             args = self.current_arguments
             destination = args[-1]  # ajustar o índice se necessário

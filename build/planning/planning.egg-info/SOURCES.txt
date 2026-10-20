@@ -1,6 +1,7 @@
 package.xml
 setup.cfg
 setup.py
+<<<<<<< HEAD
 behaviour_trees/package.xml
 config/locations.yaml
 config/params.yaml
@@ -12,6 +13,30 @@ planning/__init__.py
 planning/move_action.py
 planning/pick_waypoints.py
 planning/planning_controller.py
+=======
+launch/full_test.launch.py
+launch/plansys2.launch.py
+pddl/domain.pddl
+pddl/problem-amt.pddl
+pddl/problem-att1.pddl
+pddl/problem-att2.pddl
+pddl/problem-bmt.pddl
+pddl/problem-btt1.pddl
+pddl/problem-btt2.pddl
+pddl/sas_plan
+pddl/test-pickup-from-location.pddl
+pddl/test-stack.pddl
+pddl/teste-place-at-location.pddl
+planning/__init__.py
+planning/gripper_primitives.py
+planning/move_action.py
+planning/pick_from_container_action.py
+planning/pick_from_location_action.py
+planning/place_at_location_action.py
+planning/place_in_container_action.py
+planning/stack_action.py
+planning/unstack_action.py
+>>>>>>> garra_nao_simultanea
 planning.egg-info/PKG-INFO
 planning.egg-info/SOURCES.txt
 planning.egg-info/dependency_links.txt

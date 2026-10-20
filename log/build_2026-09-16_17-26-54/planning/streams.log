@@ -1,0 +1,43 @@
+[1.584s] Invoking command in '/home/daniel/unb/droid/WORK2-2026/build/planning': PS1=\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ PYTHONPATH=/home/daniel/unb/droid/WORK2-2026/build/planning/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/daniel/unb/droid/WORK2-2026/install/planning/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/daniel/unb/droid/WORK2-2026/build/planning/build --no-deps symlink_data
+[1.988s] running develop
+[2.240s] running egg_info
+[2.240s] creating planning.egg-info
+[2.264s] writing planning.egg-info/PKG-INFO
+[2.265s] writing dependency_links to planning.egg-info/dependency_links.txt
+[2.265s] writing entry points to planning.egg-info/entry_points.txt
+[2.265s] writing requirements to planning.egg-info/requires.txt
+[2.266s] writing top-level names to planning.egg-info/top_level.txt
+[2.266s] writing manifest file 'planning.egg-info/SOURCES.txt'
+[2.312s] reading manifest file 'planning.egg-info/SOURCES.txt'
+[2.313s] writing manifest file 'planning.egg-info/SOURCES.txt'
+[2.339s] running build_ext
+[2.341s] Creating /home/daniel/unb/droid/WORK2-2026/install/planning/lib/python3.12/site-packages/planning.egg-link (link to .)
+[2.342s] Installing move_action script to /home/daniel/unb/droid/WORK2-2026/install/planning/lib/planning
+[2.342s] Installing pick_from_container_action script to /home/daniel/unb/droid/WORK2-2026/install/planning/lib/planning
+[2.343s] Installing pick_from_location_action script to /home/daniel/unb/droid/WORK2-2026/install/planning/lib/planning
+[2.343s] Installing place_at_location_action script to /home/daniel/unb/droid/WORK2-2026/install/planning/lib/planning
+[2.343s] Installing place_in_container_action script to /home/daniel/unb/droid/WORK2-2026/install/planning/lib/planning
+[2.343s] Installing planning_controller script to /home/daniel/unb/droid/WORK2-2026/install/planning/lib/planning
+[2.344s] Installing stack_action script to /home/daniel/unb/droid/WORK2-2026/install/planning/lib/planning
+[2.344s] Installing unstack_action script to /home/daniel/unb/droid/WORK2-2026/install/planning/lib/planning
+[2.344s] 
+[2.344s] Installed /home/daniel/unb/droid/WORK2-2026/build/planning
+[2.344s] running symlink_data
+[2.345s] creating /home/daniel/unb/droid/WORK2-2026/install/planning/share/ament_index
+[2.345s] creating /home/daniel/unb/droid/WORK2-2026/install/planning/share/ament_index/resource_index
+[2.345s] creating /home/daniel/unb/droid/WORK2-2026/install/planning/share/ament_index/resource_index/packages
+[2.345s] symbolically linking /home/daniel/unb/droid/WORK2-2026/build/planning/resource/planning -> /home/daniel/unb/droid/WORK2-2026/install/planning/share/ament_index/resource_index/packages
+[2.345s] symbolically linking /home/daniel/unb/droid/WORK2-2026/build/planning/package.xml -> /home/daniel/unb/droid/WORK2-2026/install/planning/share/planning
+[2.345s] creating /home/daniel/unb/droid/WORK2-2026/install/planning/share/planning/launch
+[2.345s] symbolically linking /home/daniel/unb/droid/WORK2-2026/build/planning/launch/plansys2.launch.py -> /home/daniel/unb/droid/WORK2-2026/install/planning/share/planning/launch
+[2.345s] creating /home/daniel/unb/droid/WORK2-2026/install/planning/share/planning/pddl
+[2.345s] symbolically linking /home/daniel/unb/droid/WORK2-2026/build/planning/pddl/problem-att2.pddl -> /home/daniel/unb/droid/WORK2-2026/install/planning/share/planning/pddl
+[2.346s] symbolically linking /home/daniel/unb/droid/WORK2-2026/build/planning/pddl/problem-btt2.pddl -> /home/daniel/unb/droid/WORK2-2026/install/planning/share/planning/pddl
+[2.346s] symbolically linking /home/daniel/unb/droid/WORK2-2026/build/planning/pddl/domain.pddl -> /home/daniel/unb/droid/WORK2-2026/install/planning/share/planning/pddl
+[2.346s] symbolically linking /home/daniel/unb/droid/WORK2-2026/build/planning/pddl/test-pickup-from-location.pddl -> /home/daniel/unb/droid/WORK2-2026/install/planning/share/planning/pddl
+[2.346s] symbolically linking /home/daniel/unb/droid/WORK2-2026/build/planning/pddl/problem-btt1.pddl -> /home/daniel/unb/droid/WORK2-2026/install/planning/share/planning/pddl
+[2.346s] symbolically linking /home/daniel/unb/droid/WORK2-2026/build/planning/pddl/sas_plan -> /home/daniel/unb/droid/WORK2-2026/install/planning/share/planning/pddl
+[2.346s] symbolically linking /home/daniel/unb/droid/WORK2-2026/build/planning/pddl/problem-bmt.pddl -> /home/daniel/unb/droid/WORK2-2026/install/planning/share/planning/pddl
+[2.346s] symbolically linking /home/daniel/unb/droid/WORK2-2026/build/planning/pddl/problem-amt.pddl -> /home/daniel/unb/droid/WORK2-2026/install/planning/share/planning/pddl
+[2.347s] symbolically linking /home/daniel/unb/droid/WORK2-2026/build/planning/pddl/problem-att1.pddl -> /home/daniel/unb/droid/WORK2-2026/install/planning/share/planning/pddl
+[2.379s] Invoked command in '/home/daniel/unb/droid/WORK2-2026/build/planning' returned '0': PS1=\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ PYTHONPATH=/home/daniel/unb/droid/WORK2-2026/build/planning/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/daniel/unb/droid/WORK2-2026/install/planning/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/daniel/unb/droid/WORK2-2026/build/planning/build --no-deps symlink_data

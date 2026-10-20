@@ -1,0 +1,5 @@
+  File "/home/daniel/unb/droid/WORK2-2026/install/ros2_visao/lib/python3.12/site-packages/ros2_visao/teste.py", line 252
+    esmo texto recebido: é o que o pick_from_location espera
+         ^^^^^
+SyntaxError: invalid syntax
+

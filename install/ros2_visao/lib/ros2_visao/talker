@@ -1,10 +1,18 @@
 #!/usr/bin/python3
+<<<<<<< HEAD
 # EASY-INSTALL-ENTRY-SCRIPT: 'ros2-visao','console_scripts','talker'
+=======
+# EASY-INSTALL-ENTRY-SCRIPT: 'ros2-visao==0.0.0','console_scripts','talker'
+>>>>>>> garra_nao_simultanea
 import re
 import sys
 
 # for compatibility with easy_install; see #2198
+<<<<<<< HEAD
 __requires__ = 'ros2-visao'
+=======
+__requires__ = 'ros2-visao==0.0.0'
+>>>>>>> garra_nao_simultanea
 
 try:
     from importlib.metadata import distribution
@@ -30,4 +38,8 @@ globals().setdefault('load_entry_point', importlib_load_entry_point)
 
 if __name__ == '__main__':
     sys.argv[0] = re.sub(r'(-script\.pyw?|\.exe)?$', '', sys.argv[0])
+<<<<<<< HEAD
     sys.exit(load_entry_point('ros2-visao', 'console_scripts', 'talker')())
+=======
+    sys.exit(load_entry_point('ros2-visao==0.0.0', 'console_scripts', 'talker')())
+>>>>>>> garra_nao_simultanea

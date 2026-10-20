@@ -1,3 +1,7 @@
 [console_scripts]
+<<<<<<< HEAD
 listener = ros2_visao.testedoiscentro:main
+=======
+listener = ros2_visao.teste:main
+>>>>>>> garra_nao_simultanea
 talker = ros2_visao.img_pub_node:main

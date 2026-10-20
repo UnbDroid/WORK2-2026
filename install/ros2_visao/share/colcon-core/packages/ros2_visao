@@ -1,1 +1,5 @@
+<<<<<<< HEAD
 apriltag:cv2:cv_bridge:numpy:rclpy:robot_vision:std_msgs
+=======
+apriltag:cv2:cv_bridge:numpy:rclpy:std_msgs
+>>>>>>> garra_nao_simultanea

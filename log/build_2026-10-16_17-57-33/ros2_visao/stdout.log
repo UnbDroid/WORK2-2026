@@ -1,0 +1,24 @@
+running egg_info
+writing ../../build/ros2_visao/ros2_visao.egg-info/PKG-INFO
+writing dependency_links to ../../build/ros2_visao/ros2_visao.egg-info/dependency_links.txt
+writing entry points to ../../build/ros2_visao/ros2_visao.egg-info/entry_points.txt
+writing requirements to ../../build/ros2_visao/ros2_visao.egg-info/requires.txt
+writing top-level names to ../../build/ros2_visao/ros2_visao.egg-info/top_level.txt
+reading manifest file '../../build/ros2_visao/ros2_visao.egg-info/SOURCES.txt'
+adding license file 'LICENSE'
+writing manifest file '../../build/ros2_visao/ros2_visao.egg-info/SOURCES.txt'
+running build
+running build_py
+copying ros2_visao/teste.py -> /home/daniel/unb/droid/WORK2-2026/build/ros2_visao/build/lib/ros2_visao
+running install
+running install_lib
+copying /home/daniel/unb/droid/WORK2-2026/build/ros2_visao/build/lib/ros2_visao/teste.py -> /home/daniel/unb/droid/WORK2-2026/install/ros2_visao/lib/python3.12/site-packages/ros2_visao
+byte-compiling /home/daniel/unb/droid/WORK2-2026/install/ros2_visao/lib/python3.12/site-packages/ros2_visao/teste.py to teste.cpython-312.pyc
+running install_data
+running install_egg_info
+removing '/home/daniel/unb/droid/WORK2-2026/install/ros2_visao/lib/python3.12/site-packages/ros2_visao-0.0.0-py3.12.egg-info' (and everything under it)
+Copying ../../build/ros2_visao/ros2_visao.egg-info to /home/daniel/unb/droid/WORK2-2026/install/ros2_visao/lib/python3.12/site-packages/ros2_visao-0.0.0-py3.12.egg-info
+running install_scripts
+Installing listener script to /home/daniel/unb/droid/WORK2-2026/install/ros2_visao/lib/ros2_visao
+Installing talker script to /home/daniel/unb/droid/WORK2-2026/install/ros2_visao/lib/ros2_visao
+writing list of installed files to '/home/daniel/unb/droid/WORK2-2026/build/ros2_visao/install.log'
