@@ -6,6 +6,7 @@
         slot1 slot2 slot3 - slot
         start loc1 loc3 - location
         cube1 cube2 cube3 - object
+        p1l1 p2l1 p3l1 - position
     )
 
     (:init
@@ -17,16 +18,19 @@
         (obj-at cube1 loc3)
         (obj-at cube2 loc3)
         (obj-at cube3 loc3)
-
-
+        (position-free loc1 p1l1)
+        (position-free loc1 p2l1)
+        (position-free loc1 p3l1)
+        (connected start loc3)
+        (connected loc3 loc1)
     )
 
     (:goal
         (and
-            (at-robot robot1 loc1)
             (obj-at cube3 loc1)
             (obj-at cube2 loc1)
             (obj-at cube1 loc1)   
         )
     )
+
 )

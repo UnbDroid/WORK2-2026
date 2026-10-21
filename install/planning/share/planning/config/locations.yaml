@@ -1,7 +1,1 @@
-
-/**:
-  ros__parameters:
-    locations:
-      start: [-0.9969558715820312, -0.2346968650817871, 0.0]
-      loc1: [2.5292553901672363, 2.026285409927368, 0.0]
-      loc3: [1.9300599098205566, 1.05706787109375, 0.0]
+/home/daniel/unb/droid/WORK2-2026/build/planning/config/locations.yaml

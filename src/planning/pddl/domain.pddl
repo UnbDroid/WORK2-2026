@@ -21,12 +21,12 @@
     (position-free ?l - location ?p - position)          ; posições de deixar os cubos disponíveis
     (on ?top - object ?bottom - object ?l - location)    ; ?top está empilhado sobre ?bottom e especifica onde eles ficam empilhados
     (gripper-free ?r - robot)                            ; novo predicado: garra/executor ocupado
+    (connected ?from - location ?to - location)
   )
-
 
   (:action move
     :parameters (?r - robot ?from - location ?to - location)
-    :precondition (at-robot ?r ?from)
+    :precondition (and (at-robot ?r ?from) (connected ?from ?to))
     :effect (and (not (at-robot ?r ?from)) (at-robot ?r ?to))
   )
 
