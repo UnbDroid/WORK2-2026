@@ -4,7 +4,7 @@
     (:objects
         robot1 - robot
         slot1 slot2 slot3 - slot
-        start loc3 - location
+        start loc1 loc3 - location
         cube1 cube2 cube3 - object
     )
 
@@ -23,10 +23,10 @@
 
     (:goal
         (and
-            (at-robot robot1 loc3)
-            (holding-in robot1 cube1 slot1)
-            (holding-in robot1 cube2 slot2)
-            (holding-in robot1 cube3 slot3)
+            (at-robot robot1 loc1)
+            (obj-at cube3 loc1)
+            (obj-at cube2 loc1)
+            (obj-at cube1 loc1)   
         )
     )
 )
