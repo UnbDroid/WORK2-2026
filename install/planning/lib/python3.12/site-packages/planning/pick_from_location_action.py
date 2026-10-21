@@ -17,6 +17,7 @@ class PickCubeStep(Enum):
     GIRAR_CHASSI = auto() #podem ser simultaneos girar e vertical_chassi2 SE ALTURA FOR MAIOR QUE DO ROBO, a
     VERTICAL_CHASSI2 = auto()  #vertical para altura dos slots
     ABRIR = auto()
+    FINISH = auto()
 
 
 class PickCubeFromLocationAction(GripperPrimitives):
@@ -78,7 +79,7 @@ class PickCubeFromLocationAction(GripperPrimitives):
             self.send_command('abrir')
 
         elif self.step == PickCubeStep.ABRIR and self.command_finished():
-            self.step = PickCubeStep.START
+            self.step = PickCubeStep.FINISH
             self.finish(True, 1.0, 'pick-from-location concluído')     
 
 

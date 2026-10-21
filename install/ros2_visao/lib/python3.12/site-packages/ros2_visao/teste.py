@@ -81,7 +81,6 @@ class ColorDetector:
                     })
         return color_objects
 
-
 # 2. CLASSE DE DETECÇÃO DE APRILTAGS
 class AprilTagDetector:
     def __init__(self):
@@ -109,7 +108,6 @@ class AprilTagDetector:
                 "pose_3d": (float(pose[0][3]), float(pose[1][3]), float(pose[2][3]))
             })
         return tags
-
 
 # 3. MOTOR DE CLASSIFICAÇÃO
 class ObjectClassifier:
@@ -399,7 +397,6 @@ class VisionNode(Node):
 
         except Exception as e:
             self.get_logger().error(f'Erro no processamento da imagem: {e}')
-
 
 def main(args=None):
     rclpy.init(args=args)

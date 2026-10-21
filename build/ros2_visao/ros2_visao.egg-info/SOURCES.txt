@@ -1,8 +1,3 @@
-<<<<<<< HEAD
-package.xml
-setup.cfg
-setup.py
-=======
 LICENSE
 package.xml
 setup.cfg
@@ -14,24 +9,12 @@ setup.py
 ../../build/ros2_visao/ros2_visao.egg-info/requires.txt
 ../../build/ros2_visao/ros2_visao.egg-info/top_level.txt
 ../../build/ros2_visao/ros2_visao.egg-info/zip-safe
->>>>>>> garra_nao_simultanea
 resource/ros2_visao
 ros2_visao/__init__.py
 ros2_visao/img_pub_node.py
 ros2_visao/img_subpp_node.py
 ros2_visao/teste.py
-<<<<<<< HEAD
-ros2_visao/testedoiscentro.py
-ros2_visao.egg-info/PKG-INFO
-ros2_visao.egg-info/SOURCES.txt
-ros2_visao.egg-info/dependency_links.txt
-ros2_visao.egg-info/entry_points.txt
-ros2_visao.egg-info/requires.txt
-ros2_visao.egg-info/top_level.txt
-ros2_visao.egg-info/zip-safe
-=======
 ros2_visao/trackbar.py
 test/test_copyright.py
 test/test_flake8.py
 test/test_pep257.py
->>>>>>> garra_nao_simultanea
