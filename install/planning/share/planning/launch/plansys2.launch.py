@@ -64,6 +64,38 @@ def generate_launch_description():
     }]
 )
 
+    pick_from_location_action_node = LifecycleNode(
+        package='planning',
+        executable='pick_from_location_action',
+        name='pick_from_location_action',
+        namespace='',
+        output='screen',
+        parameters=[{
+            'action_name': 'pick-from-location',
+        }]
+    )
+
+    place_at_location_action_node = LifecycleNode(
+        package='planning',
+        executable='place_at_location_action',
+        name='place_at_location_action',
+        namespace='',
+        output='screen',
+        parameters=[{
+            'action_name': 'place-at-location',
+        }]
+    )
+
+    stack_action_node = LifecycleNode(
+        package='planning',
+        executable='stack_action',
+        name='stack_action',
+        namespace='',
+        output='screen',
+        parameters=[{
+            'action_name': 'stack',
+        }]
+    )
 
     # no gerenciador que popula o problema e aciona a execucao do plano
     controller_node = Node(
@@ -81,5 +113,8 @@ def generate_launch_description():
     problem_file_arg,
     plansys2_cmd,
     move_action_node,
+    pick_from_location_action_node,
+    place_at_location_action_node,
+    stack_action_node,
     # controller_node,
 ])

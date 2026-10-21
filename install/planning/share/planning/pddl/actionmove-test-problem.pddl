@@ -4,7 +4,7 @@
     (:objects
         robot1 - robot
         slot1 slot2 slot3 - slot
-        start wp1 wp2 - location
+        start loc3 - location
         cube1 cube2 cube3 - object
     )
 
@@ -14,9 +14,9 @@
         (slot-free robot1 slot2)
         (slot-free robot1 slot3)
         (gripper-free robot1)
-        (object-at cube1 loc3)
-        (object-at cube2 loc3)
-        (object-at cube3 loc3)
+        (obj-at cube1 loc3)
+        (obj-at cube2 loc3)
+        (obj-at cube3 loc3)
 
 
     )
