@@ -1,21 +1,27 @@
+import cv2 
+import rclpy
+from sensor_msgs.msg import Image
+from rclpy.node import Node 
+from cv_bridge import CvBridge 
+from std_msgs.msg import String
 
 class ImagePublisher(Node):
     def __init__(self):
         super().__init__('img_pub_node')
 
-        # 1. Inscrição para escutar a garra
+        # 1. INSCRIÇÃO ESSENCIAL: Faltava escutar o tópico da garra aqui!
         self.sub_garra = self.create_subscription(String, '/topico_garra', self.garra_callback, 10)
 
-        # 2. Configurações do ROS 2
+        # 2. Configurações básicas
         self.bridgeObject = CvBridge()
         self.topicNameFrames = '/cam/image_raw'
         self.queueSize = 10 
         self.publisher = self.create_publisher(Image, self.topicNameFrames, self.queueSize)
 
-        # 3. Chave de controle (Começa falso para não publicar nada)
+        # 3. Variável de controle (Começa travado, só publica após o comando)
         self.publicando = False
 
-        # 4. Inicializa a câmera com segurança logo na subida do nó
+        # 4. Inicializa a câmera com segurança no início
         self.cameraDevice = 0 
         self.camera = cv2.VideoCapture(self.cameraDevice) 
 
@@ -26,7 +32,7 @@ class ImagePublisher(Node):
             for _ in range(30):
                 self.camera.read()
 
-        # 5. Timer criado, mas que respeita a chave 'self.publicando'
+        # 5. Timer rodando em segundo plano, mas controlado pela flag 'self.publicando'
         self.periodCommunication = 0.033
         self.timer = self.create_timer(self.periodCommunication, self.timer_callbackFunction)
         self.i = 0
@@ -34,13 +40,13 @@ class ImagePublisher(Node):
     def garra_callback(self, msg):
         cmd = msg.data
         if not cmd.startswith('transladar:'):
-            return  # Ignora outros comandos (fechar, girar, etc.)
-          
+            return  # Ignora outros comandos da garra (fechar, girar, etc.)
+
         self.get_logger().info(f'Comando recebido: {cmd} -> Liberando envio de imagens!')
-        self.publicando = True  # Libera a publicação no timer
+        self.publicando = True  # Libera o timer para comecar a publicar
 
     def timer_callbackFunction(self):
-        # Se a garra não mandou o comando ainda, pula o ciclo
+        # Se a garra ainda não mandou o comando de transladar, não faz nada
         if not self.publicando:
             return
 
@@ -54,3 +60,21 @@ class ImagePublisher(Node):
             self.i += 1
         else:
             self.get_logger().warn('Aguardando imagem da câmera...')
+
+def main(args=None):
+    rclpy.init(args=args)
+    publisherObject = ImagePublisher()
+    
+    try:
+        rclpy.spin(publisherObject)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        # Fecha a câmera com segurança apenas se ela foi aberta
+        if publisherObject.camera.isOpened():
+            publisherObject.camera.release()
+        publisherObject.destroy_node()
+        rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
