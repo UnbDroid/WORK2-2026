@@ -22,7 +22,12 @@
         (position-free loc1 p2l1)
         (position-free loc1 p3l1)
         (connected start loc3)
-        (connected loc3 loc1)
+        (connected loc3 loc1)droid@DROID:~/WORK2-2026 $ git rebase --abort
+droid@DROID:~/WORK2-2026 $ git add build/planning/colcon_command_prefix_setup_py.sh.env
+The following paths are ignored by one of your .gitignore files:
+build
+hint: Use -f if you really want to add them.
+hint: Disable this message with "git config advice.addIgnoredFile false"
     )
 
     (:goal
