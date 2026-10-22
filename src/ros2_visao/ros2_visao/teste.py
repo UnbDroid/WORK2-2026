@@ -91,56 +91,73 @@ class AprilTagDetector:
 
 # 3. MOTOR DE CLASSIFICAÇÃO
 class ObjectClassifier:
-    def __init__(self):
-        # Sem mapa de tags fixo! Agora aceitamos qualquer uma.
-        pass
-
-    def is_tag_inside_color(self, contour, tag_center, tag_bbox, color_bbox, margin=15):
+    @staticmethod
+    def is_tag_inside_color(contour, tag_center, tag_bbox, color_bbox, margin=15):
         pt = (int(tag_center[0]), int(tag_center[1]))
+
         if cv2.pointPolygonTest(contour, pt, False) >= 0:
             return True
+
         x, y, w, h = color_bbox
         tx, ty, tw, th = tag_bbox
-        return (x < tx + tw + margin and x + w > tx - margin and 
-                y < ty + th + margin and y + h > ty - margin)
+
+        tx_min, ty_min = tx - margin, ty - margin
+        tx_max, ty_max = tx + tw + margin, ty + th + margin
+
+        return (x < tx_max and x + w > tx_min and y < ty_max and y + h > ty_min)
 
     def classify(self, tags, color_objects):
         classified_objects = []
 
-        # 1. PROCESSA TODAS AS TAGS
+        # 1. Associa Tags a Cores (Cubos ou Zonas)
         for tag in tags:
-            classified_objects.append({
-                "id": tag["id"],
-                "color": "qualquer",
-                "waypoint": "tag", 
-                "bbox": tag["bbox"],
-                "pose_3d": tag["pose_3d"]
-            })
-
-            # Marca a mancha de cor atrás da tag como processada
+            matched = False
             for color_obj in color_objects:
-                if not color_obj["processed"]:
-                    if self.is_tag_inside_color(color_obj["contour"], tag["center"], tag["bbox"], color_obj["bbox"]):
-                        color_obj["processed"] = True 
-                        break 
+                if color_obj["processed"]:
+                    continue
 
-        # 2. PROCESSA O QUE SOBROU (Contêineres)
+                if self.is_tag_inside_color(
+                    color_obj["contour"],
+                    tag["center"],
+                    tag["bbox"],
+                    color_obj["bbox"]
+                ):
+                    color_obj["processed"] = True
+                    matched = True
+                    classified_objects.append({
+                        "id": tag["id"],
+                        "color": color_obj["color"],
+                        "waypoint": "cubo",
+                        "bbox": color_obj["bbox"],
+                        "pose_3d": tag["pose_3d"]
+                    })
+                    break
+
+            if not matched:
+                classified_objects.append({
+                    "id": tag["id"],
+                    "color": "sem_cor",
+                    "waypoint": "zona",
+                    "bbox": tag["bbox"],
+                    "pose_3d": tag["pose_3d"]
+                })
+
+        # 2. Registra Cores Restantes sem Tag (Contêineres)
         for color_obj in color_objects:
             if not color_obj["processed"]:
                 x, y, w, h = color_obj["bbox"]
                 cx, cy = x + w // 2, y + h // 2
-                
                 pos_x = (cx - 320) / 500.0
                 pos_y = (cy - 240) / 500.0
-                estimativa_z = 80.0 / (w + 0.1) # Profundidade baseada na largura
 
                 classified_objects.append({
                     "id": -1,
                     "color": color_obj["color"],
                     "waypoint": "conteiner",
                     "bbox": color_obj["bbox"],
-                    "pose_3d": (pos_x, pos_y, estimativa_z)
-                })                
+                    "pose_3d": (pos_x, pos_y, 1.0)
+                })
+
         return classified_objects
 
 
@@ -190,9 +207,9 @@ class VisionNode(Node):
     # Integração com a garra
     # ------------------------------------------------------------------
     @staticmethod
-    def cubo_para_tag(nome_cubo):
+    def alvo_para_tag(nome_alvo):
         """'cube3' -> 3. Ajuste aqui se o id da AprilTag não for o número do nome do cubo no PDDL."""
-        m = re.search(r'(\d+)$', nome_cubo.strip())
+        m = re.search(r'(\d+)$', nome_alvo.strip())
         return int(m.group(1)) if m else None
 
     def garra_callback(self, msg):
@@ -200,9 +217,9 @@ class VisionNode(Node):
         if not cmd.startswith('transladar:'):
             return  # ignora os outros comandos da garra (alt_giro, COMBO:..., fechar, etc.)
 
-        alvo = self.cubo_para_tag(cmd.split(':', 1)[1])
+        alvo = self.alvo_para_tag(cmd.split(':', 1)[1])
         if alvo is None:
-            self.get_logger().error(f'Comando inválido, não consegui extrair o id do cubo: {cmd}')
+            self.get_logger().error(f'Comando inválido, não consegui extrair o id do alvo: {cmd}')
             return
 
         self.comando_atual = cmd
@@ -346,7 +363,7 @@ class VisionNode(Node):
                 cv2.putText(display_frame, label, (x, max(y - 10, 15)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, cor_bgr, 2)
 
                 # Só interessa a tag do cubo pedido pela garra
-                if (self.alvo_id is not None and item["waypoint"] == "tag"
+                if (self.alvo_id is not None 
                         and item["id"] == self.alvo_id):
                     alvo_encontrado = item
 
