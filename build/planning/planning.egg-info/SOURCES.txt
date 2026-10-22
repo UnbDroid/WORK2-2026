@@ -1,6 +1,7 @@
 package.xml
 setup.cfg
 setup.py
+<<<<<<< HEAD
 config/locations.yaml
 launch/plansys2.launch.py
 pddl/actionmove-test-problem.pddl
@@ -35,3 +36,17 @@ planning.egg-info/requires.txt
 planning.egg-info/top_level.txt
 planning.egg-info/zip-safe
 resource/planning
+=======
+../../build/planning/planning.egg-info/PKG-INFO
+../../build/planning/planning.egg-info/SOURCES.txt
+../../build/planning/planning.egg-info/dependency_links.txt
+../../build/planning/planning.egg-info/requires.txt
+../../build/planning/planning.egg-info/top_level.txt
+../../build/planning/planning.egg-info/zip-safe
+planning/__init__.py
+planning/pick_from_location_action.py
+resource/planning
+test/test_copyright.py
+test/test_flake8.py
+test/test_pep257.py
+>>>>>>> origin/visao

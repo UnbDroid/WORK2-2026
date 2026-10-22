@@ -29,16 +29,6 @@ class ColorDetector:
         self.blue_lower = np.array([90, 50, 50])
         self.blue_upper = np.array([130, 255, 255])
 
-                
-        '''self.red_lower1 = np.array([0, 120, 70])
-        self.red_upper1 = np.array([10, 255, 255])
-        
-        self.red_lower2 = np.array([170, 120, 70])
-        self.red_upper2 = np.array([180, 255, 255])
-        
-        self.blue_lower = np.array([90, 50, 50])
-        self.blue_upper = np.array([130, 255, 255])'''
-        
         self.kernel = np.ones((3, 3), np.uint8)
 
     def detect(self, frame):
@@ -55,16 +45,6 @@ class ColorDetector:
 
         blue_dilate = cv2.dilate(blue_mask, self.kernel, iterations=1)
 
-
-        '''red_mask1 = cv2.inRange(img_hsv, self.red_lower1, self.red_upper1)
-        red_mask2 = cv2.inRange(img_hsv, self.red_lower2, self.red_upper2)
-        red_mask = cv2.bitwise_or(red_mask1, red_mask2)
-        red_erode = cv2.erode(red_mask, self.kernel, iterations=1)
-        red_dilate = cv2.dilate(red_erode, self.kernel, iterations=1)
-
-        blue_mask = cv2.inRange(img_hsv, self.blue_lower, self.blue_upper)
-        blue_erode = cv2.erode(blue_mask, self.kernel, iterations=1)
-        blue_dilate = cv2.dilate(blue_erode, self.kernel, iterations=1)'''
 
         color_objects = []
         for mask, color_name in [(red_dilate, "vermelho"), (blue_dilate, "azul")]:
@@ -268,31 +248,17 @@ class VisionNode(Node):
         vx = Kp_x * erro_lateral
         vy = 0
         vx = max(min(vx, 0.5), -0.5)
-        
-
-
+          
         if abs(vx) < 0.1:
             vx = 0.1 if vx > 0 else -0.1
-        '''if(abs(vx) < 0.2):
-            if(vx > 0):
-                vx = 0.2
-            else:
-                vx = -0.2'''
-
+  
       elif abs(erro_frontal) > tolerancia_z:
         
         print(f"Estamos no Y, A coordenada Y é: {delta_z:4f}   O erro frontal é:{erro_frontal:4f}   Velocidade calculada Y:{Kp_z * erro_frontal:4f}, ")
         vy = Kp_z * erro_frontal
         vx = 0
         vy = max(min(vy, 0.5), -0.5)
-        
-
-        '''if(abs(vy) < 0.2):
-            if(vy > 0):
-                vy = 0.2
-            else:
-                vy = -0.2'''
-
+          
         if abs(vy) < 0.1:
             vy = 0.1 if vy > 0 else -0.1
 

@@ -1,10 +1,18 @@
 #!/usr/bin/python3
+<<<<<<< HEAD:install/planning/lib/planning/stack_action
 # EASY-INSTALL-ENTRY-SCRIPT: 'planning','console_scripts','stack_action'
+=======
+# EASY-INSTALL-ENTRY-SCRIPT: 'ros2-visao==0.0.0','console_scripts','talker'
+>>>>>>> origin/visao:install/ros2_visao/lib/ros2_visao/talker
 import re
 import sys
 
 # for compatibility with easy_install; see #2198
+<<<<<<< HEAD:install/planning/lib/planning/stack_action
 __requires__ = 'planning'
+=======
+__requires__ = 'ros2-visao==0.0.0'
+>>>>>>> origin/visao:install/ros2_visao/lib/ros2_visao/talker
 
 try:
     from importlib.metadata import distribution
@@ -30,4 +38,8 @@ globals().setdefault('load_entry_point', importlib_load_entry_point)
 
 if __name__ == '__main__':
     sys.argv[0] = re.sub(r'(-script\.pyw?|\.exe)?$', '', sys.argv[0])
+<<<<<<< HEAD:install/planning/lib/planning/stack_action
     sys.exit(load_entry_point('planning', 'console_scripts', 'stack_action')())
+=======
+    sys.exit(load_entry_point('ros2-visao==0.0.0', 'console_scripts', 'talker')())
+>>>>>>> origin/visao:install/ros2_visao/lib/ros2_visao/talker
