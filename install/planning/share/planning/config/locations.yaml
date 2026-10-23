@@ -1,1 +1,7 @@
-/home/droid/WORK2-2026/build/planning/config/locations.yaml
+
+/**:
+  ros__parameters:
+    locations:
+      start: [0.003258943557739258, 0.03589820861816406, 0.0]
+      loc2: [1.2206802368164062, 0.942864179611206, 0.0]
+      loc3: [1.3394699096679688, 1.8739798069000244, 0.0]

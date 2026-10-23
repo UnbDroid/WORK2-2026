@@ -4,9 +4,3 @@ source;share/planning/hook/pythonpath.sh
 source;share/planning/hook/ament_prefix_path.ps1
 source;share/planning/hook/ament_prefix_path.dsv
 source;share/planning/hook/ament_prefix_path.sh
-<<<<<<< HEAD
-source;../../build/planning/share/planning/hook/pythonpath_develop.ps1
-source;../../build/planning/share/planning/hook/pythonpath_develop.dsv
-source;../../build/planning/share/planning/hook/pythonpath_develop.sh
-=======
->>>>>>> origin/visao

@@ -10,6 +10,7 @@
   <depend>rclpy</depend>
   <depend>plansys2_msgs</depend>
   <depend>plansys2_support</depend>
+  <depend>plansys2_support_py</depend>
   <depend>vision_interfaces</depend>
 
   <test_depend>ament_copyright</test_depend>

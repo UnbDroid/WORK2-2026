@@ -1,6 +1,6 @@
 (define (domain robocup-work-transport)
 
-  (:requirements :strips :typing :durative-actions)
+  (:requirements :strips :typing :durative-actions :fluents)
 
   (:types
     robot
@@ -24,10 +24,22 @@
     (connected ?from - location ?to - location)
   )
 
-  (:action move
+  (:functions
+    (custo-total ?r - robot) ; deve ser mínimo no final da rodada
+  )
+
+  (:durative-action move
     :parameters (?r - robot ?from - location ?to - location)
-    :precondition (and (at-robot ?r ?from) (connected ?from ?to))
-    :effect (and (not (at-robot ?r ?from)) (at-robot ?r ?to))
+    :duration (= ?duration 5)
+    :condition (and
+      (at start (at-robot ?r ?from))
+      (over all (connected ?from ?to))
+      (at start (gripper-free ?r))
+      (over all (gripper-free ?r))) ; Impede qualquer ação de manipulação durante o deslocamento
+    :effect (and
+      (at start (not (at-robot ?r ?from)))
+      (at end (at-robot ?r ?to))
+      (at end (increase (custo-total ?r) 10)))
   )
 
   (:durative-action pick-from-location
@@ -43,7 +55,8 @@
       (at end (gripper-free ?r))
       (at end (not (obj-at ?o ?l)))
       (at end (not (slot-free ?r ?s)))
-      (at end (holding-in ?r ?o ?s)))
+      (at end (holding-in ?r ?o ?s))
+      (at end (increase (custo-total ?r) 1)))
   )
 
   (:durative-action pick-from-container
@@ -77,7 +90,8 @@
     (at end (not (holding-in ?r ?o ?s)))
     (at end (slot-free ?r ?s))
     (at end (obj-at ?o ?l))
-    (at end (not (position-free ?l ?p))))
+    (at end (not (position-free ?l ?p)))
+    (at end (increase (custo-total ?r) 1)))
 )
 
   (:action place-in-container
