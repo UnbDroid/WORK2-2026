@@ -2,7 +2,7 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch import actions
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import LifecycleNode, Node
@@ -20,6 +20,7 @@ def generate_launch_description():
     )
 
     # arquivo PDDL so para inicializar o Problem Expert oficial do plansys2
+    # o conteudo real do problema e definido em runtime pelo planning_controller
     problem_file_arg = DeclareLaunchArgument(
         'problem_file',
         default_value='actionmove-test-problem.pddl',
@@ -41,6 +42,12 @@ def generate_launch_description():
         }.items()
     )
 
+    locations_yaml = os.path.join(
+        pkg_share,
+        'config',
+        'locations.yaml'
+    )
+
     move_action_node = LifecycleNode(
         package='planning',
         executable='move_action',
@@ -54,8 +61,8 @@ def generate_launch_description():
                 'config',
                 'locations.yaml'
             ),
-        }]
-    )
+    }]
+)
 
     pick_from_location_action_node = LifecycleNode(
         package='planning',
@@ -101,29 +108,13 @@ def generate_launch_description():
         }]
     )
 
-    # Atrasar os nós de ação para dar tempo ao PlanSys2 inicializar o executor sem timeout
-    delayed_actions = TimerAction(
-        period=3.0,  # espera 3 segundos antes de subir as ações
-        actions=[
-            move_action_node,
-            pick_from_location_action_node,
-            place_at_location_action_node,
-            stack_action_node,
-        ]
-    )
-
-    # Atrasar o controller para garantir que tudo mais já está configurado
-    delayed_controller = TimerAction(
-        period=5.0,  # espera 5 segundos antes de rodar o controller
-        actions=[
-            controller_node,
-        ]
-    )
-
     return LaunchDescription([
-        phase_arg,
-        problem_file_arg,
-        plansys2_cmd,
-        delayed_actions,
-        delayed_controller,
-    ])
+    phase_arg,
+    problem_file_arg,
+    plansys2_cmd,
+    move_action_node,
+    pick_from_location_action_node,
+    place_at_location_action_node,
+    stack_action_node,
+    # controller_node,
+])

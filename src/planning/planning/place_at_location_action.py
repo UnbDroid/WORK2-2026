@@ -8,7 +8,6 @@ class PlaceCubeAtLocationStep(Enum):
     #o cubo detectado sempre estará na mesma posição da camera/shot, logo deve ser analisado aquele apriltag específico para inspencionar
     #se o cubo deve ser pego, ou não, e continuar o sacneamento para próximos cubos
     START = auto()
-    TRANSLADAR = auto()
     VERTICAL_CHASSI1 = auto() #pular as próximas duas etapas se o cubo já estiver em modo de "depositar" cubos, já que será realizado pela anterior
     GIRAR_CHASSI1 = auto()
     VERTICAL_CHASSI2 = auto() #inicia daqui se está em modo de depositar
@@ -30,15 +29,6 @@ class PlaceCubeAtLocationAction(GripperPrimitives):
         args = self.current_arguments  # [robot, cube, location, slot, position] guarda os parâmetros mandados pela ação
 
         if self.step == PlaceCubeAtLocationStep.START:
-            self.step = PlaceCubeAtLocationStep.TRANSLADAR
-            self.send_feedback(0.01, 'posicionando em frente ao cubo')
-            self.send_command(f'transladar:{args[1]}') #indica que comando de transladar deve iniciar
-            #time.sleep(1)
-            #self._pending_reply = 'move' #temp
-            #self._current_reply = 'move' 
-            #self._reply_received = True 
-
-        elif self.step == PlaceCubeAtLocationStep.TRANSLADAR and self.command_finished():
             self.step = PlaceCubeAtLocationStep.VERTICAL_CHASSI1
             self.send_feedback(0.09, 'levantando garra para girar')
             self.send_command('alt_giro') #mudar comando para frente
