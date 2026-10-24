@@ -22,7 +22,7 @@ class ImagePublisher(Node):
         self.publicando = False
 
         # 4. Inicializa a câmera com segurança no início
-        self.cameraDevice = 0 
+        self.cameraDevice = 0
         self.camera = cv2.VideoCapture(self.cameraDevice) 
 
         if not self.camera.isOpened():

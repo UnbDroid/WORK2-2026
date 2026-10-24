@@ -6,7 +6,7 @@
         slot1 slot2 slot3 - slot
         start loc2 loc3 - location
         cube1 cube2 cube3 - object
-        p1l1 p2l1 p3l1 - position
+        pos1 frente pos3 - position
     )
 
     (:init
@@ -18,9 +18,9 @@
         (obj-at cube1 loc2)
         (obj-at cube2 loc2)
         (obj-at cube3 loc2)
-        (position-free loc3 p1l1)
-        (position-free loc3 p2l1)
-        (position-free loc3 p3l1)
+        (position-free loc3 pos1)
+        (position-free loc3 frente)
+        (position-free loc3 pos3)
         (connected start loc2)
         (connected loc2 loc3)
     )

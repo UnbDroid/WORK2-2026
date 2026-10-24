@@ -6,7 +6,7 @@ from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import LifecycleNode, Node
-
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction
 
 def generate_launch_description():
     pkg_share = get_package_share_directory('planning')
@@ -108,13 +108,22 @@ def generate_launch_description():
         }]
     )
 
+    # Os action nodes só sobem depois que o PlanSys2 terminou de iniciar,
+    # para não competirem por CPU com o domain_expert no Raspberry.
+    acoes = TimerAction(
+        period=15.0,  # segundos de folga; aumente se o Failed to start plansys2! persistir
+        actions=[
+            move_action_node,
+            pick_from_location_action_node,
+            place_at_location_action_node,
+            stack_action_node,
+            # controller_node,   # se reativar, deixe aqui dentro também
+        ]
+    )
+
     return LaunchDescription([
-    phase_arg,
-    problem_file_arg,
-    plansys2_cmd,
-    move_action_node,
-    pick_from_location_action_node,
-    place_at_location_action_node,
-    stack_action_node,
-    # controller_node,
-])
+        phase_arg,
+        problem_file_arg,
+        plansys2_cmd,
+        acoes,
+ ])
