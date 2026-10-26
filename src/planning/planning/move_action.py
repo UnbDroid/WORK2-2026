@@ -87,9 +87,12 @@ class MoveAction(ActionExecutorClient):
                 self._nav_success = False
                 return super().on_activate(state)
 
-            x, y, theta = self._locations[destination]
-            qz = math.sin(theta / 2.0)
-            qw = math.cos(theta / 2.0)
+            x, y, angulo = self._locations[destination]
+
+            # Converter graus para radianos
+            yaw = math.radians(angulo)
+            qz = math.sin(yaw / 2.0)
+            qw = math.cos(yaw / 2.0)
 
             goal_msg = NavigateToPose.Goal()
             goal_msg.pose = PoseStamped()
