@@ -28,7 +28,6 @@ _colcon_prefix_chain_powershell_source_script "/home/droid/install/local_setup.p
 _colcon_prefix_chain_powershell_source_script "/home/droid/uros_ws/install/local_setup.ps1"
 _colcon_prefix_chain_powershell_source_script "/home/droid/lidar_ws/install/local_setup.ps1"
 _colcon_prefix_chain_powershell_source_script "/home/droid/ros2_ws/install/local_setup.ps1"
-_colcon_prefix_chain_powershell_source_script "/home/droid/WORK2-2026/src/ros2_visao/ros2_visao/install/local_setup.ps1"
 
 # source this prefix
 $env:COLCON_CURRENT_PREFIX=(Split-Path $PSCommandPath -Parent)
