@@ -1,29 +1,52 @@
 ; os numeros sao todos definidos aleatoriamente e deverao ser conferidos
 ; de acordo com o que for pedido no momento da competicao
 
-(define (problem btt1-instance) (:domain robocup-work-transport)
+(define (problem bmt-instance)
+    (:domain robocup-work-transport)
 
-  (:objects
-    robot1 - robot
-    start ws3 ws4 ws5 - location
-    s1 s2 s3 - slot
-    obj1 obj3 obj5 - object
-  )
+    (:objects
+        robot1 - robot
+        slot1 slot2 slot3 - slot
+        cube1 cube2 cube3 - object                    ; Trocar para número de april tags que devem ser pegas
+        locstart loc1 loc2 loc3 locfinish - location  ; Trocar 1 para altura da location
+        p1l2 p2l2 p1l3 - position                     ; Trocar numero depois de l para location correspondente
+    )
 
-  (:init
-    (at-robot robot1 start)
-    (slot-free robot1 s1)
-    (slot-free robot1 s2)
-    (slot-free robot1 s3)
+    (:init
+        (= (carga robot1) 0)                     ; Robo sempre começa carregando 0 cubos
 
-    (obj-at obj1 ws3)
-    (obj-at obj3 ws4)
-    (obj-at obj5 ws5)
-  )
+        (= (restantes loc1) 3)                   ; Inserir aqui apenas localizações que começam com cubos, e suas quantidades
+        (= (restantes loc2) 0)
+        (= (restantes loc3) 0)                   
 
-  (:goal (and
-    (obj-at obj1 ws4)
-    (obj-at obj3 ws5)
-    (obj-at obj5 ws3)
-  ))
+        (gripper-free robot1)
+        (at-robot robot1 locstart)
+
+        (slot-free robot1 slot1)
+        (slot-free robot1 slot2)
+        (slot-free robot1 slot3)
+
+        (obj-at cube1 loc1)
+        (obj-at cube2 loc1)
+        (obj-at cube3 loc1)
+        
+
+        (position-free loc2 p1l2)
+        (position-free loc2 p2l2)
+        (position-free loc3 p1l3)
+
+        (connected locstart loc1)
+        (connected loc1 loc2)
+        (connected loc2 loc3)
+        (connected loc3 locfinish)
+    )
+
+    (:goal
+        (and
+            (obj-at cube1 loc2)
+            (obj-at cube2 loc2)
+            (obj-at cube3 loc3)
+            (at-robot robot1 locfinish)
+        )
+    )
 )

@@ -27,14 +27,36 @@ class GripperPrimitives(ActionExecutorClient):
         return self._reply_received and self._current_reply == self._pending_reply #só retorna true se espera um reply por reply_received, e se é igual ao esperado
 
     def slot_to_cmd(self, slot: str) -> str:
-        # mapping = {'slot1': '1', 'slot2': '2', 'slot3': '3', 'origin': '0'}, só é necessário se comandos enviados pelo PDDL não batem exatamente com aqueles esperado pelo nó subscriber
-        return slot #mapping[slot]
+        chave = String()
+
+        mapping = {
+            'slot1': 'slot1', 
+            'slot2': 'slot2', 
+            'slot3': 'slot3', 
+            'p1': 'pos1',
+            'p2': 'frente',
+            'p3': 'pos3',
+            # deve casar com comandos possíveis recebidos na main
+        }
+
+        if slot.startswith('p'): #posições devem ser padronizadas por p(1-3)l#
+            chave = slot[:2]
+            return mapping[chave]
+
+        return mapping[slot]
 
     def height_to_cmd(self, location: str) -> str:
         mapping = {
             'loc1': '5cm',
-            'loc2': '10cm',
-            'loc3': '15cm',
-            # complete com todas as suas locations e a altura de mesa correspondente
+            'loc2': '5cm',
+            'loc3': '5cm',
+            'loc4': '10cm',
+            'loc5': '10cm',
+            'loc6': '10cm',
+            'loc7': '15cm',
+            'loc8': '15cm',
+            'loc9': '15cm',
+            # colocar todas as locations e a altura de mesa correspondente
         }
+
         return mapping[location]
