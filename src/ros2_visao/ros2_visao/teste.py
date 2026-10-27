@@ -173,10 +173,13 @@ class VisionNode(Node):
         self.alvo_id = None            # id da AprilTag procurada
         self.comando_atual = None      # string recebida em /topico_garra, devolvida como eco ao final
         self.frames_estaveis = 0
+        self.altura_mesa_cm = None 
         self.inicio_trecho = None      # instante em que o trecho atual da busca começou
         self.sentido_busca = 1         # +1 = sentido de search_vy, -1 = sentido inverso
         self.trechos_feitos = 0        # trechos da busca já concluídos sem achar a tag
-
+        
+        self.ALVOS_POR_ALTURA = {5.0:  (0.115,    0.685),10.0: (0.114278, 0.602245),15.0: (0.172,    0.558),}
+        
         self.sub = self.create_subscription(Image, '/cam/image_raw', self.image_callback, 10)
         self.sub_garra = self.create_subscription(String, '/topico_garra', self.garra_callback, 10)
         self.pub_status = self.create_publisher(String, '/topico_garra_status', 10)
@@ -185,35 +188,52 @@ class VisionNode(Node):
         # Janelas comentadas para não dar erro de Display no SSH
         cv2.namedWindow("Visão do Robô", cv2.WINDOW_NORMAL)
         cv2.resizeWindow("Visão do Robô", 640, 480)
-
+      
     # ------------------------------------------------------------------
     # Integração com a garra
     # ------------------------------------------------------------------
     @staticmethod
     def cubo_para_tag(nome_cubo):
-        """'cube3' -> 3. Ajuste aqui se o id da AprilTag não for o número do nome do cubo no PDDL."""
         m = re.search(r'(\d+)$', nome_cubo.strip())
         return int(m.group(1)) if m else None
 
+    @staticmethod
+    def altura_para_cm(texto_altura):
+        m = re.fullmatch(r'(\d+(?:\.\d+)?)\s*cm', texto_altura.strip().lower())
+        return float(m.group(1)) if m else None
+     
     def garra_callback(self, msg):
         cmd = msg.data
         if not cmd.startswith('transladar:'):
-            return  # ignora os outros comandos da garra (alt_giro, COMBO:..., fechar, etc.)
+            return
 
-        alvo = self.cubo_para_tag(cmd.split(':', 1)[1])
-        if alvo is None:
-            self.get_logger().error(f'Comando inválido, não consegui extrair o id do cubo: {cmd}')
+        partes = cmd.split(':')
+        if len(partes) != 3:
+            self.get_logger().error(f'Formato inesperado (esperado transladar:cubeX:Ncm): {cmd}')
+            return
+
+        _, nome_cubo, texto_altura = partes
+
+        alvo = self.cubo_para_tag(nome_cubo)
+        altura_cm = self.altura_para_cm(texto_altura)
+
+        if alvo is None or altura_cm is None:
+            self.get_logger().error(f'Comando inválido: {cmd}')
+            return
+
+        if altura_cm not in self.ALVOS_POR_ALTURA:
+            self.get_logger().error(f'Altura {altura_cm} cm sem calibração. Disponíveis: {list(self.ALVOS_POR_ALTURA)}')
             return
 
         self.comando_atual = cmd
+        self.altura_mesa_cm = altura_cm
         self.alvo_id = alvo
         self.frames_estaveis = 0
         self.inicio_trecho = self.get_clock().now()
         self.sentido_busca = 1
         self.trechos_feitos = 0
         self.fase = Fase.BUSCANDO
-        self.get_logger().info(f'Comando recebido: {cmd} -> buscando tag {alvo}')
-
+        self.get_logger().info(f'Comando recebido: {cmd} -> tag {alvo}, mesa a {altura_cm} cm')
     def parar_robo(self):
         # Várias vezes para garantir que o último comando recebido pelas rodas seja zero
         for _ in range(3):
@@ -231,12 +251,10 @@ class VisionNode(Node):
     # ------------------------------------------------------------------
     # Controle de aproximação (inalterado)
     # ------------------------------------------------------------------
-    def calcular_velocidade_aproximacao(self, delta_x, delta_z):
+    def calcular_velocidade_aproximacao(self, delta_x, delta_z,altura_cm):
       Kp_x = 8.0
       Kp_z = 2.0
-
-      distancia_alvo_x = 0.114278
-      distancia_alvo_z = 0.602245
+      distancia_alvo_x, distancia_alvo_z = self.ALVOS_POR_ALTURA[altura_cm]
       tolerancia_x = 0.01
       tolerancia_z = 0.01
 
@@ -309,7 +327,7 @@ class VisionNode(Node):
             return
 
         cam_x, _, cam_z = alvo["pose_3d"]
-        v_frente, v_lado = self.calcular_velocidade_aproximacao(cam_x, cam_z)
+        v_frente, v_lado = self.calcular_velocidade_aproximacao(cam_x, cam_z, self.altura_mesa_cm)
 
         twist = Twist()
         twist.linear.x = float(v_frente)
