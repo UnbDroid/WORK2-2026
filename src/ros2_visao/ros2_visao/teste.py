@@ -109,20 +109,23 @@ class ObjectClassifier:
 
         # 1. PROCESSA TODAS AS TAGS
         for tag in tags:
-            classified_objects.append({
-                "id": tag["id"],
-                "color": "qualquer",
-                "waypoint": "tag", 
-                "bbox": tag["bbox"],
-                "pose_3d": tag["pose_3d"]
-            })
+            cor_da_tag = "sem_cor"   # padrão: tag sem mancha de cor atrás (ex.: zona)
 
-            # Marca a mancha de cor atrás da tag como processada
+            # Procura a mancha de cor atrás da tag e marca como processada
             for color_obj in color_objects:
                 if not color_obj["processed"]:
                     if self.is_tag_inside_color(color_obj["contour"], tag["center"], tag["bbox"], color_obj["bbox"]):
-                        color_obj["processed"] = True 
-                        break 
+                        color_obj["processed"] = True
+                        cor_da_tag = color_obj["color"]   
+                        break
+
+            classified_objects.append({
+                "id": tag["id"],
+                "color": cor_da_tag,
+                "waypoint": "tag",
+                "bbox": tag["bbox"],
+                "pose_3d": tag["pose_3d"]
+            })
 
         # 2. PROCESSA O QUE SOBROU (Contêineres)
         for color_obj in color_objects:
