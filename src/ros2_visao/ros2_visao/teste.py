@@ -91,73 +91,56 @@ class AprilTagDetector:
 
 # 3. MOTOR DE CLASSIFICAÇÃO
 class ObjectClassifier:
-    @staticmethod
-    def is_tag_inside_color(contour, tag_center, tag_bbox, color_bbox, margin=15):
-        pt = (int(tag_center[0]), int(tag_center[1]))
+    def __init__(self):
+        # Sem mapa de tags fixo! Agora aceitamos qualquer uma.
+        pass
 
+    def is_tag_inside_color(self, contour, tag_center, tag_bbox, color_bbox, margin=15):
+        pt = (int(tag_center[0]), int(tag_center[1]))
         if cv2.pointPolygonTest(contour, pt, False) >= 0:
             return True
-
         x, y, w, h = color_bbox
         tx, ty, tw, th = tag_bbox
-
-        tx_min, ty_min = tx - margin, ty - margin
-        tx_max, ty_max = tx + tw + margin, ty + th + margin
-
-        return (x < tx_max and x + w > tx_min and y < ty_max and y + h > ty_min)
+        return (x < tx + tw + margin and x + w > tx - margin and 
+                y < ty + th + margin and y + h > ty - margin)
 
     def classify(self, tags, color_objects):
         classified_objects = []
 
-        # 1. Associa Tags a Cores (Cubos ou Zonas)
+        # 1. PROCESSA TODAS AS TAGS
         for tag in tags:
-            matched = False
+            classified_objects.append({
+                "id": tag["id"],
+                "color": "qualquer",
+                "waypoint": "tag", 
+                "bbox": tag["bbox"],
+                "pose_3d": tag["pose_3d"]
+            })
+
+            # Marca a mancha de cor atrás da tag como processada
             for color_obj in color_objects:
-                if color_obj["processed"]:
-                    continue
+                if not color_obj["processed"]:
+                    if self.is_tag_inside_color(color_obj["contour"], tag["center"], tag["bbox"], color_obj["bbox"]):
+                        color_obj["processed"] = True 
+                        break 
 
-                if self.is_tag_inside_color(
-                    color_obj["contour"],
-                    tag["center"],
-                    tag["bbox"],
-                    color_obj["bbox"]
-                ):
-                    color_obj["processed"] = True
-                    matched = True
-                    classified_objects.append({
-                        "id": tag["id"],
-                        "color": color_obj["color"],
-                        "waypoint": "cubo",
-                        "bbox": color_obj["bbox"],
-                        "pose_3d": tag["pose_3d"]
-                    })
-                    break
-
-            if not matched:
-                classified_objects.append({
-                    "id": tag["id"],
-                    "color": "sem_cor",
-                    "waypoint": "zona",
-                    "bbox": tag["bbox"],
-                    "pose_3d": tag["pose_3d"]
-                })
-
-        # 2. Registra Cores Restantes sem Tag (Contêineres)
+        # 2. PROCESSA O QUE SOBROU (Contêineres)
         for color_obj in color_objects:
             if not color_obj["processed"]:
                 x, y, w, h = color_obj["bbox"]
                 cx, cy = x + w // 2, y + h // 2
+                
                 pos_x = (cx - 320) / 500.0
                 pos_y = (cy - 240) / 500.0
+                estimativa_z = 80.0 / (w + 0.1) # Profundidade baseada na largura
 
                 classified_objects.append({
                     "id": -1,
                     "color": color_obj["color"],
                     "waypoint": "conteiner",
                     "bbox": color_obj["bbox"],
-                    "pose_3d": (pos_x, pos_y, 1.0)
-                })
-
+                    "pose_3d": (pos_x, pos_y, estimativa_z)
+                })                
         return classified_objects
 
 
@@ -190,10 +173,24 @@ class VisionNode(Node):
         self.alvo_id = None            # id da AprilTag procurada
         self.comando_atual = None      # string recebida em /topico_garra, devolvida como eco ao final
         self.frames_estaveis = 0
+        self.altura_mesa_cm = None 
         self.inicio_trecho = None      # instante em que o trecho atual da busca começou
         self.sentido_busca = 1         # +1 = sentido de search_vy, -1 = sentido inverso
         self.trechos_feitos = 0        # trechos da busca já concluídos sem achar a tag
-
+        
+        
+        self.ALVOS = {
+            "cubo": {
+                5.0:  (0.115,    0.685),
+                10.0: (0.114278, 0.602245),
+                15.0: (0.172,    0.558),
+            },
+            "zona": {
+                5.0:  (0.0, 0.0),   # CALIBRAR
+},
+        }
+        self.tipo_alvo = None
+        
         self.sub = self.create_subscription(Image, '/cam/image_raw', self.image_callback, 10)
         self.sub_garra = self.create_subscription(String, '/topico_garra', self.garra_callback, 10)
         self.pub_status = self.create_publisher(String, '/topico_garra_status', 10)
@@ -202,35 +199,63 @@ class VisionNode(Node):
         # Janelas comentadas para não dar erro de Display no SSH
         cv2.namedWindow("Visão do Robô", cv2.WINDOW_NORMAL)
         cv2.resizeWindow("Visão do Robô", 640, 480)
-
+      
     # ------------------------------------------------------------------
     # Integração com a garra
     # ------------------------------------------------------------------
     @staticmethod
-    def alvo_para_tag(nome_alvo):
-        """'cube3' -> 3. Ajuste aqui se o id da AprilTag não for o número do nome do cubo no PDDL."""
-        m = re.search(r'(\d+)$', nome_alvo.strip())
+    def cubo_para_tag(nome_cubo):
+        m = re.search(r'(\d+)$', nome_cubo.strip())
         return int(m.group(1)) if m else None
 
+    @staticmethod
+    def altura_para_cm(texto_altura):
+        m = re.fullmatch(r'(\d+(?:\.\d+)?)\s*cm', texto_altura.strip().lower())
+        return float(m.group(1)) if m else None
+
+    @staticmethod
+    def nome_para_tipo(nome):
+      n = nome.strip().lower()
+      if n.startswith('cube'):
+        return 'cubo'
+      if n.startswith('zone'):
+        return 'zona'
+      return None
+     
     def garra_callback(self, msg):
         cmd = msg.data
         if not cmd.startswith('transladar:'):
-            return  # ignora os outros comandos da garra (alt_giro, COMBO:..., fechar, etc.)
-
-        alvo = self.alvo_para_tag(cmd.split(':', 1)[1])
-        if alvo is None:
-            self.get_logger().error(f'Comando inválido, não consegui extrair o id do alvo: {cmd}')
             return
 
+        partes = cmd.split(':')
+        if len(partes) != 3:
+            self.get_logger().error(f'Formato inesperado (esperado transladar:cubeX:Ncm): {cmd}')
+            return
+
+        _, nome_alvo, texto_altura = partes
+
+        alvo = self.cubo_para_tag(nome_alvo)          # pode manter o nome, ou renomear para nome_para_id
+        tipo = self.nome_para_tipo(nome_alvo)
+        altura_cm = self.altura_para_cm(texto_altura)
+
+        if alvo is None or tipo is None or altura_cm is None:
+          self.get_logger().error(f'Comando inválido: {cmd}')
+          return
+
+        if altura_cm not in self.ALVOS[tipo]:
+          self.get_logger().error(f'{tipo} a {altura_cm} cm sem calibração. Disponíveis: {list(self.ALVOS[tipo])}')
+          return
+
         self.comando_atual = cmd
+        self.tipo_alvo = tipo            # NOVO
+        self.altura_mesa_cm = altura_cm
         self.alvo_id = alvo
         self.frames_estaveis = 0
         self.inicio_trecho = self.get_clock().now()
         self.sentido_busca = 1
         self.trechos_feitos = 0
         self.fase = Fase.BUSCANDO
-        self.get_logger().info(f'Comando recebido: {cmd} -> buscando tag {alvo}')
-
+        self.get_logger().info(f'Comando recebido: {cmd} -> tag {alvo}, mesa a {altura_cm} cm')
     def parar_robo(self):
         # Várias vezes para garantir que o último comando recebido pelas rodas seja zero
         for _ in range(3):
@@ -248,12 +273,10 @@ class VisionNode(Node):
     # ------------------------------------------------------------------
     # Controle de aproximação (inalterado)
     # ------------------------------------------------------------------
-    def calcular_velocidade_aproximacao(self, delta_x, delta_z):
+    def calcular_velocidade_aproximacao(self, delta_x, delta_z, tipo, altura_cm):
       Kp_x = 8.0
       Kp_z = 2.0
-
-      distancia_alvo_x = 0.114278
-      distancia_alvo_z = 0.602245
+      distancia_alvo_x, distancia_alvo_z = self.ALVOS[tipo][altura_cm]
       tolerancia_x = 0.01
       tolerancia_z = 0.01
 
@@ -283,7 +306,7 @@ class VisionNode(Node):
         vx = 0
         vy = 0
 
-     # print(f'                        ---------------Velocidade final: vx={vx:3f} e vy={vy:f}  A coordenada X atual: {delta_x:3f}, o erro lateral atual é:{erro_lateral:3f} , A coordenada Y atual: {delta_z:3f}, O erro frontal atual é:{erro_frontal:3f} ')
+     # print(f'---------------Velocidade final: vx={vx:3f} e vy={vy:f}  A coordenada X atual: {delta_x:3f}, o erro lateral atual é:{erro_lateral:3f} , A coordenada Y atual: {delta_z:3f}, O erro frontal atual é:{erro_frontal:3f} ')
       return vy,-vx
 
     # ------------------------------------------------------------------
@@ -326,8 +349,8 @@ class VisionNode(Node):
             return
 
         cam_x, _, cam_z = alvo["pose_3d"]
-        v_frente, v_lado = self.calcular_velocidade_aproximacao(cam_x, cam_z)
-
+        self.get_logger().info(f'x={cam_x:.4f} z={cam_z:.4f}', throttle_duration_sec=1.0) #apenas usada para print coordenadas quando o robo não está em movimento
+        v_frente, v_lado = self.calcular_velocidade_aproximacao(cam_x, cam_z, self.tipo_alvo, self.altura_mesa_cm)
         twist = Twist()
         twist.linear.x = float(v_frente)
         twist.linear.y = float(v_lado)
@@ -363,7 +386,7 @@ class VisionNode(Node):
                 cv2.putText(display_frame, label, (x, max(y - 10, 15)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, cor_bgr, 2)
 
                 # Só interessa a tag do cubo pedido pela garra
-                if (self.alvo_id is not None 
+                if (self.alvo_id is not None and item["waypoint"] == "tag"
                         and item["id"] == self.alvo_id):
                     alvo_encontrado = item
 
@@ -396,4 +419,3 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
-
