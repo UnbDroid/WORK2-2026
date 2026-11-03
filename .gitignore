@@ -1,5 +1,8 @@
 build/
 install/
 log/
-__pycache__/
-*.pyc
+**/__pycache__/
+src/robot_vision/build/
+src/robot_vision/install/
+src/robot_vision/log/
+sas_plan
