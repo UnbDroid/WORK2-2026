@@ -199,23 +199,6 @@ class VisionNode(Node):
         m = re.search(r'(\d+)$', nome_cubo.strip())
         return int(m.group(1)) if m else None
 
-    @staticmethod
-    def altura_para_cm(texto_altura):
-        m = re.fullmatch(r'(\d+(?:\.\d+)?)\s*cm', texto_altura.strip().lower())
-        return float(m.group(1)) if m else None
-
-    def ajuste_callback(self, msg):
-        status = msg.data.strip()
-        if status == 'terminou de ajustar':
-            self.garra_ajustada = True
-            self.get_logger().info('AVAL RECEBIDO: Garra ajustada. Visão liberada para mover o robô.')
-        else:
-            # Qualquer outra mensagem (ex: "ajustando") trava a base do robô
-            self.garra_ajustada = False
-            self.parar_robo()
-            self.get_logger().info(f'Trava ativada pela garra ({status}). Base pausada.')
-
-     
     def garra_callback(self, msg):
         cmd = msg.data
         if not cmd.startswith('transladar:'):
