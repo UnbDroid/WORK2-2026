@@ -63,8 +63,8 @@ volatile long pulsosRTD = 0;
 
 MotorPI RTE = {23, 22, 19, 34, &pulsosRTE, 0, 0, 2.5, 3.0, -1, 1};
 MotorPI RFD = {25, 26, 13, 27, &pulsosRFD, 0, 0, 2.5, 3.0, 1, 1};
-MotorPI RFE = {4, 16, 33, 32, &pulsosRFE, 0, 0, 3, 3.0, -1, 1};
-MotorPI RTD = {21, 15, 36, 39, &pulsosRTD, 0, 0, 3, 3.0, 1, 1};
+MotorPI RFE = {4, 16, 33, 32, &pulsosRFE, 0, 0, 3.0, 3.0, -1, 1};
+MotorPI RTD = {21, 15, 36, 39, &pulsosRTD, 0, 0, 3.0, 3.0, 1, 1};
 
 void publicarDebug(const char *texto) {
   strcpy(msg_debug.data.data, texto);
@@ -181,6 +181,8 @@ void configurarMotor(MotorPI& m) {
   pinMode(m.rpwm, OUTPUT);
   pinMode(m.lpwm, OUTPUT);
 
+  analogWriteFrequency(20000);
+  
   pinMode(m.encA, INPUT_PULLUP);
   pinMode(m.encB, INPUT_PULLUP);
 
@@ -195,7 +197,16 @@ void callback_cmd_vel(const void *msgin) {
 
   vx_alvo = msg->linear.x * escalaLinear;
   vy_alvo = msg->linear.y * escalaLinear;
-  w_alvo = msg->angular.z * escalaAngular;
+  double w = msg->angular.z;
+
+  if (w > 0 && w < 0.15) {
+    w = 0.15;
+  }
+  else if (w < 0 && w > -0.15) {
+    w = -0.15;
+  }
+
+  w_alvo = w * escalaAngular;
 
   ultimoCmdVel = millis();
 }
