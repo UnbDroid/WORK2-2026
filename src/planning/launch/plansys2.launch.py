@@ -14,14 +14,14 @@ def generate_launch_description():
     # Qual fase da competicao o planning_controller deve montar e rodar
     phase_arg = DeclareLaunchArgument(
         'phase',
-        default_value='bmt',
+        default_value='btt2',
         description='fase a ser executada (bmt, btt1, btt2, att1, att2, amt, move_test)',
     )
 
     # Arquivo PDDL so para inicializar o Problem Expert oficial do plansys2
     problem_file_arg = DeclareLaunchArgument(
         'problem_file',
-        default_value='actionmove-test-problem.pddl',
+        default_value='problem-btt2.pddl',
         description='arquivo de problema PDDL usado so pra inicializar o Problem Expert',
     )
     problem_file_path = PathJoinSubstitution(

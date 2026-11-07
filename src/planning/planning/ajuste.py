@@ -56,8 +56,8 @@ class AproximarRotacionar(Node):
         self.tolerancia_angular = 1.0
 
         self.kp_rotacao = 1.0
-        self.velocidade_angular_max = 0.5
-        self.velocidade_angular_min = 0.15
+        self.velocidade_angular_max = 0.7 #0.5
+        self.velocidade_angular_min = 0.3 #mudei 0.15
 
         # Odometria
         self.angulo_atual = None
@@ -71,7 +71,7 @@ class AproximarRotacionar(Node):
         self.estado = "AGUARDANDO"
 
         # Segurança
-        self.timeout = 0.3
+        self.timeout = 2.0
 
         # Timer de controle: 20 Hz
         self.timer = self.create_timer(
