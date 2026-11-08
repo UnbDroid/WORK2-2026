@@ -14,14 +14,14 @@ def generate_launch_description():
     # Qual fase da competicao o planning_controller deve montar e rodar
     phase_arg = DeclareLaunchArgument(
         'phase',
-        default_value='btt2',
+        default_value='bmt',
         description='fase a ser executada (bmt, btt1, btt2, att1, att2, amt, move_test)',
     )
 
     # Arquivo PDDL so para inicializar o Problem Expert oficial do plansys2
     problem_file_arg = DeclareLaunchArgument(
         'problem_file',
-        default_value='problem-btt2.pddl',
+        default_value='actionmove-test-problem.pddl',
         description='arquivo de problema PDDL usado so pra inicializar o Problem Expert',
     )
     problem_file_path = PathJoinSubstitution(
@@ -77,7 +77,8 @@ def generate_launch_description():
         namespace='',
         output='screen',
         parameters=[{
-            'action_name': 'pick-from-location',
+            'action_name': 'move-nao-cheio',
+            'locations_file': locations_yaml,
         }],
     )
 
@@ -88,7 +89,8 @@ def generate_launch_description():
         namespace='',
         output='screen',
         parameters=[{
-            'action_name': 'place-at-location',
+            'action_name': 'move-nao-cheio',
+            #'locations_file': locations_yaml,
         }],
     )
 
@@ -99,9 +101,46 @@ def generate_launch_description():
         namespace='',
         output='screen',
         parameters=[{
-            'action_name': 'stack',
+            'action_name': 'move-nao-cheio',
+            #'locations_file': locations_yaml,
         }],
     )
+
+    # place_in_container_action_node = LifecycleNode(
+    #     package='planning',
+    #     executable='place_in_container_action',
+    #     name='place_in_container_action',
+    #     namespace='',
+    #     output='screen',
+    #     parameters=[{
+    #         'action_name': 'move-nao-cheio',
+    #         'locations_file': locations_yaml,
+    #     }],
+    # )
+
+    # pick_from_container_action_node = LifecycleNode(
+    #     package='planning',
+    #     executable='pick_from_container_action',
+    #     name='pick_from_container_action',
+    #     namespace='',
+    #     output='screen',
+    #     parameters=[{
+    #         'action_name': 'move-nao-cheio',
+    #         'locations_file': locations_yaml,
+    #     }],
+    # )
+
+    # place_from_at_shelf_action_node = LifecycleNode(
+    #     package='planning',
+    #     executable='place_from_at_shelf_action',
+    #     name='place_from_at_shelf_action',
+    #     namespace='',
+    #     output='screen',
+    #     parameters=[{
+    #         'action_name': 'move-nao-cheio',
+    #         'locations_file': locations_yaml,
+    #     }],
+    # )
 
     # Nó gerenciador que popula o problema e aciona a execução do plano
     controller_node = Node(
@@ -123,6 +162,9 @@ def generate_launch_description():
             pick_from_location_action_node,
             place_at_location_action_node,
             stack_action_node,
+            # place_in_container_action_node,
+            # pick_from_container_action_node,
+            # place_from_at_shelf_action_node,
             # controller_node,
         ],
     )

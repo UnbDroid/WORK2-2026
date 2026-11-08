@@ -21,7 +21,7 @@ class AproximarRotacionar(Node):
         )
 
         self.publisher_ajuste = self.create_publisher(
-            String, '/topico_ajuste', 10
+            String, '/topico_garra_status', 10
         )
 
         # Subscribers
@@ -69,6 +69,7 @@ class AproximarRotacionar(Node):
 
         # Estados
         self.estado = "AGUARDANDO"
+        self.comando_atual = None
 
         # Segurança
         self.timeout = 2.0
@@ -89,11 +90,21 @@ class AproximarRotacionar(Node):
 
     def garra_callback(self, msg):
 
-        if not msg.data.startswith('transladar:'):
+        if not msg.data.startswith('ajuste:'):
             return
 
         if self.estado != "AGUARDANDO":
             return
+
+        try:
+            self.angulo_alvo = float(msg.data.split(':')[1])
+        except (ValueError, IndexError):
+            self.get_logger().error(
+                f'Comando de ajuste inválido: {msg.data}'
+            )
+            return
+
+        self.comando_atual = msg.data
 
         self.distancia_atual = None
         self.ultima_leitura = None
@@ -101,7 +112,7 @@ class AproximarRotacionar(Node):
         self.estado = "APROXIMANDO"
 
         self.get_logger().info(
-            'Comando recebido. Iniciando aproximação.'
+            f'Comando recebido. Ângulo alvo: {self.angulo_alvo}°'
         )
 
     # =====================================
@@ -244,13 +255,15 @@ class AproximarRotacionar(Node):
         self.estado = "AGUARDANDO"
 
         msg = String()
-        msg.data = "terminou de ajustar"
+        msg.data = self.comando_atual
 
         self.publisher_ajuste.publish(msg)
 
         self.get_logger().info(
-            'Ajuste concluído. Visão liberada.'
+            f'Ajuste concluído. Mensagem publicada: {msg.data}'
         )
+
+        self.comando_atual = None
 
     # =====================================
     # ERRO

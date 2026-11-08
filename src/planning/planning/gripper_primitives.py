@@ -5,12 +5,27 @@ from rclpy.duration import Duration
 class GripperPrimitives(ActionExecutorClient):
     def __init__(self, action_name: str):
         super().__init__(action_name, 0.25)
+
+        # DECLARANDO E LENDO PARÂMETROS
+        # Avisa ao ROS2 que queremos aceitar qualquer parâmetro no grupo "locations"
+
+        self.declare_parameters(
+            namespace='',
+            parameters=[
+                ('locations', None)
+            ]
+        )
+
         self._pub = self.create_publisher(String, '/topico_garra', 10) #cria publisher para enviar ações a serem feitas
         self._sub = self.create_subscription(
             String, '/topico_garra_status', self._status_callback, 10) #cria subscriber de forma a receber o status de conclusão das ações
+        
         self._pending_reply = None #qual reply de status é esperada de ser a próxima para a execução
         self._current_reply = None #ultima reply recebida
         self._reply_received = False #reply recebida, deve ser checada depois se é a esperada
+
+        # Dicionário interno para armazenar os locais mapeados
+        self.locations_dict = self._load_locations_from_params()
 
     def _status_callback(self, msg): #roda sempre que chega uma mensagem em /topico_garra_status
         self._current_reply = msg.data
@@ -60,3 +75,27 @@ class GripperPrimitives(ActionExecutorClient):
         }
 
         return mapping[location]
+
+    def _load_locations_from_params(self) -> dict:
+        """Lê os parâmetros 'locations' do ROS 2 e converte para um dicionário python"""
+        locations = {}
+        
+        # Pega todos os parâmetros carregados neste nó
+        # No caso do seu YAML, eles ficarão salvos como 'locations.loc2', 'locations.loc3'
+        params = self.get_parameters_by_prefix('locations')
+        
+        for key, param in params.items():
+            # key será apenas o nome da localização (ex: 'loc2', 'start')
+            # param.value conterá a lista de 4 posições (x, y, z, yaw)
+            locations[key] = param.value
+            
+        return locations
+
+    def get_location_angle(self, loc_name: str) -> float:
+        if loc_name in self.locations_dict:
+            # Pega o 4º valor do array [x, y, z, angulo]
+            return float(self.locations_dict[loc_name][3])
+        else:
+            self.get_logger().error(f'Location {loc_name} nao encontrada no YAML de parametros!')
+            return 0.0 # Valor default em caso de erro
+        
