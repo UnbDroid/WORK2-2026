@@ -9,12 +9,12 @@ class GripperPrimitives(ActionExecutorClient):
         # DECLARANDO E LENDO PARÂMETROS
         # Avisa ao ROS2 que queremos aceitar qualquer parâmetro no grupo "locations"
 
-        self.declare_parameters(
-            namespace='',
-            parameters=[
-                ('locations', None)
-            ]
-        )
+#        self.declare_parameters(
+#            namespace='',
+#            parameters=[
+#                ('locations', None)
+#            ]
+#        )
 
         self._pub = self.create_publisher(String, '/topico_garra', 10) #cria publisher para enviar ações a serem feitas
         self._sub = self.create_subscription(
