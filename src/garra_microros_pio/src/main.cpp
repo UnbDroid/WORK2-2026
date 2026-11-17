@@ -61,9 +61,9 @@ char status_buffer[32];
 
 //levando em conta slot do meio como posição 0
 char command_buffer[32]; //diminuir
-int slot1 = -450;
+int slot1 = -500;
 int slot2 = 0;
-int slot3 = 450;
+int slot3 = 500;
 int frente = -4850;
 int pos1 = -4350;
 int pos3 = -5350;
@@ -89,9 +89,9 @@ int alt_giro = -25000;
 int shelf = -40000;
 
 std::unordered_map<std::string, int> dict_alt = {
-    {"5cm", 60000},
-    {"10cm", 40000},
-    {"15cm", 20000},
+    {"5cm", 70000},
+    {"10cm", 50000},
+    {"15cm", 30000},
     {"bottom", 0},
     {"top", -19000}
 };
@@ -116,7 +116,7 @@ Servo myservo;
 #define SERVO_PIN 18
 
 void fechar_garra(){
-  myservo.write(90);
+  myservo.write(130);
   delay(500);
 }
 

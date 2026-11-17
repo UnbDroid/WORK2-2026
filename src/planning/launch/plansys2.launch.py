@@ -78,6 +78,7 @@ def generate_launch_description():
         output='screen',
         parameters=[{
             'action_name': 'pick-from-location',
+            'locations_file': locations_yaml,
         }],
     )
 
@@ -89,6 +90,7 @@ def generate_launch_description():
         output='screen',
         parameters=[{
             'action_name': 'place-at-location',
+            'locations_file': locations_yaml,
         }],
     )
 
@@ -100,8 +102,45 @@ def generate_launch_description():
         output='screen',
         parameters=[{
             'action_name': 'stack',
+            'locations_file': locations_yaml,
         }],
     )
+
+    # place_in_container_action_node = LifecycleNode(
+    #     package='planning',
+    #     executable='place_in_container_action',
+    #     name='place_in_container_action',
+    #     namespace='',
+    #     output='screen',
+    #     parameters=[{
+    #         'action_name': 'move-nao-cheio',
+    #         'locations_file': locations_yaml,
+    #     }],
+    # )
+
+    # pick_from_container_action_node = LifecycleNode(
+    #     package='planning',
+    #     executable='pick_from_container_action',
+    #     name='pick_from_container_action',
+    #     namespace='',
+    #     output='screen',
+    #     parameters=[{
+    #         'action_name': 'move-nao-cheio',
+    #         'locations_file': locations_yaml,
+    #     }],
+    # )
+
+    # place_from_at_shelf_action_node = LifecycleNode(
+    #     package='planning',
+    #     executable='place_from_at_shelf_action',
+    #     name='place_from_at_shelf_action',
+    #     namespace='',
+    #     output='screen',
+    #     parameters=[{
+    #         'action_name': 'move-nao-cheio',
+    #         'locations_file': locations_yaml,
+    #     }],
+    # )
 
     # Nó gerenciador que popula o problema e aciona a execução do plano
     controller_node = Node(
@@ -123,6 +162,9 @@ def generate_launch_description():
             pick_from_location_action_node,
             place_at_location_action_node,
             stack_action_node,
+            # place_in_container_action_node,
+            # pick_from_container_action_node,
+            # place_from_at_shelf_action_node,
             # controller_node,
         ],
     )

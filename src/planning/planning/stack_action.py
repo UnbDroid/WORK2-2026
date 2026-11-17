@@ -8,7 +8,7 @@ class StackStep(Enum):
     #o cubo detectado sempre estará na mesma posição da camera/shot, logo deve ser analisado aquele apriltag específico para inspencionar
     #se o cubo deve ser pego, ou não, e continuar o sacneamento para próximos cubos
     START = auto()
-    TRANSLADAR = auto()
+    AJUSTAR = auto()
     VERTICAL_CHASSI1 = auto()  # pular as próximas duas etapas se o cubo já estiver em modo de "depositar" cubos, já que será realizado pela anterior
     GIRAR_CHASSI1 = auto()
     VERTICAL_CHASSI2 = auto()  # inicia daqui se está em modo de depositar
@@ -34,107 +34,107 @@ class StackAction(GripperPrimitives):
     def __init__(self):
         super().__init__('stack')  # nome precisa bater com nome da action no pddl domain
         self.step = StackStep.START
+        self.target_location = None
+        self.angulo = None
 
     def do_work(self):
-        args = self.current_arguments  # [robot, top, bottom, location, slot] — REVISAR: confirme a ordem real dos parâmetros de "stack" no domain.pddl
+        args = self.current_arguments  # [robot, bottom, top, location, bottomslot, topslot, position]
 
         if self.step == StackStep.START:
-            self.step = StackStep.TRANSLADAR
-            self.send_feedback(0.02, 'indo para posicao de empilhamento')
-            # funcao de mover
-            time.sleep(1)
-            self._pending_reply = 'move'
-            self._current_reply = 'move'
-            self._reply_received = True
+            self.step = StackStep.AJUSTAR
+            self.target_location = args[3]
+            self.angulo = self.get_location_angle(self.target_location)
+            self.send_feedback(0.01, f'Ajustando distância de 20 cm e angulação de {self.angulo} graus da mesa')
+            self.send_command(f'ajustar:{self.angulo}') 
 
-        elif self.step == StackStep.TRANSLADAR and self.command_finished():
+        elif self.step == StackStep.AJUSTAR and self.command_finished():
             self.step = StackStep.VERTICAL_CHASSI1
-            self.send_feedback(0.08, 'levantando garra para girar ate o chassi')
+            self.send_feedback(0.08, 'Levantando garra para girar ate o chassi')
             self.send_command('alt_giro')
 
         elif self.step == StackStep.VERTICAL_CHASSI1 and self.command_finished():
             self.step = StackStep.GIRAR_CHASSI1
-            self.send_feedback(0.14, 'girando para o slot do cubo')
+            self.send_feedback(0.14, f'Girando para {args[4]} do cubo inferior')
             self.send_command(self.slot_to_cmd(args[4]))
 
         elif self.step == StackStep.GIRAR_CHASSI1 and self.command_finished():
             self.step = StackStep.VERTICAL_CHASSI2
-            self.send_feedback(0.20, 'abaixando ate a altura do slot')
+            self.send_feedback(0.20, 'Abaixando ate a altura do slot')
             self.send_command('inicial')
 
         elif self.step == StackStep.VERTICAL_CHASSI2 and self.command_finished():
             self.step = StackStep.FECHAR1
-            self.send_feedback(0.26, 'fechando garra')
+            self.send_feedback(0.26, 'Fechando garra')
             self.send_command('fechar')
 
         elif self.step == StackStep.FECHAR1 and self.command_finished():
             self.step = StackStep.VERTICAL_CHASSI3
-            self.send_feedback(0.32, 'levantando garra com o cubo')
+            self.send_feedback(0.32, f'Levantando garra com {args[1]}')
             self.send_command('alt_giro')
 
         elif self.step == StackStep.VERTICAL_CHASSI3 and self.command_finished():
             self.step = StackStep.GIRAR_AREA1
-            self.send_feedback(0.38, 'girando para a area de empilhamento')
-            self.send_command('frente')
+            self.send_feedback(0.38, f'Girando para posição {args[6]}')
+            self.send_command(self.slot_to_cmd(args[6]))
 
         elif self.step == StackStep.GIRAR_AREA1 and self.command_finished(): #para aqui, acho que não está mandando o comando para a main corretamente
             self.step = StackStep.STACK1
-            self.send_feedback(0.44, 'abaixando para empilhar cubo 1')
+            self.send_feedback(0.44, f'Abaixando para empilhar cubo debaixo: {args[1]}')
             self.send_command(f'empilha:{self.height_to_cmd(args[3])}:bottom')
 
         elif self.step == StackStep.STACK1 and self.command_finished():
             self.step = StackStep.ABRIR1
-            self.send_feedback(0.50, 'abrindo garra')
+            self.send_feedback(0.50, 'Abrindo garra')
             self.send_command('abrir')
 
         elif self.step == StackStep.ABRIR1 and self.command_finished():
             self.step = StackStep.VERTICAL_AREA1
-            self.send_feedback(0.56, 'subindo apos soltar o cubo')
+            self.send_feedback(0.56, 'Subindo para altura de giro')
             self.send_command('alt_giro')
 
         elif self.step == StackStep.VERTICAL_AREA1 and self.command_finished():
             self.step = StackStep.GIRAR_CHASSI2
-            self.send_feedback(0.62, 'girando para pegar cubo 2')
+            self.send_feedback(0.62, f'Girando para {args[5]}')
             self.send_command(self.slot_to_cmd(args[5]))  
 
         elif self.step == StackStep.GIRAR_CHASSI2 and self.command_finished():
             self.step = StackStep.VERTICAL_CHASSI4
-            self.send_feedback(0.68, 'abaixando ate a altura do proximo slot')
+            self.send_feedback(0.68, 'Abaixando ate a altura dos slots')
             self.send_command('inicial')
 
         elif self.step == StackStep.VERTICAL_CHASSI4 and self.command_finished():
             self.step = StackStep.FECHAR2
-            self.send_feedback(0.74, 'fechando garra')
+            self.send_feedback(0.74, 'Fechando garra')
             self.send_command('fechar')
 
         elif self.step == StackStep.FECHAR2 and self.command_finished():
             self.step = StackStep.VERTICAL_CHASSI5
-            self.send_feedback(0.80, 'levantando garra com o segundo cubo')
+            self.send_feedback(0.80, f'Levantando garra com {args[2]}')
             self.send_command('alt_giro')
 
         elif self.step == StackStep.VERTICAL_CHASSI5 and self.command_finished():
             self.step = StackStep.GIRAR_AREA2
-            self.send_feedback(0.86, 'girando para a area de empilhamento novamente')
-            self.send_command('frente')
+            self.send_feedback(0.86, f'Girando para posição {args[6]}')
+            self.send_command(self.slot_to_cmd(args[6]))
 
         elif self.step == StackStep.GIRAR_AREA2 and self.command_finished():
             self.step = StackStep.STACK2
-            self.send_feedback(0.90, 'abaixando para empilhar o cubo 2')
+            self.send_feedback(0.90, f'Abaixando para empilhar cubo de cima: {args[2]}')
             self.send_command(f'empilha:{self.height_to_cmd(args[3])}:top')  
 
         elif self.step == StackStep.STACK2 and self.command_finished():
             self.step = StackStep.ABRIR2
-            self.send_feedback(0.94, 'abrindo garra')
+            self.send_feedback(0.94, 'Abrindo garra')
             self.send_command('abrir')
 
         elif self.step == StackStep.ABRIR2 and self.command_finished():
             self.step = StackStep.VERTICAL_AREA2
-            self.send_feedback(0.97, 'subindo para altura original')
+            self.send_feedback(0.97, 'Subindo para altura de giro')
             self.send_command('alt_giro')
 
         elif self.step == StackStep.VERTICAL_AREA2 and self.command_finished():
             self.step = StackStep.GIRAR_CHASSI3
-            self.send_feedback(0.99, 'girando garra de volta a posicao neutra')
+            self.send_feedback(0.99, 'Girando garra de volta a posicao neutra')
             self.send_command('slot2')  
 
         elif self.step == StackStep.GIRAR_CHASSI3 and self.command_finished():

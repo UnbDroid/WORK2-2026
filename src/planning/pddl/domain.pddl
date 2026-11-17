@@ -132,13 +132,14 @@
   )
 
   (:durative-action stack
-    :parameters (?r - robot ?bottom - object ?top - object ?l - location ?bottomslot - slot ?topslot - slot)
+    :parameters (?r - robot ?bottom - object ?top - object ?l - location ?bottomslot - slot ?topslot - slot ?p - position)
     :duration (= ?duration 1)
     :condition (and
       (at start (gripper-free ?r))
       (over all (at-robot ?r ?l))
       (at start (holding-in ?r ?top ?topslot))
-      (at start (holding-in ?r ?bottom ?bottomslot)))
+      (at start (holding-in ?r ?bottom ?bottomslot))
+      (at start (position-free ?l ?p)))
     :effect (and
       (at start (not (gripper-free ?r)))
       (at end (gripper-free ?r))
@@ -147,6 +148,7 @@
       (at end (slot-free ?r ?topslot))
       (at end (slot-free ?r ?bottomslot))
       (at end (on ?top ?bottom ?l))
+      (at end (not (position-free ?l ?p)))
       (at end (decrease (carga ?r) 2)))
   )
 )

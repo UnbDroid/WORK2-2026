@@ -19,7 +19,6 @@ class ColorDetector:
         self.red_upper = np.array([5, 255, 255])
         self.red_lower2 = np.array([170, self.red_lower[1], self.red_lower[2]])
         self.red_upper2 = np.array([179, self.red_upper[1], self.red_upper[2]])
-
         # Limites para o azul 
         self.blue_lower = np.array([90, 50, 50])
         self.blue_upper = np.array([130, 255, 255])
@@ -144,9 +143,9 @@ class VisionNode(Node):
 
     ALVOS = {
         "cubo": {
-            5.0:  (0.115,    0.685),
-            10.0: (0.114278, 0.602245),
-            15.0: (0.172,    0.558),
+            5.0:  (0.185,    0.770),
+            10.0: (0.173, 0.695),
+            15.0: (0.163, 0.629),
         },
         "zona": {
             5.0:  (0.0, 0.0),   # CALIBRAR
@@ -164,7 +163,7 @@ class VisionNode(Node):
         self.classifier = ObjectClassifier()
 
         # Parâmetros
-        self.declare_parameter('search_vy', -0.15)
+        self.declare_parameter('search_vy', -0.4)
         self.declare_parameter('search_sweep_time', 30.0)
         self.declare_parameter('search_max_legs', 3)
         self.declare_parameter('stable_frames', 5)
@@ -176,7 +175,7 @@ class VisionNode(Node):
         self.tipo_alvo = None
         self.altura_mesa_cm = None
         self.comando_atual = None
-        self.garra_ajustada = False    # Interlock com a garra
+        self.garra_ajustada = True    # Interlock com a garra
         self.frames_estaveis = 0
         self.inicio_trecho = None
         self.sentido_busca = 1          # +1 = sentido normal, -1 = inverso
@@ -188,7 +187,7 @@ class VisionNode(Node):
 
         self.sub = self.create_subscription(Image, '/cam/image_raw', self.image_callback, 10)
         self.sub_garra = self.create_subscription(String, '/topico_garra', self.garra_callback, 10)
-        self.sub_ajuste = self.create_subscription(String, '/topico_ajuste', self.ajuste_callback, 10)
+        #self.sub_ajuste = self.create_subscription(String, '/topico_ajuste', self.ajuste_callback, 10)
         self.pub_status = self.create_publisher(String, '/topico_garra_status', 10)
         self.pub_cmd_vel = self.create_publisher(Twist, '/cmd_vel', 10)
 
@@ -216,15 +215,15 @@ class VisionNode(Node):
         return float(m.group(1)) if m else None
 
     # Callbacks de Controle
-    def ajuste_callback(self, msg):
-        status = msg.data.strip()
-        if status == 'terminou de ajustar':
-            self.garra_ajustada = True
-            self.get_logger().info('AVISO RECEBIDO: Garra ajustada. Visão liberada para mover o robô.')
-        else:
-            self.garra_ajustada = False
-            self.parar_robo()
-            self.get_logger().info(f'Trava ativada pela garra ({status}). Base pausada.')
+    # def ajuste_callback(self, msg):
+    #     status = msg.data.strip()
+    #     if status == 'terminou de ajustar':
+    #         self.garra_ajustada = True
+    #         self.get_logger().info('AVISO RECEBIDO: Garra ajustada. Visão liberada para mover o robô.')
+    #     else:
+    #         self.garra_ajustada = False
+    #         self.parar_robo()
+    #         self.get_logger().info(f'Trava ativada pela garra ({status}). Base pausada.')
 
     def garra_callback(self, msg):
         cmd = msg.data
@@ -297,7 +296,7 @@ class VisionNode(Node):
     def concluir_alinhamento(self):
         self.parar_robo()
         self.fase = Fase.IDLE
-        self.garra_ajustada = False
+        #self.garra_ajustada = False
 
         if self.tipo_alvo == 'cubo':
             self.memoria.get(self.local_atual, {}).pop(self.alvo_id, None)
@@ -336,6 +335,8 @@ class VisionNode(Node):
         else:
             vx = 0
             vy = 0
+
+        print(f'Velocidade final: vx={vx:.3f} e vy={vy:.3f}  A coordenada X atual: {delta_x:.3f}, o erro lateral atual é:{erro_lateral:.3f} , A coordenada Y atual: {delta_z:.3f}, O erro frontal atual é:{erro_frontal:.3f}')
 
         return vy, -vx
 
