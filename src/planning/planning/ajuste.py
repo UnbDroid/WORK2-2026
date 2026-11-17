@@ -1,12 +1,11 @@
-
 import math
+
 import rclpy
 
-from std_msgs.msg import String
+# from std_msgs.msg import String
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
 from sensor_msgs.msg import LaserScan
-from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist
 
 
@@ -15,16 +14,14 @@ class AproximarRotacionar(Node):
     def __init__(self):
         super().__init__('aproximar_rotacionar')
 
-        # Publishers
         self.publisher = self.create_publisher(
             Twist, '/cmd_vel', 10
         )
 
-        self.publisher_ajuste = self.create_publisher(
-            String, '/topico_garra_status', 10
-        )
+        # self.publisher_ajuste = self.create_publisher(
+        #     String, '/topico_garra_status', 10
+        # )
 
-        # Subscribers
         self.subscription = self.create_subscription(
             LaserScan,
             '/scan',
@@ -32,47 +29,42 @@ class AproximarRotacionar(Node):
             qos_profile_sensor_data
         )
 
-        self.subscription_odom = self.create_subscription(
-            Odometry,
-            '/odom',
-            self.callback_odom,
-            qos_profile_sensor_data
-        )
+        # self.sub_garra = self.create_subscription(
+        #     String,
+        #     '/topico_garra',
+        #     self.garra_callback,
+        #     10
+        # )
 
-        self.sub_garra = self.create_subscription(
-            String,
-            '/topico_garra',
-            self.garra_callback,
-            10
-        )
-
-        # Configurações da aproximação
         self.distancia_alvo = 0.20
         self.tolerancia = 0.02
-        self.velocidade_frente = 0.2
+        self.velocidade_frente = 0.10
+        self.velocidade_ajuste = 0.05
 
-        # Configurações da rotação
-        self.angulo_alvo = 0.0  # graus
-        self.tolerancia_angular = 0.5
-
-        self.kp_rotacao = 1.0
-        self.velocidade_angular_max = 0.5 #0.5
-        self.velocidade_angular_min = 0.3 #mudei 0.15
-
-        # Odometria
-        self.angulo_atual = None
-        self.ultima_odom = None
+        self.angulo_lateral = 30.0  # graus em relação à frente
+        self.tolerancia_lateral = 0.01  # diferença máxima entre os lados, em metros
+        self.kp_rotacao = 2.0
+        self.velocidade_angular_max = 0.7
+        self.velocidade_angular_min = 0.3
+        self.sinal_rotacao = 1.0  # inverter para -1.0 se girar para o lado errado
 
         # LiDAR
         self.distancia_atual = None
+        self.distancia_esquerda = None
+        self.distancia_direita = None
         self.ultima_leitura = None
 
         # Estados
         self.estado = "AGUARDANDO"
         self.comando_atual = None
+        self.verificacoes = 0
+        self.verificacoes_necessarias = 4
+        self.inicio_ajuste = None
 
         # Segurança
-        self.timeout = 5.0
+        self.timeout = 2.0
+        self.timeout_ajuste = 30.0
+        self.distancia_minima_segura = 0.12
 
         # Timer de controle: 20 Hz
         self.timer = self.create_timer(
@@ -80,153 +72,170 @@ class AproximarRotacionar(Node):
             self.controlar
         )
 
-        self.get_logger().info(
-            'Nó iniciado. Aguardando comando da garra.'
-        )
-
-    # =====================================
-    # ATIVAÇÃO PELA GARRA
-    # =====================================
-
-    def garra_callback(self, msg): 
-
-        self.get_logger().info(
-        f'RECEBI NO CALLBACK: {msg.data} | Estado: {self.estado}'
-    )
-
-        if not msg.data.startswith('ajustar:'):
-            return
-
-        if self.estado != "AGUARDANDO":
-            return
-
-        try:
-            self.angulo_alvo = float(msg.data.split(':')[1])
-        except (ValueError, IndexError):
-            self.get_logger().error(
-                f'Comando de ajuste inválido: {msg.data}'
-            )
-            return
-
-        self.comando_atual = msg.data
-
-        self.distancia_atual = None
-        self.ultima_leitura = None
-
+        # Teste sem garra: inicia o ajuste automaticamente
+        self.inicio_ajuste = self.get_clock().now()
         self.estado = "APROXIMANDO"
 
         self.get_logger().info(
-            f'Comando recebido. Ângulo alvo: {self.angulo_alvo}°'
+            'Nó iniciado. Iniciando aproximação e alinhamento pelo LiDAR.'
         )
+
+    # =====================================
+    # ATIVAÇÃO PELA GARRA (DESATIVADA PARA TESTE)
+    # =====================================
+
+    # def garra_callback(self, msg):
+    #     if msg.data != 'ajuste' and not msg.data.startswith('ajuste:'):
+    #         return
+    #
+    #     if self.estado != "AGUARDANDO":
+    #         return
+    #
+    #     self.comando_atual = msg.data
+    #     self.distancia_atual = None
+    #     self.distancia_esquerda = None
+    #     self.distancia_direita = None
+    #     self.ultima_leitura = None
+    #     self.verificacoes = 0
+    #     self.inicio_ajuste = self.get_clock().now()
+    #     self.estado = "APROXIMANDO"
+    #
+    #     self.get_logger().info(
+    #         'Comando recebido. Iniciando aproximação e alinhamento pelo LiDAR.'
+    #     )
 
     # =====================================
     # LEITURA DO LIDAR
     # =====================================
 
     def callback(self, msg):
-
-        if not msg.ranges:
+        if not msg.ranges or msg.angle_increment == 0.0:
             return
 
-        # LiDAR invertido: último raio aponta para frente
-        distancia = msg.ranges[-1]
+        quantidade = len(msg.ranges)
+        abertura = abs(msg.angle_increment) * quantidade
 
-        if not math.isfinite(distancia):
+        # O cálculo com índices circulares exige uma varredura de aproximadamente 360°
+        if abs(abertura - 2.0 * math.pi) > math.radians(5.0):
+            self.distancia_atual = None
+            self.distancia_esquerda = None
+            self.distancia_direita = None
             return
 
-        if not msg.range_min <= distancia <= msg.range_max:
-            return
-
-        self.distancia_atual = distancia
-        self.ultima_leitura = self.get_clock().now()
-
-    # =====================================
-    # LEITURA DA ODOMETRIA
-    # =====================================
-
-    def callback_odom(self, msg):
-
-        q = msg.pose.pose.orientation
-
-        yaw = math.atan2(
-            2.0 * (q.w * q.z + q.x * q.y),
-            1.0 - 2.0 * (q.y**2 + q.z**2)
+        # LiDAR de cabeça para baixo: angle_max aponta para frente
+        indice_frente = quantidade - 1
+        deslocamento = round(
+            math.radians(self.angulo_lateral) / abs(msg.angle_increment)
         )
 
-        self.angulo_atual = math.degrees(yaw)
-        self.ultima_odom = self.get_clock().now()
+        # Na montagem invertida, o sentido angular do sensor é espelhado
+        # Hipótese inicial: índices menores que a frente apontam para a esquerda
+        indice_esquerda = (indice_frente - deslocamento) % quantidade
+        indice_direita = (indice_frente + deslocamento) % quantidade
+
+        distancia_frente = msg.ranges[indice_frente]
+        distancia_esquerda = msg.ranges[indice_esquerda]
+        distancia_direita = msg.ranges[indice_direita]
+
+        distancias = (
+            distancia_frente,
+            distancia_esquerda,
+            distancia_direita
+        )
+
+        if not all(
+            math.isfinite(d) and msg.range_min <= d <= msg.range_max
+            for d in distancias
+        ):
+            self.distancia_atual = None
+            self.distancia_esquerda = None
+            self.distancia_direita = None
+            return
+
+        self.distancia_atual = distancia_frente
+        self.distancia_esquerda = distancia_esquerda
+        self.distancia_direita = distancia_direita
+        self.ultima_leitura = self.get_clock().now()
 
     # =====================================
     # CONTROLE PRINCIPAL
     # =====================================
 
     def controlar(self):
-
         if self.estado in ("AGUARDANDO", "ERRO"):
             return
 
         agora = self.get_clock().now()
         cmd = Twist()
 
+        tempo_ajuste = (
+            agora - self.inicio_ajuste
+        ).nanoseconds / 1e9
+
+        if tempo_ajuste > self.timeout_ajuste:
+            self.erro_ajuste("Tempo máximo de ajuste excedido")
+            return
+
+        if self.ultima_leitura is None:
+            self.parar()
+            # Aguarda uma leitura válida, sem continuar movimentando
+            tempo_sem_leitura = tempo_ajuste
+            if tempo_sem_leitura > self.timeout:
+                self.erro_ajuste("Sem leitura válida do LiDAR")
+            return
+
+        tempo_scan = (
+            agora - self.ultima_leitura
+        ).nanoseconds / 1e9
+
+        if tempo_scan > self.timeout:
+            self.erro_ajuste("Timeout do LiDAR")
+            return
+
+        # Não utiliza valores inválidos após uma leitura descartada
+        if any(d is None for d in (
+            self.distancia_atual, self.distancia_esquerda, self.distancia_direita
+        )):
+            self.parar()
+            return
+
+        distancia = self.distancia_atual
+        erro_lateral = self.distancia_esquerda - self.distancia_direita
+
+        if distancia < self.distancia_minima_segura:
+            self.erro_ajuste("Mesa próxima demais do LiDAR")
+            return
+
         # ETAPA 1: APROXIMAR
         if self.estado == "APROXIMANDO":
-
-            if self.ultima_leitura is None:
-                # Aguarda primeira leitura válida
-                self.parar()
-                return
-
-            tempo_scan = (
-                agora - self.ultima_leitura
-            ).nanoseconds / 1e9
-
-            if tempo_scan > self.timeout:
-                self.erro_ajuste("Timeout do LiDAR")
-                return
-
-            distancia = self.distancia_atual
-
             if distancia > self.distancia_alvo + self.tolerancia:
                 cmd.linear.x = self.velocidade_frente
 
             elif distancia < self.distancia_alvo - self.tolerancia:
-                cmd.linear.x = -self.velocidade_frente
+                cmd.linear.x = -self.velocidade_ajuste
 
             else:
                 self.parar()
-              #  self.estado = "ROTACIONANDO"
-                self.finalizar_ajuste()
+                self.estado = "ALINHANDO"
 
                 self.get_logger().info(
-                    'Distância alcançada. Iniciando rotação.'
+                    'Distância alcançada. Iniciando alinhamento.'
                 )
                 return
 
-        # ETAPA 2: ROTACIONAR
-        elif self.estado == "ROTACIONANDO":
-
-            if self.angulo_atual is None or self.ultima_odom is None:
+        # ETAPA 2: ALINHAR
+        elif self.estado == "ALINHANDO":
+            if abs(erro_lateral) <= self.tolerancia_lateral:
                 self.parar()
+                self.estado = "VERIFICANDO"
+                self.verificacoes = 0
+
+                self.get_logger().info(
+                    'Alinhamento alcançado. Verificando distância e orientação.'
+                )
                 return
 
-            tempo_odom = (
-                agora - self.ultima_odom
-            ).nanoseconds / 1e9
-
-            if tempo_odom > self.timeout:
-                self.erro_ajuste("Timeout da odometria")
-                return
-
-            # Erro normalizado entre -180 e 180 graus
-            erro = (
-                self.angulo_alvo - self.angulo_atual + 180
-            ) % 360 - 180
-
-            if abs(erro) <= self.tolerancia_angular:
-                self.finalizar_ajuste()
-                return
-
-            velocidade = self.kp_rotacao * math.radians(erro)
+            velocidade = self.kp_rotacao * erro_lateral
 
             velocidade = max(
                 -self.velocidade_angular_max,
@@ -235,17 +244,47 @@ class AproximarRotacionar(Node):
 
             if abs(velocidade) < self.velocidade_angular_min:
                 velocidade = math.copysign(
-                    self.velocidade_angular_min, erro
+                    self.velocidade_angular_min, velocidade
                 )
 
-            cmd.angular.z = velocidade
+            cmd.angular.z = self.sinal_rotacao * velocidade
+
+        # ETAPA 3: VERIFICAR
+        elif self.estado == "VERIFICANDO":
+            distancia_correta = (
+                abs(distancia - self.distancia_alvo) <= self.tolerancia
+            )
+
+            alinhamento_correto = (
+                abs(erro_lateral) <= self.tolerancia_lateral
+            )
+
+            if not alinhamento_correto:
+                self.verificacoes = 0
+                self.estado = "ALINHANDO"
+                self.parar()
+                return
+
+            if not distancia_correta:
+                self.verificacoes = 0
+                self.estado = "APROXIMANDO"
+                self.parar()
+                return
+
+            self.verificacoes += 1
+
+            if self.verificacoes >= self.verificacoes_necessarias:
+                self.finalizar_ajuste()
+                return
 
         self.publisher.publish(cmd)
 
         self.get_logger().debug(
             f'Estado: {self.estado} | '
-            f'Distância: {self.distancia_atual} | '
-            f'Ângulo: {self.angulo_atual} | '
+            f'Frente: {self.distancia_atual:.3f} | '
+            f'Esquerda: {self.distancia_esquerda:.3f} | '
+            f'Direita: {self.distancia_direita:.3f} | '
+            f'Erro lateral: {erro_lateral:.3f} | '
             f'Vx: {cmd.linear.x:.2f} | '
             f'Wz: {cmd.angular.z:.2f}'
         )
@@ -255,27 +294,23 @@ class AproximarRotacionar(Node):
     # =====================================
 
     def finalizar_ajuste(self):
-
         self.parar()
         self.estado = "AGUARDANDO"
 
-        msg = String()
-        msg.data = self.comando_atual
+        # msg = String()
+        # msg.data = self.comando_atual
+        # self.publisher_ajuste.publish(msg)
 
-        self.publisher_ajuste.publish(msg)
-
-        self.get_logger().info(
-            f'Ajuste concluído. Mensagem publicada: {msg.data}'
-        )
+        self.get_logger().info('Ajuste concluído.')
 
         self.comando_atual = None
+        self.inicio_ajuste = None
 
     # =====================================
     # ERRO
     # =====================================
 
     def erro_ajuste(self, motivo):
-
         self.parar()
         self.estado = "ERRO"
 
@@ -283,20 +318,20 @@ class AproximarRotacionar(Node):
             f'Ajuste interrompido: {motivo}'
         )
 
-        msg = String()
-        msg.data = "erro no ajuste"
-        self.publisher_ajuste.publish(msg)
+        # msg = String()
+        # msg.data = "erro no ajuste"
+        # self.publisher_ajuste.publish(msg)
 
     # =====================================
     # PARADA
     # =====================================
 
     def parar(self):
-        self.publisher.publish(Twist())
+        if rclpy.ok():
+            self.publisher.publish(Twist())
 
 
 def main(args=None):
-
     rclpy.init(args=args)
     node = AproximarRotacionar()
 
