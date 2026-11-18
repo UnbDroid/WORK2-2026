@@ -36,7 +36,7 @@ class PlaceCubeAtLocationAction(GripperPrimitives):
             self.target_location = args[2]
             self.angulo = self.get_location_angle(self.target_location)
             self.send_feedback(0.01, f'Ajustando distância de 20 cm e angulação de {self.angulo} graus da mesa')
-            time.sleep(2)  # delay antes de publicar o comando
+            time.sleep(1)  # delay antes de publicar o comando
             self.send_command(f'ajustar:{self.angulo}') 
         
         elif self.step == PlaceCubeAtLocationStep.AJUSTAR and self.command_finished():

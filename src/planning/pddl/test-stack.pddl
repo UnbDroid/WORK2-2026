@@ -7,28 +7,44 @@
     (:objects 
     
         robot1 - robot
-        cube1 - object
-        cube2 - object
-        cube3 - object
-        loc1 - location
-        slot1 - slot
-        slot2 - slot
-        slot3 - slot
+        cube1 cube2 - object
+        locstart loc7 loc4 locfinish - location
+        slot1 slot2 slot3 - slot 
+        p2l4 - position
 
     )
 
     (:init
-    
-        (at-robot robot1 loc1)
+
+        (= (carga robot1) 0)
+
+        (= (restantes locstart) 0)
+        (= (restantes loc7) 2)
+        (= (restantes loc4) 0)
+        (= (restantes locfinish) 0)
+
         (gripper-free robot1)
-        (holding-in robot1 cube1 slot1)
-        (holding-in robot1 cube2 slot2)
+        (at-robot robot1 locstart)
+
+        (slot-free robot1 slot1)
+        (slot-free robot1 slot2)
+        (slot-free robot1 slot3)
+
+        (obj-at cube1 loc7)
+        (obj-at cube2 loc7)
+
+        (connected locstart loc7)
+        (connected loc7 loc4)
+        (connected loc4 locfinish)
+
+        (position-free loc4 p2l4)
 
     )
 
     (:goal (and
 
-        (on cube1 cube2 loc1)
+        (at-robot robot1 locfinish)
+        (on cube1 cube2 loc4)
 
         ) 
     )

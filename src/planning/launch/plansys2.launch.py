@@ -21,7 +21,7 @@ def generate_launch_description():
     # Arquivo PDDL so para inicializar o Problem Expert oficial do plansys2
     problem_file_arg = DeclareLaunchArgument(
         'problem_file',
-        default_value='actionmove-test-problem.pddl',
+        default_value='test-stack.pddl',
         description='arquivo de problema PDDL usado so pra inicializar o Problem Expert',
     )
     problem_file_path = PathJoinSubstitution(

@@ -11,6 +11,7 @@ setup.py
 config/locations.yaml
 launch/plansys2.launch.py
 pddl/actionmove-test-problem.pddl
+pddl/container-test-problem.pddl
 pddl/domain.pddl
 pddl/problem-amt.pddl
 pddl/problem-att1.pddl
@@ -18,7 +19,6 @@ pddl/problem-att2.pddl
 pddl/problem-bmt.pddl
 pddl/problem-btt1.pddl
 pddl/problem-btt2.pddl
-pddl/sas_plan
 pddl/test-move-pickup.pddl
 pddl/test-pickup-from-location.pddl
 pddl/test-stack.pddl
@@ -31,6 +31,7 @@ planning/move_action.py
 planning/pick_from_container_action.py
 planning/pick_from_location_action.py
 planning/pick_waypoints.py
+planning/place_at_cavity_action.py
 planning/place_at_location_action.py
 planning/place_from_at_shelf_action.py
 planning/place_in_container_action.py

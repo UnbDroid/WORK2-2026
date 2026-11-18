@@ -9,6 +9,7 @@ class StackStep(Enum):
     #se o cubo deve ser pego, ou não, e continuar o sacneamento para próximos cubos
     START = auto()
     AJUSTAR = auto()
+    TRANSLADAR = auto()
     VERTICAL_CHASSI1 = auto()  # pular as próximas duas etapas se o cubo já estiver em modo de "depositar" cubos, já que será realizado pela anterior
     GIRAR_CHASSI1 = auto()
     VERTICAL_CHASSI2 = auto()  # inicia daqui se está em modo de depositar
@@ -38,7 +39,7 @@ class StackAction(GripperPrimitives):
         self.angulo = None
 
     def do_work(self):
-        args = self.current_arguments  # [robot, bottom, top, location, bottomslot, topslot, position]
+        args = self.current_arguments  # [robot, bottom, top, location, bottomslot, topslot, position, tag]
 
         if self.step == StackStep.START:
             self.step = StackStep.AJUSTAR
@@ -48,8 +49,13 @@ class StackAction(GripperPrimitives):
             self.send_command(f'ajustar:{self.angulo}') 
 
         elif self.step == StackStep.AJUSTAR and self.command_finished():
+            self.step = StackStep.TRANSLADAR
+            self.send_feedback(0.04, 'Procurando tag 200 para empilhar')
+            self.send_command(f'transladar:cube7:{self.height_to_cmd(args[3])}:{args[3]}')
+
+        elif self.step == StackStep.TRANSLADAR and self.command_finished():
             self.step = StackStep.VERTICAL_CHASSI1
-            self.send_feedback(0.08, 'Levantando garra para girar ate o chassi')
+            self.send_feedback(0.08, 'Levantando garra para girar')
             self.send_command('alt_giro')
 
         elif self.step == StackStep.VERTICAL_CHASSI1 and self.command_finished():

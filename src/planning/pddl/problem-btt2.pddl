@@ -1,6 +1,3 @@
-; os numeros sao todos definidos aleatoriamente e deverao ser conferidos
-; de acordo com o que for pedido no momento da competicao
-
 (define (problem bmt-instance)
     (:domain robocup-work-transport)
 

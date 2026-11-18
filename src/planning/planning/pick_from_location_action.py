@@ -35,13 +35,13 @@ class PickCubeFromLocationAction(GripperPrimitives):
             self.target_location = args[2]
             self.angulo = self.get_location_angle(self.target_location)
             self.send_feedback(0.01, f'Ajustando distância de 20 cm e angulação de {self.angulo} graus da mesa')
-            time.sleep(2)  # delay antes de publicar o comando
+            time.sleep(1)  # delay antes de publicar o comando
             self.send_command(f'ajustar:{self.angulo}') 
         
         elif self.step == PickCubeStep.AJUSTAR and self.command_finished():
             self.step = PickCubeStep.TRANSLADAR
             self.send_feedback(0.06, 'Posicionando em frente ao cubo')
-            time.sleep(2)  # delay antes de publicar o comando
+            time.sleep(1)  # delay antes de publicar o comando
             self.send_command(f'transladar:{args[1]}:{self.height_to_cmd(args[2])}:{args[2]}') #botei :{args[2]}
 
         elif self.step == PickCubeStep.TRANSLADAR and self.command_finished():

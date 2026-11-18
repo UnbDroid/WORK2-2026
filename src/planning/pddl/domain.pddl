@@ -9,6 +9,7 @@
     container  ; containers azuis e vermelhos
     slot       ; unidades de capacidade de armazenamento de cubos no robô (3)
     position    ; três posições possíveis na mesa para deixar três cubos
+    cavity     ; cavidade para deixar cubos na mesa de precisão
   )
 
   (:predicates
@@ -22,6 +23,8 @@
     (on ?top - object ?bottom - object ?l - location)    ; ?top está empilhado sobre ?bottom e especifica onde eles ficam empilhados
     (gripper-free ?r - robot)                            ; novo predicado: garra/executor ocupado
     (connected ?from - location ?to - location)
+    (in-cavity ?o - object ?l - location ?ca - cavity)   ; posições de deixar os cubos disponíveis
+    (cavity-free ?l - location ?ca - cavity) 
   )
 
   (:functions
@@ -151,4 +154,19 @@
       (at end (not (position-free ?l ?p)))
       (at end (decrease (carga ?r) 2)))
   )
+
+  (:durative-action place-at-cavity
+    :parameters (?r - robot ?o - object ?l - location ?ca - cavity)
+    :duration (= ?duration 1)
+    :condition (and
+      (at start (gripper-free ?r))
+      (over all (at-robot ?r ?l))
+      (at start (cavity-free ?l ?ca))
+      (at start (obj-at ?o ?l)))
+    :effect (and
+      (at start (not (gripper-free ?r)))
+      (at end (gripper-free ?r))
+      (at end (in-cavity ?o ?l ?ca))
+      (at end (not (cavity-free ?l ?ca)))
+      (at end (obj-at ?o ?l))))
 )
