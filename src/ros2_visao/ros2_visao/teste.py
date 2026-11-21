@@ -151,19 +151,22 @@ class ObjectClassifier:
         classified_objects = []
 
         for tag in tags:
-            classified_objects.append({
+            tag_item = {
                 "id": tag["id"],
                 "color": "qualquer",
                 "waypoint": "tag",
                 "bbox": tag["bbox"],
-                "pose_3d": tag["pose_3d"]
-            })
+                "pose_3d": tag["pose_3d"],
+                "cor_cubo": None   # cor da massa de cor em que a tag está (None se não achou)
+            }
+            classified_objects.append(tag_item)
 
             for color_obj in color_objects:
                 if not color_obj["processed"]:
                     if self.is_tag_inside_color(color_obj["contour"], tag["center"],
                                                 tag["bbox"], color_obj["bbox"]):
                         color_obj["processed"] = True
+                        tag_item["cor_cubo"] = color_obj["color"]
                         break
 
         # Massas de cor sem tag dentro = contêineres
@@ -252,6 +255,9 @@ class VisionNode(Node):
         self.sentido_busca = 1          # +1 = sentido normal (o de search_vy), -1 = inverso
         self.trechos_feitos = 0
 
+        # True depois de enviar "cubeidentificado:COR:NUMERO" para o comando atual
+        self.cubo_identificado_enviado = False
+
         # Filtro exponencial do contêiner (X, Z suavizados)
         self.x_filt = None
         self.z_filt = None
@@ -270,6 +276,7 @@ class VisionNode(Node):
         self.sub = self.create_subscription(Image, '/cam/image_raw', self.image_callback, 10)
         self.sub_garra = self.create_subscription(String, '/topico_garra', self.garra_callback, 10)
         self.pub_status = self.create_publisher(String, '/topico_garra_status', 10)
+        self.pub_garra = self.create_publisher(String, '/topico_garra', 10)
         self.pub_cmd_vel = self.create_publisher(Twist, '/cmd_vel', 10)
 
         cv2.namedWindow("Visão do Robô", cv2.WINDOW_NORMAL)
@@ -355,6 +362,7 @@ class VisionNode(Node):
         self.tipo_alvo = tipo
         self.altura_mesa_cm = altura_cm
         self.frames_estaveis = 0
+        self.cubo_identificado_enviado = False
         self.resetar_filtro()
         self.get_logger().info(f'Comando: {cmd} -> {tipo} id {alvo}, mesa a {altura_cm} cm, local {local}')
 
@@ -374,6 +382,15 @@ class VisionNode(Node):
     def parar_robo(self):
         for _ in range(3):
             self.publicar_cmd(Twist())
+
+    # Envio da identificação do cubo para o tópico da garra
+    def publicar_cubo_identificado(self, item):
+        """Publica 'cubeidentificado:COR:NUMERO' (COR = vermelho ou azul) em /topico_garra."""
+        msg = String()
+        msg.data = f'cubeidentificado:{item["cor_cubo"]}:{item["id"]}'
+        self.pub_garra.publish(msg)
+        self.cubo_identificado_enviado = True
+        self.get_logger().info(f'Enviado em /topico_garra: {msg.data}')
 
     # Memória e escolha de sentido
     def registrar_tags(self, results):
@@ -592,6 +609,14 @@ class VisionNode(Node):
                             alvo_encontrado = item
                     elif alvo_encontrado is None or item["waypoint"] == self.tipo_alvo:
                         alvo_encontrado = item
+
+            # Cubo alvo visto com a cor identificada: envia cubeidentificado:COR:NUMERO (uma vez por comando)
+            if (self.fase != Fase.IDLE
+                    and self.tipo_alvo == 'cubo'
+                    and not self.cubo_identificado_enviado
+                    and alvo_encontrado is not None
+                    and alvo_encontrado.get("cor_cubo") is not None):
+                self.publicar_cubo_identificado(alvo_encontrado)
 
             if self.fase == Fase.BUSCANDO:
                 self.passo_busca(alvo_encontrado)
