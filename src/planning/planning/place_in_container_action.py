@@ -9,6 +9,7 @@ class PlaceCubeAtLocationStep(Enum):
     #se o cubo deve ser pego, ou não, e continuar o sacneamento para próximos cubos
     START = auto()
     AJUSTAR = auto()
+    TRANSLADAR = auto()
     VERTICAL_CHASSI1 = auto() #pular as próximas duas etapas se o cubo já estiver em modo de "depositar" cubos, já que será realizado pela anterior
     GIRAR_CHASSI1 = auto()
     VERTICAL_CHASSI2 = auto() #inicia daqui se está em modo de depositar
@@ -37,11 +38,17 @@ class PlaceCubeAtLocationAction(GripperPrimitives):
             self.angulo = self.get_location_angle(self.target_location)
             self.send_feedback(0.01, f'Ajustando distância de 20 cm e angulação de {self.angulo} graus da mesa')
             time.sleep(1)  # delay antes de publicar o comando
-            self.send_command(f'ajustar:{self.angulo}') 
+            self.send_command(f'ajustar:{self.height_to_cmd(args[3])}') 
         
         elif self.step == PlaceCubeAtLocationStep.AJUSTAR and self.command_finished():
+            self.step = PlaceCubeAtLocationStep.TRANSLADAR
+            self.send_feedback(0.06, 'Posicionando em frente ao conteiner')
+            time.sleep(1)  # delay antes de publicar o comando
+            self.send_command(f'transladar:{args[2]}:{self.height_to_cmd(args[3])}:{args[3]}') #botei :{args[2]}
+
+        elif self.step == PlaceCubeAtLocationStep.TRANSLADAR and self.command_finished():
             self.step = PlaceCubeAtLocationStep.VERTICAL_CHASSI1
-            self.send_feedback(0.09, 'Levantando garra para girar')
+            self.send_feedback(0.11, 'Levantando garra para girar')
             self.send_command('alt_giro') #mudar comando para frente
 
         elif self.step == PlaceCubeAtLocationStep.VERTICAL_CHASSI1 and self.command_finished():
@@ -66,8 +73,8 @@ class PlaceCubeAtLocationAction(GripperPrimitives):
 
         elif self.step == PlaceCubeAtLocationStep.VERTICAL_CHASSI3 and self.command_finished():
             self.step = PlaceCubeAtLocationStep.GIRAR_AREA
-            self.send_feedback(0.54, f'Girando para posição {args[5]}')
-            self.send_command(self.slot_to_cmd(args[5])) #manda para diferentes posições em vez de apenas para frente
+            self.send_feedback(0.54, f'Girando para posição frente')
+            self.send_command('frente') #manda para diferentes posições em vez de apenas para frente
 
         elif self.step == PlaceCubeAtLocationStep.GIRAR_AREA and self.command_finished():
             self.step = PlaceCubeAtLocationStep.VERTICAL_AREA1
@@ -91,7 +98,7 @@ class PlaceCubeAtLocationAction(GripperPrimitives):
 
         elif self.step == PlaceCubeAtLocationStep.GIRAR_CHASSI2 and self.command_finished():
             self.step = PlaceCubeAtLocationStep.START #cria um loop para próxima ação da garra
-            self.finish(True, 1.0, 'place-at-cavity concluído')     
+            self.finish(True, 1.0, 'place-in-container concluído')     
 
 
 def main(args=None):

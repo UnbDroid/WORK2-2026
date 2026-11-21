@@ -36,7 +36,7 @@ class PickCubeFromLocationAction(GripperPrimitives):
             self.angulo = self.get_location_angle(self.target_location)
             self.send_feedback(0.01, f'Ajustando distância de 20 cm e angulação de {self.angulo} graus da mesa')
             time.sleep(1)  # delay antes de publicar o comando
-            self.send_command(f'ajustar:{self.angulo}') 
+            self.send_command(f'ajustar:{self.height_to_cmd(args[2])}') 
         
         elif self.step == PickCubeStep.AJUSTAR and self.command_finished():
             self.step = PickCubeStep.TRANSLADAR

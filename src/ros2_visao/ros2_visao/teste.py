@@ -11,15 +11,42 @@ from geometry_msgs.msg import Twist
 from std_msgs.msg import String
 
 
+# ---------------------------------------------------------------------------
+# CONSTANTES DE CÂMERA / CONTÊINER
+# ---------------------------------------------------------------------------
+# Parâmetros intrínsecos (os mesmos usados no AprilTagDetector)
+FX, FY, CX0, CY0 = 753.64, 755.34, 315.52, 243.88
+
+# Distância do contêiner pela borda de CIMA da caixa (a base pode sair da imagem,
+# então a altura da caixa não serve: ela cresce e depois diminui ao chegar perto):
+#     Z = REF_V / (y_topo - Y_HORIZ)
+# Y_HORIZ: constante da geometria da câmera, estimada com 4 leituras (-300).
+# REF_V: define a escala de Z. CALIBRAR: no ponto ideal de parada, leia y_topo no
+# log e faça REF_V = Z_ideal * (y_topo - Y_HORIZ).  Com Z_ideal = 0.602245 e
+# y_topo = 249:  REF_V = 0.602245 * (249 + 300) = 330.63
+Y_HORIZ = -300.0
+REF_V = 330.63
+
+# Altura mínima (em pixels) para aceitar uma massa de cor como contêiner.
+# Evita que um cubo com a tag perdida num frame vire "contêiner".
+# CALIBRAR: deve ser maior que a altura de um cubo e menor que a do contêiner
+# na distância mais longa em que você precisa vê-lo.
+H_MIN_container = 100000000000000000000000000
+
+# ID negativo por cor (o comando recebe -1 ou -2)
+container_IDS = {"vermelho": -1, "azul": -2}
+
+
 # 1. CLASSE DE DETECÇÃO DE CORES
 class ColorDetector:
     def __init__(self):
-        # Limites para o vermelho 
+        # Limites para o vermelho
         self.red_lower = np.array([0, 136, 85])
         self.red_upper = np.array([5, 255, 255])
         self.red_lower2 = np.array([170, self.red_lower[1], self.red_lower[2]])
         self.red_upper2 = np.array([179, self.red_upper[1], self.red_upper[2]])
-        # Limites para o azul 
+
+        # Limites para o azul
         self.blue_lower = np.array([90, 50, 50])
         self.blue_upper = np.array([130, 255, 255])
 
@@ -52,7 +79,7 @@ class ColorDetector:
         return color_objects
 
 
-# 2. CLASSE DE DETECÇÃO DE APRILTAGS (Com a inicialização original DetectorOptions)
+# 2. CLASSE DE DETECÇÃO DE APRILTAGS
 class AprilTagDetector:
     def __init__(self):
         self.options = apriltag.DetectorOptions(families="tag36h11")
@@ -63,7 +90,7 @@ class AprilTagDetector:
     def detect(self, frame):
         if frame is None:
             return []
-            
+
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         results = self.detector.detect(gray)
         tags = []
@@ -91,8 +118,34 @@ class ObjectClassifier:
             return True
         x, y, w, h = color_bbox
         tx, ty, tw, th = tag_bbox
-        return (x < tx + tw + margin and x + w > tx - margin and 
+        return (x < tx + tw + margin and x + w > tx - margin and
                 y < ty + th + margin and y + h > ty - margin)
+
+    @staticmethod
+    def medir_container(contour):
+        """Mede o contêiner a partir da massa de cor.
+
+        - convexHull preenche buracos na máscara (barato, sem MORPH_CLOSE)
+        - centroide por momentos: mais estável que o centro do bbox
+        - Z pela borda de cima da caixa (y_topo): continua visível mesmo quando
+          a base do contêiner sai da imagem, e cresce sempre ao chegar perto
+
+        Retorna (bbox, pose_3d) com pose_3d = (X, 0, Z) na mesma convenção
+        das tags, ou None se a massa for pequena demais.
+        """
+        hull = cv2.convexHull(contour)
+        m = cv2.moments(hull)
+        if m["m00"] == 0:
+            return None
+
+        cx = m["m10"] / m["m00"]
+        x, y, w, h = cv2.boundingRect(hull)
+        if h < H_MIN_container:
+            return None
+
+        z = REF_V / (y - Y_HORIZ)
+        x_m = ((cx - CX0) / FX) * z   # lateral na mesma escala de Z
+        return (x, y, w, h), (x_m, 0.0, z)
 
     def classify(self, tags, color_objects):
         classified_objects = []
@@ -101,33 +154,36 @@ class ObjectClassifier:
             classified_objects.append({
                 "id": tag["id"],
                 "color": "qualquer",
-                "waypoint": "tag", 
+                "waypoint": "tag",
                 "bbox": tag["bbox"],
                 "pose_3d": tag["pose_3d"]
             })
 
             for color_obj in color_objects:
                 if not color_obj["processed"]:
-                    if self.is_tag_inside_color(color_obj["contour"], tag["center"], tag["bbox"], color_obj["bbox"]):
-                        color_obj["processed"] = True 
-                        break 
+                    if self.is_tag_inside_color(color_obj["contour"], tag["center"],
+                                                tag["bbox"], color_obj["bbox"]):
+                        color_obj["processed"] = True
+                        break
 
+        # Massas de cor sem tag dentro = contêineres
         for color_obj in color_objects:
-            if not color_obj["processed"]:
-                x, y, w, h = color_obj["bbox"]
-                cx, cy = x + w // 2, y + h // 2
-                
-                pos_x = (cx - 320) / 500.0
-                pos_y = (cy - 240) / 500.0
-                estimativa_z = 80.0 / (w + 0.1)
+            if color_obj["processed"]:
+                continue
 
-                classified_objects.append({
-                    "id": -1,
-                    "color": color_obj["color"],
-                    "waypoint": "conteiner",
-                    "bbox": color_obj["bbox"],
-                    "pose_3d": (pos_x, pos_y, estimativa_z)
-                })                
+            medida = self.medir_container(color_obj["contour"])
+            if medida is None:
+                continue
+            bbox, pose_3d = medida
+
+            classified_objects.append({
+                "id": container_IDS[color_obj["color"]],
+                "color": color_obj["color"],
+                "waypoint": "container",
+                "bbox": bbox,
+                "h_px": bbox[3],
+                "pose_3d": pose_3d
+            })
         return classified_objects
 
 
@@ -152,6 +208,16 @@ class VisionNode(Node):
             10.0: (0.0, 0.0),   # CALIBRAR
             15.0: (0.0, 0.0),   # CALIBRAR
         },
+        "container": {
+            5.0:  (0.130, 0.626),   
+            10.0: (0.148, 0.720),  
+            15.0: (0.2124 , 0.8413),
+        },
+        "empilhamento": {
+            5.0:  (0.0, 0.0),   # CALIBRAR
+            10.0: (0.208, 0.719),
+            15.0: (0.0, 0.0),   # CALIBRAR
+        },
     }
 
     def __init__(self):
@@ -162,12 +228,15 @@ class VisionNode(Node):
         self.tag_detector = AprilTagDetector()
         self.classifier = ObjectClassifier()
 
-        # Parâmetros
-        self.declare_parameter('search_vy', -0.4)
-        self.declare_parameter('search_sweep_time', 30.0)
-        self.declare_parameter('search_max_legs', 3)
-        self.declare_parameter('stable_frames', 5)
-        self.declare_parameter('limiar_x_memoria', 0.0)
+        # Parâmetros (ros2 run ... --ros-args -p search_vy:=-0.3)
+        self.declare_parameter('search_vy', -0.2)           # VELOCIDADE (m/s) da translação na busca; o sinal define o sentido "normal"
+        self.declare_parameter('search_sweep_time', 30.0)   # TEMPO (s) de cada trecho da busca antes de inverter
+        self.declare_parameter('search_max_legs', 3)        # nº máximo de trechos antes de desistir (0 = varre para sempre)
+        self.declare_parameter('stable_frames', 5)          # frames seguidos dentro da tolerância para concluir o alinhamento
+        self.declare_parameter('frames_para_avistar', 3)    # frames seguidos vendo a tag antes de iniciar o alinhamento
+        self.declare_parameter('frames_perdida_limite', 15) # frames sem ver a tag no alinhamento antes de voltar a buscar
+        self.declare_parameter('dist_min_memoria', 0.05)    # (m) abaixo disso a tag lembrada é considerada "aqui perto"
+        self.declare_parameter('suavizacao_container', 0.4)  # 0..1, menor = mais suave
 
         # Estado do comportamento
         self.fase = Fase.IDLE
@@ -175,19 +244,31 @@ class VisionNode(Node):
         self.tipo_alvo = None
         self.altura_mesa_cm = None
         self.comando_atual = None
-        self.garra_ajustada = True    # Interlock com a garra
         self.frames_estaveis = 0
+        self.frames_vistos = 0
+        self.frames_perdidos = 0
+        self.ultimo_erro_lateral = 0.0
         self.inicio_trecho = None
-        self.sentido_busca = 1          # +1 = sentido normal, -1 = inverso
+        self.sentido_busca = 1          # +1 = sentido normal (o de search_vy), -1 = inverso
         self.trechos_feitos = 0
 
-        # Memória: local -> {id: último cam_x visto}
+        # Filtro exponencial do contêiner (X, Z suavizados)
+        self.x_filt = None
+        self.z_filt = None
+
+        # Memória: local -> {id da tag: posição lateral estimada da tag (m)}
         self.memoria = {}
         self.local_atual = None
 
+        # Posição lateral estimada do robô (m, +y = esquerda), integrando a velocidade comandada.
+        # Serve só para decidir o sentido da busca: guardar o x da câmera (como era antes)
+        # fica obsoleto assim que o robô anda.
+        self.y_est = 0.0
+        self.vy_ultimo = 0.0
+        self.t_ultimo_cmd = None
+
         self.sub = self.create_subscription(Image, '/cam/image_raw', self.image_callback, 10)
         self.sub_garra = self.create_subscription(String, '/topico_garra', self.garra_callback, 10)
-        #self.sub_ajuste = self.create_subscription(String, '/topico_ajuste', self.ajuste_callback, 10)
         self.pub_status = self.create_publisher(String, '/topico_garra_status', 10)
         self.pub_cmd_vel = self.create_publisher(Twist, '/cmd_vel', 10)
 
@@ -197,7 +278,9 @@ class VisionNode(Node):
     # Parsing da mensagem
     @staticmethod
     def nome_para_id(nome):
-        m = re.search(r'(\d+)$', nome.strip())
+        """cube5 -> 5 | zone2 -> 2 | container-1 -> -1 | container-2 -> -2"""
+        n = nome.strip().lower()
+        m = re.search(r'(-?\d+)$', n)
         return int(m.group(1)) if m else None
 
     @staticmethod
@@ -207,24 +290,22 @@ class VisionNode(Node):
             return 'cubo'
         if n.startswith('zone'):
             return 'zona'
+        if n.startswith('container'):
+            return 'container'
+        if n.startswith('empilhamento'):
+            return 'empilhamento'
         return None
 
     @staticmethod
     def altura_para_cm(texto_altura):
-        m = re.fullmatch(r'(\d+(?:\.\d+)?)\s*cm', texto_altura.strip().lower())
+        m = re.fullmatch(r'(\d+(?:\.\d+)?)\s*(?:cm)?', texto_altura.strip().lower())
         return float(m.group(1)) if m else None
 
-    # Callbacks de Controle
-    # def ajuste_callback(self, msg):
-    #     status = msg.data.strip()
-    #     if status == 'terminou de ajustar':
-    #         self.garra_ajustada = True
-    #         self.get_logger().info('AVISO RECEBIDO: Garra ajustada. Visão liberada para mover o robô.')
-    #     else:
-    #         self.garra_ajustada = False
-    #         self.parar_robo()
-    #         self.get_logger().info(f'Trava ativada pela garra ({status}). Base pausada.')
+    def resetar_filtro(self):
+        self.x_filt = None
+        self.z_filt = None
 
+    # Callback de comando (único canal de controle: /topico_garra)
     def garra_callback(self, msg):
         cmd = msg.data
         if not cmd.startswith('transladar:'):
@@ -246,57 +327,101 @@ class VisionNode(Node):
             self.get_logger().error(f'Comando inválido: {cmd}')
             return
 
+        if tipo == 'container' and alvo not in container_IDS.values():
+            self.get_logger().error(
+                f'Contêiner inválido (use -1 = vermelho, -2 = azul): {cmd}')
+            return
+
+        if tipo != 'container' and alvo < 0:
+            self.get_logger().error(f'ID negativo só é válido para contêiner: {cmd}')
+            return
+
         if altura_cm not in self.ALVOS[tipo]:
             self.get_logger().error(f'{tipo} a {altura_cm} cm sem calibração. Disponíveis: {list(self.ALVOS[tipo])}')
             return
 
+        if self.ALVOS[tipo][altura_cm] == (0.0, 0.0):
+            self.get_logger().error(f'{tipo} a {altura_cm} cm ainda não calibrado (alvo 0, 0). Comando ignorado.')
+            return
+
         if local != self.local_atual:
+            # Mudou de local: o referencial lateral e a memória antiga não valem mais
             self.local_atual = local
-            self.memoria.setdefault(local, {})
+            self.memoria[local] = {}
+            self.y_est = 0.0
 
         self.comando_atual = cmd
         self.alvo_id = alvo
         self.tipo_alvo = tipo
         self.altura_mesa_cm = altura_cm
         self.frames_estaveis = 0
+        self.resetar_filtro()
         self.get_logger().info(f'Comando: {cmd} -> {tipo} id {alvo}, mesa a {altura_cm} cm, local {local}')
 
         self.iniciar_busca()
 
-    # Memória e Escolha de Sentido
+    # Publicação de velocidade + estimativa de posição lateral
+    def publicar_cmd(self, twist):
+        agora = self.get_clock().now()
+        if self.t_ultimo_cmd is not None:
+            dt = (agora - self.t_ultimo_cmd).nanoseconds / 1e9
+            if dt < 0.5:  # ignora lacunas (nó ficou em IDLE sem publicar)
+                self.y_est += self.vy_ultimo * dt
+        self.t_ultimo_cmd = agora
+        self.vy_ultimo = twist.linear.y
+        self.pub_cmd_vel.publish(twist)
+
+    def parar_robo(self):
+        for _ in range(3):
+            self.publicar_cmd(Twist())
+
+    # Memória e escolha de sentido
     def registrar_tags(self, results):
         if self.fase == Fase.IDLE or self.local_atual is None:
             return
         mem = self.memoria.setdefault(self.local_atual, {})
         for item in results:
             if item["id"] >= 0:
-                mem[item["id"]] = item["pose_3d"][0]
+                # Posição lateral da tag no mesmo eixo de y_est (+ = esquerda).
+                # O x da câmera é + para a direita, por isso o sinal de menos.
+                mem[item["id"]] = self.y_est - item["pose_3d"][0]
+
+    def sentido_para(self, esquerda):
+        """Converte 'ir para a esquerda/direita' no sentido (+1/-1) usado pela busca."""
+        sentido_normal_e_esquerda = self.get_parameter('search_vy').value > 0
+        return 1 if esquerda == sentido_normal_e_esquerda else -1
 
     def escolher_sentido(self):
         mem = self.memoria.get(self.local_atual, {})
-        ultimo_x = mem.get(self.alvo_id)
-        limiar = self.get_parameter('limiar_x_memoria').value
+        y_tag = mem.get(self.alvo_id)
 
-        if ultimo_x is None or ultimo_x > limiar:
-            self.get_logger().info(f'Alvo {self.alvo_id}: sem registro ou à frente -> sentido normal')
+        if y_tag is None:
+            self.get_logger().info(f'Alvo {self.alvo_id}: sem registro -> sentido normal')
             return 1
-        self.get_logger().info(f'Alvo {self.alvo_id}: já passei por ele (x={ultimo_x:.3f}) -> voltando')
-        return -1
+
+        delta = y_tag - self.y_est
+        if abs(delta) < self.get_parameter('dist_min_memoria').value:
+            self.get_logger().info(f'Alvo {self.alvo_id}: registrado aqui perto (delta={delta:.2f} m) -> sentido normal')
+            return 1
+
+        esquerda = delta > 0
+        sentido = self.sentido_para(esquerda)
+        self.get_logger().info(
+            f'Alvo {self.alvo_id}: registrado a {abs(delta):.2f} m à '
+            f'{"esquerda" if esquerda else "direita"} -> sentido {"normal" if sentido == 1 else "inverso"}')
+        return sentido
 
     def iniciar_busca(self):
         self.sentido_busca = self.escolher_sentido()
         self.inicio_trecho = self.get_clock().now()
         self.trechos_feitos = 0
+        self.frames_vistos = 0
         self.fase = Fase.BUSCANDO
-
-    def parar_robo(self):
-        for _ in range(3):
-            self.pub_cmd_vel.publish(Twist())
 
     def concluir_alinhamento(self):
         self.parar_robo()
         self.fase = Fase.IDLE
-        #self.garra_ajustada = False
+        self.resetar_filtro()
 
         if self.tipo_alvo == 'cubo':
             self.memoria.get(self.local_atual, {}).pop(self.alvo_id, None)
@@ -342,12 +467,21 @@ class VisionNode(Node):
 
     # Fases do Comportamento
     def passo_busca(self, alvo):
+        """Fase 1: translada de lado; inverte o sentido a cada trecho sem achar a tag."""
         if alvo is not None:
-            self.get_logger().info(f'Tag {self.alvo_id} avistada! Iniciando alinhamento.')
-            self.frames_estaveis = 0
-            self.fase = Fase.ALINHANDO
-            self.passo_alinhamento(alvo)
-            return
+            self.frames_vistos += 1
+            # Só começa a alinhar depois de ver a tag por alguns frames seguidos:
+            # um único frame na borda da imagem não é confiável.
+            if self.frames_vistos >= self.get_parameter('frames_para_avistar').value:
+                self.get_logger().info(f'Tag {self.alvo_id} avistada! Iniciando alinhamento.')
+                self.frames_estaveis = 0
+                self.frames_perdidos = 0
+                self.resetar_filtro()
+                self.fase = Fase.ALINHANDO
+                self.passo_alinhamento(alvo)
+                return
+        else:
+            self.frames_vistos = 0
 
         tempo_trecho = self.get_parameter('search_sweep_time').value
         max_trechos = self.get_parameter('search_max_legs').value
@@ -366,22 +500,56 @@ class VisionNode(Node):
 
         twist = Twist()
         twist.linear.y = float(self.get_parameter('search_vy').value) * self.sentido_busca
-        self.pub_cmd_vel.publish(twist)
+        self.publicar_cmd(twist)
 
     def passo_alinhamento(self, alvo):
+        """Fase 2: alinhamento fino; se a tag some por muitos frames, volta a buscar."""
         if alvo is None:
             self.frames_estaveis = 0
-            self.pub_cmd_vel.publish(Twist())
+            self.frames_perdidos += 1
+            self.resetar_filtro()
+            self.publicar_cmd(Twist())
+
+            if self.frames_perdidos >= self.get_parameter('frames_perdida_limite').value:
+                self.get_logger().warning(f'Tag {self.alvo_id} perdida durante o alinhamento; voltando a buscar.')
+                # Volta a varrer em direção ao lado onde a tag estava (erro lateral > 0 = tag à direita)
+                self.sentido_busca = self.sentido_para(self.ultimo_erro_lateral < 0)
+                self.inicio_trecho = self.get_clock().now()
+                self.trechos_feitos = 0
+                self.frames_vistos = 0
+                self.fase = Fase.BUSCANDO
             return
 
+        self.frames_perdidos = 0
+
         cam_x, _, cam_z = alvo["pose_3d"]
+        alvo_x, _ = self.ALVOS[self.tipo_alvo][self.altura_mesa_cm]
+        self.ultimo_erro_lateral = cam_x - alvo_x
+
+        # Contêiner: suaviza X e Z (a massa de cor é mais ruidosa que uma tag)
+        if self.tipo_alvo == 'container':
+            a = float(self.get_parameter('suavizacao_container').value)
+            if self.x_filt is None:
+                self.x_filt, self.z_filt = cam_x, cam_z
+            else:
+                self.x_filt = a * cam_x + (1 - a) * self.x_filt
+                self.z_filt = a * cam_z + (1 - a) * self.z_filt
+            cam_x, cam_z = self.x_filt, self.z_filt
+
+            # Use estes valores para calibrar o ponto ideal em ALVOS["container"]
+            bx, by, bw, bh = alvo["bbox"]
+            self.get_logger().info(
+                f'[calibração contêiner] X={cam_x:.4f}  Z={cam_z:.4f}  h_px={alvo.get("h_px", 0)}'
+                f'  y_topo={by}  y_base={by + bh}  x_esq={bx}  x_dir={bx + bw}',
+                throttle_duration_sec=0.5)
+
         v_frente, v_lado = self.calcular_velocidade_aproximacao(
             cam_x, cam_z, self.tipo_alvo, self.altura_mesa_cm)
 
         twist = Twist()
         twist.linear.x = float(v_frente)
         twist.linear.y = float(v_lado)
-        self.pub_cmd_vel.publish(twist)
+        self.publicar_cmd(twist)
 
         if v_frente == 0.0 and v_lado == 0.0:
             self.frames_estaveis += 1
@@ -412,26 +580,29 @@ class VisionNode(Node):
                 label = f"{item['waypoint'].upper()} | ID:{item['id']} | {item['color']}"
                 cv2.putText(display_frame, label, (x, max(y - 10, 15)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, cor_bgr, 2)
 
+                if item["waypoint"] == "container":
+                    px, _, pz = item["pose_3d"]
+                    cv2.putText(display_frame, f"X={px:.3f} Z={pz:.3f}", (x, y + h + 18),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, cor_bgr, 2)
+
                 if self.alvo_id is not None and item["id"] == self.alvo_id:
-                    if alvo_encontrado is None or item["waypoint"] == self.tipo_alvo:
+                    if self.tipo_alvo == 'container':
+                        # Mais de um da mesma cor: pega o maior (mais próximo)
+                        if alvo_encontrado is None or item["h_px"] > alvo_encontrado["h_px"]:
+                            alvo_encontrado = item
+                    elif alvo_encontrado is None or item["waypoint"] == self.tipo_alvo:
                         alvo_encontrado = item
 
-            # Interlock com a garra aplicado nas fases
             if self.fase == Fase.BUSCANDO:
-                if self.garra_ajustada:
-                    self.passo_busca(alvo_encontrado)
-                else:
-                    self.inicio_trecho = self.get_clock().now()  # Congela o timeout enquanto espera
-                    self.parar_robo()
+                self.passo_busca(alvo_encontrado)
             elif self.fase == Fase.ALINHANDO:
-                if self.garra_ajustada:
-                    self.passo_alinhamento(alvo_encontrado)
-                else:
-                    self.parar_robo()
+                self.passo_alinhamento(alvo_encontrado)
+            # Fase.IDLE: não publica nada em /cmd_vel
 
-            status_trava = "LIBERADO" if self.garra_ajustada else "TRAVADO"
-            cv2.putText(display_frame, f"FASE: {self.fase.name} [{status_trava}]", (10, 25),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0) if self.garra_ajustada else (0, 0, 255), 2)
+            texto = f"FASE: {self.fase.name}"
+            if self.fase != Fase.IDLE:
+                texto += " | ALVO VISTO" if alvo_encontrado is not None else " | ALVO NAO VISTO"
+            cv2.putText(display_frame, texto, (10, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
             cv2.imshow("Visão do Robô", display_frame)
             cv2.waitKey(1)
 
@@ -454,4 +625,4 @@ def main(args=None):
 
 
 if __name__ == '__main__':
-    main() 
+    main()

@@ -210,7 +210,7 @@ class CavityAction(GripperPrimitives):
             self.step = CavityStep.PICK_TRANSLADAR2
             self.send_feedback(0.109, f'Posicionando em frente ao cubo dois')
             time.sleep(1)  # delay antes de publicar o comando
-            self.send_command(f'transladar:zone1:{self.height_to_cmd(args[2])}:{args[2]}') #sempre é publicado a posição da tag onde deve ser deixado o cubo anteriormente pego
+            self.send_command(f'transladar:zona101:{self.height_to_cmd(args[2])}:{args[2]}') #sempre é publicado a posição da tag onde deve ser deixado o cubo anteriormente pego
 
         elif self.step == CavityStep.PICK_TRANSLADAR2 and self.command_finished():
             self.step = CavityStep.PICK_VERTICAL_GIRO_IDA2
@@ -312,7 +312,7 @@ class CavityAction(GripperPrimitives):
             self.step = CavityStep.PICK_TRANSLADAR3
             self.send_feedback(0.281, f'Posicionando em frente ao cubo três')
             time.sleep(1)  # delay antes de publicar o comando
-            self.send_command(f'transladar:zone2:{self.height_to_cmd(args[2])}:{args[2]}') 
+            self.send_command(f'transladar:zona2:{self.height_to_cmd(args[2])}:{args[2]}') 
 
         elif self.step == CavityStep.PICK_TRANSLADAR3 and self.command_finished():
             self.step = CavityStep.PICK_VERTICAL_MESA3

@@ -42,9 +42,11 @@ class GripperPrimitives(ActionExecutorClient):
             'slot1': 'slot1', 
             'slot2': 'slot2', 
             'slot3': 'slot3', 
+            'pf': 'frente',
             'p1': 'pos1',
-            'p2': 'frente',
+            'p2': 'pos2',
             'p3': 'pos3',
+            'p4': 'pos4',
             # deve casar com comandos possíveis recebidos na main
         }
 
@@ -56,15 +58,17 @@ class GripperPrimitives(ActionExecutorClient):
 
     def height_to_cmd(self, location: str) -> str:
         mapping = {
-            'loc1': '5cm',
-            'loc2': '5cm',
-            'loc3': '5cm',
-            'loc4': '10cm',
-            'loc5': '10cm',
-            'loc6': '10cm',
-            'loc7': '15cm',
-            'loc8': '15cm',
-            'loc9': '15cm',
+            'loc1': '5',
+            'loc2': '5',
+            'loc3': '5',
+            'loc4': '10',
+            'loc5': '10',
+            'loc6': '10',
+            'loc7': '15',
+            'loc8': '15',
+            'loc9': '15',
+            'locshelf1' : '10',
+            'locshelf2' : 'shelf',
             # colocar todas as locations e a altura de mesa correspondente
         }
 

@@ -37,7 +37,7 @@ class PlaceCubeAtLocationAction(GripperPrimitives):
             self.angulo = self.get_location_angle(self.target_location)
             self.send_feedback(0.01, f'Ajustando distância de 20 cm e angulação de {self.angulo} graus da mesa')
             time.sleep(1)  # delay antes de publicar o comando
-            self.send_command(f'ajustar:{self.angulo}') 
+            self.send_command(f'ajustar:{self.height_to_cmd(args[2])}') 
         
         elif self.step == PlaceCubeAtLocationStep.AJUSTAR and self.command_finished():
             self.step = PlaceCubeAtLocationStep.VERTICAL_CHASSI1
@@ -61,11 +61,19 @@ class PlaceCubeAtLocationAction(GripperPrimitives):
 
         elif self.step == PlaceCubeAtLocationStep.FECHAR and self.command_finished():
             self.step = PlaceCubeAtLocationStep.VERTICAL_CHASSI3
-            self.send_feedback(0.45, 'Subindo para altura de giro')
-            self.send_command('alt_giro')
+            if args[2] == 'locshelf2':
+                self.send_command('shelf')
+                self.send_feedback(0.45, 'Subindo para altura da shelf')
+            else:   
+                self.send_command('alt_giro') #mudar comando para frente
+                self.send_feedback(0.45, 'Subindo para altura de giro')
+
 
         elif self.step == PlaceCubeAtLocationStep.VERTICAL_CHASSI3 and self.command_finished():
-            self.step = PlaceCubeAtLocationStep.GIRAR_AREA
+            if args[2] == 'locshelf2':
+                self.step = PlaceCubeAtLocationStep.VERTICAL_AREA1
+            else:
+                self.step = PlaceCubeAtLocationStep.GIRAR_AREA
             self.send_feedback(0.54, f'Girando para posição {args[4]}')
             self.send_command(self.slot_to_cmd(args[4])) #manda para diferentes posições em vez de apenas para frente
 

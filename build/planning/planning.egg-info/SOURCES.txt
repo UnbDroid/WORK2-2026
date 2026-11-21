@@ -24,14 +24,16 @@ pddl/test-pickup-from-location.pddl
 pddl/test-stack.pddl
 pddl/teste-place-at-location.pddl
 planning/__init__.py
-planning/ajuste copy.py
 planning/ajuste.py
+planning/ajusteativo.py
+planning/ajustecopy.py
 planning/gripper_primitives.py
 planning/move_action.py
 planning/pick_from_container_action.py
 planning/pick_from_location_action.py
 planning/pick_waypoints.py
 planning/place_at_cavity_action.py
+planning/place_at_cavity_two.py
 planning/place_at_location_action.py
 planning/place_from_at_shelf_action.py
 planning/place_in_container_action.py

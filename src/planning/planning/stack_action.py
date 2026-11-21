@@ -46,7 +46,7 @@ class StackAction(GripperPrimitives):
             self.target_location = args[3]
             self.angulo = self.get_location_angle(self.target_location)
             self.send_feedback(0.01, f'Ajustando distância de 20 cm e angulação de {self.angulo} graus da mesa')
-            self.send_command(f'ajustar:{self.angulo}') 
+            self.send_command(f'ajustar:{self.height_to_cmd(args[3])}') 
 
         elif self.step == StackStep.AJUSTAR and self.command_finished():
             self.step = StackStep.TRANSLADAR
