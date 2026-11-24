@@ -387,7 +387,7 @@ class VisionNode(Node):
     def publicar_cubo_identificado(self, item):
         """Publica 'cubeidentificado:COR:NUMERO' (COR = vermelho ou azul) em /topico_garra."""
         msg = String()
-        msg.data = f'cubeidentificado:{item["cor_cubo"]}:{item["id"]}'
+        msg.data = f'cubeidentificado:{item["cor_cubo"]}:{item["id"]}' 
         self.pub_garra.publish(msg)
         self.cubo_identificado_enviado = True
         self.get_logger().info(f'Enviado em /topico_garra: {msg.data}')
@@ -491,7 +491,7 @@ class VisionNode(Node):
             # um único frame na borda da imagem não é confiável.
             if self.frames_vistos >= self.get_parameter('frames_para_avistar').value:
                 self.get_logger().info(f'Tag {self.alvo_id} avistada! Iniciando alinhamento.')
-                self.frames_estaveis = 0
+                self.get_logger().info(f'Cubo da cor {alvo.get("cor_cubo", "não identificada")}')
                 self.frames_perdidos = 0
                 self.resetar_filtro()
                 self.fase = Fase.ALINHANDO

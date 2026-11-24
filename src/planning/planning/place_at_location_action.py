@@ -83,7 +83,10 @@ class PlaceCubeAtLocationAction(GripperPrimitives):
             self.send_command(self.height_to_cmd(args[2]))
 
         elif self.step == PlaceCubeAtLocationStep.VERTICAL_AREA1 and self.command_finished():
-            self.step = PlaceCubeAtLocationStep.ABRIR
+            if args[2] == 'locshelf2':
+               self.step = PlaceCubeAtLocationStep.VERTICAL_AREA2
+            else:
+                self.step = PlaceCubeAtLocationStep.ABRIR
             self.send_feedback(0.72, 'Abrindo garra')
             self.send_command('abrir')
 

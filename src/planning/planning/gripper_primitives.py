@@ -59,16 +59,25 @@ class GripperPrimitives(ActionExecutorClient):
     def height_to_cmd(self, location: str) -> str:
         mapping = {
             'loc1': '5',
-            'loc2': '5',
-            'loc3': '5',
-            'loc4': '10',
+            'loc2': '10',
+            'loc3': '15',
+            'loc4': '15', #bloqueio
             'loc5': '10',
             'loc6': '10',
-            'loc7': '15',
-            'loc8': '15',
+            'loc7': '5',
+            'loc8': '10',
             'loc9': '15',
-            'locshelf1' : '10',
+            'loc10': '15', #bloqueio
+            'locshelf1' : '5',
             'locshelf2' : 'shelf',
+            'locshelf3' : '5',
+            'locshelf4' : 'shelf',
+            'locshelf5' : '5',
+            'locshelf6' : 'shelf',
+            'locshelf7' : '5',
+            'locshelf8' : 'shelf',
+            'locpp1' :'10',
+            'locpp2' :'10'
             # colocar todas as locations e a altura de mesa correspondente
         }
 

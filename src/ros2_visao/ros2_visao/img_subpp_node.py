@@ -361,8 +361,11 @@ class VisionNode(Node):
         self.vy_ultimo = 0.0
         self.t_ultimo_cmd = None
 
+        self.cubo_identificado_enviado = False #mudei
+
         self.sub = self.create_subscription(Image, '/cam/image_raw', self.image_callback, 10)
         self.sub_garra = self.create_subscription(String, '/topico_garra', self.garra_callback, 10)
+        self.pub_garra = self.create_publisher(String, '/topico_garra', 10) #mudei
         self.pub_status = self.create_publisher(String, '/topico_garra_status', 10)
         self.pub_cmd_vel = self.create_publisher(Twist, '/cmd_vel', 10)
 
@@ -681,6 +684,7 @@ class VisionNode(Node):
             # um único frame na borda da imagem não é confiável.
             if self.frames_vistos >= self.get_parameter('frames_para_avistar').value:
                 self.get_logger().info(f'Tag {self.alvo_id} avistada! Iniciando alinhamento.')
+                self.get_logger().info(f'Cubo da cor {alvo.get("cor_cubo", "não identificada")}')
                 self.frames_estaveis = 0
                 self.frames_perdidos = 0
                 self.resetar_filtro()

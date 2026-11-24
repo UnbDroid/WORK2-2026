@@ -20,6 +20,7 @@
     (holding-in ?r - robot ?o - object ?s - slot)        ; vincula objeto ao slot de carga usado
     (slot-free ?r - robot ?s - slot)                     ; slot de carga disponível
     (position-free ?l - location ?p - position)          ; posições de deixar os cubos disponíveis
+    (at-position ?o - object ?l - location ?p - position) ; em qual position ele deve ser posto
     (on ?top - object ?bottom - object ?l - location)    ; ?top está empilhado sobre ?bottom e especifica onde eles ficam empilhados
     (gripper-free ?r - robot)                            ; novo predicado: garra/executor ocupado
     (connected ?from - location ?to - location)
@@ -113,6 +114,7 @@
     (at end (not (holding-in ?r ?o ?s)))
     (at end (slot-free ?r ?s))
     (at end (obj-at ?o ?l))
+    (at end (at-position ?o ?l ?p))
     (at end (not (position-free ?l ?p)))
     (at end (decrease (carga ?r) 1)))
 )
@@ -168,5 +170,7 @@
       (at end (gripper-free ?r))
       (at end (in-cavity ?o ?l ?ca))
       (at end (not (cavity-free ?l ?ca)))
-      (at end (obj-at ?o ?l))))
+      (at end (not (obj-at ?o ?l)))
+      (at end (decrease (restantes ?l) 1)))
+  )
 )

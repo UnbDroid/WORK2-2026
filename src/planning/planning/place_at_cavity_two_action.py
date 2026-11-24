@@ -38,7 +38,7 @@ class CavityAction(GripperPrimitives):
     """
 
     def __init__(self):
-        super().__init__('place-at-cavity')  # nome precisa bater com nome da action no pddl domain
+        super().__init__('place_at_cavity')  # nome precisa bater com nome da action no pddl domain
         self._zerar()
 
     def _zerar(self):
@@ -75,11 +75,11 @@ class CavityAction(GripperPrimitives):
         while (self.get_clock().now() - t0).nanoseconds / 1e9 < segundos:
             yield
 
-    def ir_para_zona(self, zona, loc, angulo, altura):
+    def ir_para_zona(self, zona, loc, altura):
         """AJUSTAR + TRANSLADAR: alinha o robô em frente à cavidade."""
         yield from self.pausa(PAUSA_ANTES_DE_PUBLICAR)
-        yield from self.passo(f'ajustar:{angulo}',
-                              f'Ajustando distância e ângulo ({angulo} graus)', TIMEOUT_AJUSTE)
+        yield from self.passo(f'ajustar:{altura}',
+                              f'Ajustando distância e ângulo', TIMEOUT_AJUSTE)
         yield from self.pausa(PAUSA_ANTES_DE_PUBLICAR)
         yield from self.passo(f'transladar:{zona}:{altura}:{loc}',
                               f'Posicionando em frente a {zona}', TIMEOUT_VISAO)
@@ -145,12 +145,11 @@ class CavityAction(GripperPrimitives):
     # Rotina principal
     # ------------------------------------------------------------------
     def rotina(self, loc):
-        angulo = self.get_location_angle(loc)
         try:
             altura = self.height_to_cmd(loc)
         except KeyError:
             altura = None
-        if angulo is None or altura is None:
+        if altura is None:
             raise FalhaPasso(f'Sem ângulo ou altura para a location {loc}')
 
         vazias = set()        # cavidades sabidamente vazias (nada para pegar nelas)
@@ -163,7 +162,7 @@ class CavityAction(GripperPrimitives):
             if visitas > MAX_VISITAS:
                 raise FalhaPasso(f'Mais de {MAX_VISITAS} visitas sem terminar')
 
-            yield from self.ir_para_zona(zona, loc, angulo, altura)
+            yield from self.ir_para_zona(zona, loc, altura)
             estado = yield from self.inspecionar(zona)
             self.get_logger().info(f'{zona}: {estado}')
 

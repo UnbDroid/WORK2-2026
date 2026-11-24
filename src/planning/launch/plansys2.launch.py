@@ -21,7 +21,7 @@ def generate_launch_description():
     # Arquivo PDDL so para inicializar o Problem Expert oficial do plansys2
     problem_file_arg = DeclareLaunchArgument(
         'problem_file',
-        default_value='test-stack.pddl',
+        default_value='problem-amt.pddl',
         description='arquivo de problema PDDL usado so pra inicializar o Problem Expert',
     )
     problem_file_path = PathJoinSubstitution(
@@ -118,6 +118,18 @@ def generate_launch_description():
         }],
     )
 
+    place_at_cavity_two_action_node = LifecycleNode(
+            package='planning',
+            executable='place_at_cavity_two_action',
+            name='place_at_cavity_two_action',
+            namespace='',
+            output='screen',
+            parameters=[{
+                'action_name': 'place-at-cavity',
+                'locations_file': locations_yaml,
+            }],
+        )
+
     # pick_from_container_action_node = LifecycleNode(
     #     package='planning',
     #     executable='pick_from_container_action',
@@ -163,6 +175,7 @@ def generate_launch_description():
             place_at_location_action_node,
             stack_action_node,
             place_in_container_action_node,
+            place_at_cavity_two_action_node
             # pick_from_container_action_node,
             # place_from_at_shelf_action_node,
             # controller_node,

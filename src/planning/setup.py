@@ -36,7 +36,7 @@ setup(
             'place_at_location_action = planning.place_at_location_action:main',
             'place_in_container_action = planning.place_in_container_action:main',
             'stack_action = planning.stack_action:main',
-            'unstack_action = planning.unstack_action:main',
+            'place_at_cavity_two_action = planning.place_at_cavity_two_action:main'
         ],
     },
 )
