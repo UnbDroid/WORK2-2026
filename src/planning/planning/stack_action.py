@@ -75,8 +75,12 @@ class StackAction(GripperPrimitives):
 
         elif self.step == StackStep.FECHAR1 and self.command_finished():
             self.step = StackStep.VERTICAL_CHASSI3
-            self.send_feedback(0.32, f'Levantando garra com {args[1]}')
-            self.send_command('alt_giro')
+            if self.target_location in ['loc4', 'loc10']:
+                self.send_feedback(0.32, f'Levantando garra com {args[1]} para girar pela esquerda')
+                self.send_command('alt_giro_esquerda')
+            else:
+                self.send_feedback(0.32, f'Levantando garra com {args[1]} para girar direita')
+                self.send_command('alt_giro')
 
         elif self.step == StackStep.VERTICAL_CHASSI3 and self.command_finished():
             self.step = StackStep.GIRAR_AREA1
@@ -95,8 +99,13 @@ class StackAction(GripperPrimitives):
 
         elif self.step == StackStep.ABRIR1 and self.command_finished():
             self.step = StackStep.VERTICAL_AREA1
-            self.send_feedback(0.56, 'Subindo para altura de giro')
-            self.send_command('alt_giro')
+            if self.target_location in ['loc4', 'loc10']:
+                self.send_feedback(0.56, f'Levantando para girar pela esquerda')
+                self.send_command('alt_giro_esquerda')
+            else:
+                self.send_feedback(0.56, f'Levantando para girar direita')
+                self.send_command('alt_giro')
+
 
         elif self.step == StackStep.VERTICAL_AREA1 and self.command_finished():
             self.step = StackStep.GIRAR_CHASSI2
@@ -115,8 +124,12 @@ class StackAction(GripperPrimitives):
 
         elif self.step == StackStep.FECHAR2 and self.command_finished():
             self.step = StackStep.VERTICAL_CHASSI5
-            self.send_feedback(0.80, f'Levantando garra com {args[2]}')
-            self.send_command('alt_giro')
+            if self.target_location in ['loc4', 'loc10']:
+                self.send_feedback(0.80, f'Levantando garra com {args[3]} para girar pela esquerda')
+                self.send_command('alt_giro_esquerda')
+            else:
+                self.send_feedback(0.80, f'Levantando garra com {args[3]} para girar direita')
+                self.send_command('alt_giro')
 
         elif self.step == StackStep.VERTICAL_CHASSI5 and self.command_finished():
             self.step = StackStep.GIRAR_AREA2
@@ -135,8 +148,12 @@ class StackAction(GripperPrimitives):
 
         elif self.step == StackStep.ABRIR2 and self.command_finished():
             self.step = StackStep.VERTICAL_AREA2
-            self.send_feedback(0.97, 'Subindo para altura de giro')
-            self.send_command('alt_giro')
+            if self.target_location in ['loc4', 'loc10']:
+                self.send_feedback(0.32, f'Levantando garra para girar pela esquerda')
+                self.send_command('alt_giro_esquerda')
+            else:
+                self.send_feedback(0.32, f'Levantando garra para girar direita')
+                self.send_command('alt_giro')
 
         elif self.step == StackStep.VERTICAL_AREA2 and self.command_finished():
             self.step = StackStep.GIRAR_CHASSI3

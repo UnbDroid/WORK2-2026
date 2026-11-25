@@ -41,8 +41,9 @@ class PlaceCubeAtLocationAction(GripperPrimitives):
         
         elif self.step == PlaceCubeAtLocationStep.AJUSTAR and self.command_finished():
             self.step = PlaceCubeAtLocationStep.VERTICAL_CHASSI1
-            self.send_feedback(0.09, 'Levantando garra para girar')
-            self.send_command('alt_giro') #mudar comando para frente
+            if self.target_location in ['loc4', 'loc10']:
+                self.send_feedback(0.09, 'Levantando garra para girar')
+                self.send_command('alt_giro') #mudar comando para frente
 
         elif self.step == PlaceCubeAtLocationStep.VERTICAL_CHASSI1 and self.command_finished():
             self.step = PlaceCubeAtLocationStep.GIRAR_CHASSI1

@@ -1,5 +1,11 @@
-; os numeros sao todos definidos aleatoriamente e deverao ser conferidos
-; de acordo com o que for pedido no momento da competicao
+; Gerado por tools/yaml_para_pddl.py a partir de BMT (Basic Manipulation Test)
+; duracao da prova: 6 min
+;
+; Areas do YAML -> locations do PDDL:
+;   WS_3   -> loc3
+;   WS_6   -> loc6
+;
+; Cubos (tag -> cor): 2=vermelho, 7=azul, 19=vermelho
 
 (define (problem bmt-instance)
     (:domain robocup-work-transport)
@@ -7,41 +13,52 @@
     (:objects
         robot1 - robot
         slot1 slot2 slot3 - slot
-        cube1 cube2 cube3 - object               ; Trocar para número de april tags que devem ser pegas
-        locstart loc1 loc2 locfinish - location  ; Trocar 1 para altura da location
-        p1l2 p2l2 p3l2 - position                ; Trocar numero depois de l para location correspondente
+        locstart1 loc7 loc8 locfinish1 - location
+        cube2 cube7 cube19 - object
+        p1l6 p2l6 p3l6 - position
     )
 
     (:init
-        (= (carga robot1) 0)                     ; Robo sempre começa carregando 0 cubos
+        (= (carga robot1) 0)
 
-        (= (restantes loc1) 3)                   ; Inserir aqui apenas localizações que começam com cubos, e suas quantidades
+        (= (restantes locstart1) 0)
+        (= (restantes loc10) 0)
+        (= (restantes loc8) 3)
+        (= (restantes locfinish1) 0)
 
         (gripper-free robot1)
-        (at-robot robot1 locstart)
-
+        (at-robot robot1 locstart1)
         (slot-free robot1 slot1)
         (slot-free robot1 slot2)
         (slot-free robot1 slot3)
 
-        (obj-at cube1 loc1)
-        (obj-at cube2 loc1)
-        (obj-at cube3 loc1)
+        (obj-at cube2 loc10)
+        (obj-at cube7 loc10)
+        (obj-at cube19 loc10)
 
-        (position-free loc2 p1l2)
-        (position-free loc2 p2l2)
-        (position-free loc2 p3l2)
+        (position-free loc8 p1l6)
+        (position-free loc8 p2l6)
+        (position-free loc8 p3l6)
 
-        (connected locstart loc1)
-        (connected loc1 loc2)
-        (connected loc2 locfinish)
+        (connected locstart loc10)
+        (connected locstart loc8)
+        (connected locstart locfinish)
+        (connected loc10 locstart)
+        (connected loc10 loc8)
+        (connected loc10 locfinish)
+        (connected loc8 locstart)
+        (connected loc8 loc10)
+        (connected loc8 locfinish)
     )
 
     (:goal
         (and
-            (obj-at cube1 loc2)
-            (obj-at cube2 loc2)
-            (obj-at cube3 loc2)
+            (obj-at cube2 loc8)   ; WS_6
+            (at-position cube2 loc8 p3l6)
+            (obj-at cube7 loc8)   ; WS_6
+            (at-position cube7 loc8 p1l6)
+            (obj-at cube19 loc8)   ; WS_6
+            (at-position cube19 loc8 p2l6)
             (at-robot robot1 locfinish)
         )
     )

@@ -1,0 +1,27 @@
+# Arquivo de TESTE no formato do contrato v3 (Commander 2.2.0) - nao e' oficial.
+task_id: BMT
+name: Basic Manipulation Test
+duration_min: 6
+
+active_service_areas: [WS_3, WS_6]
+
+objects:
+  - {id: 2, color: RED}
+  - {id: 7, color: BLUE}
+  - {id: 19, color: RED}
+
+start_state:
+  WS_3:
+    obj_ids: [2, 7, 19]
+    table: [19, 2, 7]
+  WS_6:
+    obj_ids: []
+    table: []
+
+finish_state:
+  WS_3:
+    obj_ids: []
+    table: []
+  WS_6:
+    obj_ids: [2, 7, 19]
+    table: [7, 19, 2]

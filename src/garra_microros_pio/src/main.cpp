@@ -175,8 +175,14 @@ void garra_callback(const void *msgin)
 
     else if (strcmp(garra_msg->data.data, "alt_giro") == 0)
     {
-      vertical(alt_giro);
+      // vertical(alt_giro_esquerda);
       publish_status("alt_giro");
+    }
+
+    else if (strcmp(garra_msg->data.data, "alt_giro_esquerda") == 0)
+    {
+      vertical(alt_giro);
+      publish_status("alt_giro_esquerda");
     }
 
     else if (strcmp(garra_msg->data.data, "5cm") == 0)

@@ -146,12 +146,20 @@ class PickCubeFromLocationAction(GripperPrimitives):
 
             self.step = PickCubeStep.VERTICAL_AREA1
 
-            self.send_feedback(
-                0.11,
-                'Levantando garra para girar'
-            )
+            if self.target_location in ['loc4', 'loc10']:
+                self.send_feedback(
+                    0.11,
+                    'Levantando garra para girar pela esquerda'
+                )
 
-            self.send_command('alt_giro')
+                self.send_command('alt_giro_esquerda')
+            else:
+                self.send_feedback(
+                    0.11,
+                    'Levantando garra para girar pela direita'
+                )
+
+                self.send_command('alt_giro')
 
         # =====================================
         # VERTICAL AREA 1
@@ -220,12 +228,21 @@ class PickCubeFromLocationAction(GripperPrimitives):
 
             self.step = PickCubeStep.VERTICAL_CHASSI1
 
-            self.send_feedback(
-                0.55,
-                'Subindo com cubo para altura de giro'
-            )
+            if self.target_location in ['loc4', 'loc10']:
+                self.send_feedback(
+                    0.55,
+                    'Levantando garra com cubo para girar pela esquerda'
+                )
 
-            self.send_command('alt_giro')
+                self.send_command('alt_giro_esquerda')
+            else:
+
+                self.send_feedback(
+                    0.55,
+                    'Subindo com cubo para altura de giro pela direita'
+                )
+
+                self.send_command('alt_giro')
 
         # =====================================
         # VERTICAL CHASSI 1

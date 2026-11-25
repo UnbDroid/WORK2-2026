@@ -1,0 +1,47 @@
+# Arquivo de TESTE no formato do contrato v3 (Commander 2.2.0) - nao e' oficial.
+task_id: BTT2
+name: Basic Transportation Test II
+duration_min: 10
+
+active_service_areas: [WS_2, WS_3, WS_5, WS_8, WS_9]
+
+objects:
+  - {id: 1, color: BLUE}
+  - {id: 6, color: RED}
+  - {id: 13, color: BLUE}
+  - {id: 20, color: RED}
+  - {id: 26, color: BLUE}
+
+start_state:
+  WS_2:
+    obj_ids: [1, 20]
+    table: [20, 1]
+  WS_3:
+    obj_ids: [13]
+    table: [13]
+  WS_5:
+    obj_ids: [6, 26]
+    table: [6, 26]
+  WS_8:
+    obj_ids: []
+    table: []
+  WS_9:
+    obj_ids: []
+    table: []
+
+finish_state:
+  WS_2:
+    obj_ids: [6]
+    table: [6]
+  WS_3:
+    obj_ids: [1, 26]
+    table: [26, 1]
+  WS_5:
+    obj_ids: []
+    table: []
+  WS_8:
+    obj_ids: [13, 20]
+    table: [13, 20]
+  WS_9:
+    obj_ids: []
+    table: []
