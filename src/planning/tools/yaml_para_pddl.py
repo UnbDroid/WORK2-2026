@@ -9,8 +9,6 @@ import yaml
 
 ROBO = 'robot1'
 SLOTS_ROBO = ['slot1', 'slot2', 'slot3']
-LOC_START = 'locstart'
-LOC_FINISH = 'locfinish'
 MAX_POSICOES_MESA = 4          # slot_to_cmd conhece p1..p4
 POSICAO_PILHA = 2              # posicao usada pela acao `stack` (centro da zona)
 COR_PT = {'BLUE': 'azul', 'RED': 'vermelho'}
@@ -144,7 +142,7 @@ def conferir(doc):
 
 # TRADUCAO
 
-def traduzir(doc, com_finish=True):
+def traduzir(doc, loc_start, loc_finish, com_finish=True):
     conferir(doc)
     avisos = []
     task = doc['task_id']
@@ -155,7 +153,7 @@ def traduzir(doc, com_finish=True):
 
     # locations
     mapa_areas = {}           # area YAML -> lista de locations PDDL
-    locations = [LOC_START]
+    locations = [loc_start]
     for area in ativas:
         t = tipo_area(area)
         if t == 'WS':
@@ -166,7 +164,7 @@ def traduzir(doc, com_finish=True):
             locs = [nome_pp(area)]
         mapa_areas[area] = locs
         locations += locs
-    locations.append(LOC_FINISH)
+    locations.append(loc_finish)
 
     def loc_de(col):
         tipo, area, _ = col
@@ -261,7 +259,7 @@ def traduzir(doc, com_finish=True):
         if not parado(o):
             restantes[loc_de(inicio[o])] += 1
     init += [f'(= (restantes {loc}) {n})' for loc, n in restantes.items()] + ['']
-    init += [f'(gripper-free {ROBO})', f'(at-robot {ROBO} {LOC_START})']
+    init += [f'(gripper-free {ROBO})', f'(at-robot {ROBO} {loc_start})']
     init += [f'(slot-free {ROBO} {s})' for s in SLOTS_ROBO] + ['']
 
     for (cor, area), nome in containers.items():
@@ -295,7 +293,7 @@ def traduzir(doc, com_finish=True):
             init.append(f'(cavity-free {loc} {cav})')
     init.append('')
     for a, b in itertools.permutations(locations, 2):
-        if a != LOC_FINISH:
+        if a != loc_finish:
             init.append(f'(connected {a} {b})')
 
     # goal
@@ -325,12 +323,13 @@ def traduzir(doc, com_finish=True):
         for base, topo in zip(pilha, pilha[1:]):
             goal.append(f'(on {nome_cubo(topo)} {nome_cubo(base)} {loc})   ; {area} pilha: {topo} sobre {base}')
     if com_finish:
-        goal.append(f'(at-robot {ROBO} {LOC_FINISH})')
+        goal.append(f'(at-robot {ROBO} {loc_finish})')
 
     # texto
     cab = [
         f'; Gerado por tools/yaml_para_pddl.py a partir de {task} ({doc.get("name", "")})',
         f'; duracao da prova: {doc.get("duration_min", "?")} min',
+        f'; inicio: {loc_start} | fim: {loc_finish}',
         ';',
         '; Areas do YAML -> locations do PDDL:',
     ]
@@ -401,12 +400,19 @@ def main():
     ap.add_argument('-o', '--saida', help='arquivo .pddl de saida (padrao: pddl/problem-<task>.pddl)')
     ap.add_argument('--locations', help='locations.yaml para conferir se todas as locations existem')
     ap.add_argument('--sem-finish', action='store_true', help='nao exige (at-robot robot1 locfinish) no goal')
+    ap.add_argument('--start', choices=['1', '2'], default='1',
+                    help='posicao inicial a usar: locstart1 ou locstart2 (padrao: 1)')
+    ap.add_argument('--finish', choices=['1', '2'], default='1',
+                    help='posicao final a usar: locfinish1 ou locfinish2 (padrao: 1)')
     args = ap.parse_args()
+
+    loc_start = f'locstart{args.start}'
+    loc_finish = f'locfinish{args.finish}'
 
     with open(args.yaml) as f:
         doc = yaml.safe_load(f)
     try:
-        texto, locations, avisos = traduzir(doc, com_finish=not args.sem_finish)
+        texto, locations, avisos = traduzir(doc, loc_start, loc_finish, com_finish=not args.sem_finish)
     except ErroContrato as e:
         sys.exit(f'ERRO: {e}')
 

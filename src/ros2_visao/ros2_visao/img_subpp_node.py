@@ -408,6 +408,19 @@ class VisionNode(Node):
         if cmd.startswith('inspecionar:'):
             self.iniciar_inspecao(cmd)
             return
+        if cmd.startswith('impossivel'):
+            if self.fase in (Fase.BUSCANDO, Fase.ALINHANDO):
+                self.get_logger().warning(
+                    f'[IMPOSSÍVEL] "{cmd}" recebido na fase {self.fase.name} (alvo {self.comando_atual}). '
+                    f'Parei de buscar/alinhar e vou responder como se o alvo tivesse sido pego.')
+                self.concluir_alinhamento()
+                self.get_logger().warning(
+                    f'[IMPOSSÍVEL] Eco enviado (alinhamento FINGIDO, nada foi pego): {self.comando_atual}. '
+                    f'A garra segue para o próximo passo.')
+            else:
+                self.get_logger().info(
+                    f'[IMPOSSÍVEL] "{cmd}" ignorado: robô na fase {self.fase.name}, não há alinhamento para encerrar.')
+            return
         if not cmd.startswith('transladar:'):
             return
 
@@ -658,14 +671,14 @@ class VisionNode(Node):
             vy = 0
             vx = max(min(vx, 0.5), -0.5)
             if abs(vx) < 0.1:
-                vx = 0.1 if vx > 0 else -0.1
+                vx = 0.15 if vx > 0 else -0.15
 
         elif abs(erro_frontal) > tolerancia_z:
             vy = Kp_z * erro_frontal
             vx = 0
             vy = max(min(vy, 0.5), -0.5)
             if abs(vy) < 0.1:
-                vy = 0.1 if vy > 0 else -0.1
+                vy = 0.15 if vy > 0 else -0.15
 
         else:
             vx = 0

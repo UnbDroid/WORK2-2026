@@ -9,6 +9,7 @@ class PickCubeStep(Enum):
     START = auto()
     AJUSTAR = auto()
     TRANSLADAR = auto()
+    ABRIR1 = auto()
     VERTICAL_AREA1 = auto()
     GIRAR_AREA = auto()
     VERTICAL_AREA2 = auto()
@@ -16,7 +17,7 @@ class PickCubeStep(Enum):
     VERTICAL_CHASSI1 = auto()
     GIRAR_CHASSI = auto()
     VERTICAL_CHASSI2 = auto()
-    ABRIR = auto()
+    ABRIR2 = auto()
 
 
 class PickCubeFromLocationAction(GripperPrimitives):
@@ -135,12 +136,26 @@ class PickCubeFromLocationAction(GripperPrimitives):
                 f'{self.height_to_cmd(args[2])}:{args[2]}'
             )
 
+        elif (
+            self.step == PickCubeStep.TRANSLADAR
+            and self.command_finished()
+        ):
+
+            self.step = PickCubeStep.ABRIR1
+
+            self.send_feedback(
+                0.10,
+                'Abrindo garra'
+            )
+
+            self.send_command('abrir')
+
         # =====================================
         # TRANSLADAR
         # =====================================
 
         elif (
-            self.step == PickCubeStep.TRANSLADAR
+            self.step == PickCubeStep.ABRIR1
             and self.command_finished()
         ):
 
@@ -291,7 +306,7 @@ class PickCubeFromLocationAction(GripperPrimitives):
             and self.command_finished()
         ):
 
-            self.step = PickCubeStep.ABRIR
+            self.step = PickCubeStep.ABRIR2
 
             self.send_feedback(
                 0.88,
@@ -305,7 +320,7 @@ class PickCubeFromLocationAction(GripperPrimitives):
         # =====================================
 
         elif (
-            self.step == PickCubeStep.ABRIR
+            self.step == PickCubeStep.ABRIR2
             and self.command_finished()
         ):
 

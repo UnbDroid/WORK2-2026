@@ -28,7 +28,7 @@ class AproximarRotacionar(Node):
         )
 
         # Distância de segurança das paredes laterais
-        self.distancia_limite_parede = 0.32
+        self.distancia_limite_parede = 0.22
         self.distancia_parede_90 = None
         self.distancia_parede_270 = None
         self.ultimo_scan_valido = None
@@ -389,21 +389,21 @@ class AproximarRotacionar(Node):
             self.encerrar_monitoramento('Monitoramento encerrado por falta de scans.')
             return
 
-        if (
-            self.distancia_atual is not None
-            and self.distancia_atual < self.distancia_limite_frente
-        ):
-            self.get_logger().warn(
-                f'Obstáculo frontal a {self.distancia_atual * 100:.1f} cm! '
-                'Publicando impossivel em /topico_garra.'
-            )
+        # if (
+        #     self.distancia_atual is not None
+        #     and self.distancia_atual < self.distancia_limite_frente
+        # ):
+        #     self.get_logger().warn(
+        #         f'Obstáculo frontal a {self.distancia_atual * 100:.1f} cm! '
+        #         'Publicando impossivel em /topico_garra.'
+        #     )
 
-            self.publisher_garra.publish(String(data='impossivel'))
+        #     self.publisher_garra.publish(String(data='impossivel'))
 
-            self.encerrar_monitoramento(
-                'Obstáculo frontal muito próximo. Monitoramento encerrado.'
-            )
-            return
+        #     self.encerrar_monitoramento(
+        #         'Obstáculo frontal muito próximo. Monitoramento encerrado.'
+        #     )
+        #     return
                         
         parede_90_perto = (
             self.distancia_parede_90 is not None

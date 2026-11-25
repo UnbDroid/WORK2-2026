@@ -86,11 +86,12 @@ void rotacionar(int npasso) {
 
 //negativo = para cima
 int alt_giro = -25000;
+int alt_giro_esquerda = -60000;
 int shelf = -40000;
 
 std::unordered_map<std::string, int> dict_alt = {
-    {"5cm", 70000},
-    {"10cm", 50000},
+    {"5cm", 75000},
+    {"10cm", 53000},
     {"15cm", 30000},
     {"bottom", 0},
     {"top", -19000}
@@ -181,7 +182,7 @@ void garra_callback(const void *msgin)
 
     else if (strcmp(garra_msg->data.data, "alt_giro_esquerda") == 0)
     {
-      vertical(alt_giro);
+      vertical(alt_giro_esquerda);
       publish_status("alt_giro_esquerda");
     }
 
