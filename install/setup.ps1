@@ -24,7 +24,6 @@ function _colcon_prefix_chain_powershell_source_script {
 
 # source chained prefixes
 _colcon_prefix_chain_powershell_source_script "/opt/ros/jazzy/local_setup.ps1"
-_colcon_prefix_chain_powershell_source_script "/home/daniel/unb/droid/WORK2-2026/src/planning/planning/install/local_setup.ps1"
 _colcon_prefix_chain_powershell_source_script "/home/daniel/install/local_setup.ps1"
 
 # source this prefix

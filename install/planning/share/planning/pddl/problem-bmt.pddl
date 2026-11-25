@@ -4,9 +4,9 @@
 ;
 ; Areas do YAML -> locations do PDDL:
 ;   WS_3   -> loc3
-;   WS_5   -> loc5
+;   WS_4   -> loc4
 ;
-; Cubos (tag -> cor): 10=vermelho, 15=vermelho, 18=vermelho
+; Cubos (tag -> cor): 5=azul, 13=azul, 22=vermelho, 23=vermelho
 
 (define (problem bmt-instance)
     (:domain robocup-work-transport)
@@ -14,9 +14,9 @@
     (:objects
         robot1 - robot
         slot1 slot2 slot3 - slot
-        locstart1 loc3 loc5 locfinish1 - location
-        cube10 cube15 cube18 - object
-        p1l5 p2l5 p3l5 - position
+        locstart1 loc3 loc4 locfinish1 - location
+        cube5 cube13 cube22 cube23 - object
+        p1l3 p1l4 p2l4 p3l4 - position
     )
 
     (:init
@@ -24,7 +24,7 @@
 
         (= (restantes locstart1) 0)
         (= (restantes loc3) 3)
-        (= (restantes loc5) 0)
+        (= (restantes loc4) 0)
         (= (restantes locfinish1) 0)
 
         (gripper-free robot1)
@@ -33,33 +33,37 @@
         (slot-free robot1 slot2)
         (slot-free robot1 slot3)
 
-        (obj-at cube10 loc3)
-        (obj-at cube15 loc3)
-        (obj-at cube18 loc3)
+        (obj-at cube5 loc3)
+        (at-position cube5 loc3 p1l3)
+        (obj-at cube13 loc3)
+        (obj-at cube22 loc3)
+        (obj-at cube23 loc3)
 
-        (position-free loc5 p1l5)
-        (position-free loc5 p2l5)
-        (position-free loc5 p3l5)
+        (position-free loc4 p1l4)
+        (position-free loc4 p2l4)
+        (position-free loc4 p3l4)
 
         (connected locstart1 loc3)
-        (connected locstart1 loc5)
+        (connected locstart1 loc4)
         (connected locstart1 locfinish1)
         (connected loc3 locstart1)
-        (connected loc3 loc5)
+        (connected loc3 loc4)
         (connected loc3 locfinish1)
-        (connected loc5 locstart1)
-        (connected loc5 loc3)
-        (connected loc5 locfinish1)
+        (connected loc4 locstart1)
+        (connected loc4 loc3)
+        (connected loc4 locfinish1)
     )
 
     (:goal
         (and
-            (obj-at cube10 loc5)   ; WS_5
-            (at-position cube10 loc5 p1l5)
-            (obj-at cube15 loc5)   ; WS_5
-            (at-position cube15 loc5 p2l5)
-            (obj-at cube18 loc5)   ; WS_5
-            (at-position cube18 loc5 p3l5)
+            (obj-at cube5 loc3)   ; WS_3
+            (at-position cube5 loc3 p1l3)
+            (obj-at cube13 loc4)   ; WS_4
+            (at-position cube13 loc4 p3l4)
+            (obj-at cube22 loc4)   ; WS_4
+            (at-position cube22 loc4 p2l4)
+            (obj-at cube23 loc4)   ; WS_4
+            (at-position cube23 loc4 p1l4)
             (at-robot robot1 locfinish1)
         )
     )

@@ -281,9 +281,9 @@ class VisionNode(Node):
 
     ALVOS = {
         "cubo": {
-            5.0:  (0.185,    0.770),
+            5.0:  (0.228,    0.731),
             10.0: (0.173, 0.695),
-            15.0: (0.183, 0.744),
+            15.0: (0.215, 0.586),
         },
         "zona": {
             5.0:  (0.0, 0.0),   # CALIBRAR
@@ -684,7 +684,7 @@ class VisionNode(Node):
             vx = 0
             vy = 0
 
-        print(f'Velocidade final: vx={vx:.3f} e vy={vy:.3f}  A coordenada X atual: {delta_x:.3f}, o erro lateral atual é:{erro_lateral:.3f} , A coordenada Y atual: {delta_z:.3f}, O erro frontal atual é:{erro_frontal:.3f}')
+        #print(f'Velocidade final: vx={vx:.3f} e vy={vy:.3f}  A coordenada X atual: {delta_x:.3f}, o erro lateral atual é:{erro_lateral:.3f} , A coordenada Y atual: {delta_z:.3f}, O erro frontal atual é:{erro_frontal:.3f}')
 
         return vy, -vx
 
