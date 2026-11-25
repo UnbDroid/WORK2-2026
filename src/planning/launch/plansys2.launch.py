@@ -1,9 +1,14 @@
 import os
+import re
+import tempfile
+
+import yaml
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction
+from launch.actions import (DeclareLaunchArgument, IncludeLaunchDescription, LogInfo,
+                            OpaqueFunction, TimerAction)
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import LifecycleNode, Node
 
 
@@ -24,25 +29,79 @@ def generate_launch_description():
         default_value='test-basicmove.pddl',
         description='arquivo de problema PDDL usado so pra inicializar o Problem Expert',
     )
-    problem_file_path = PathJoinSubstitution(
-        [pkg_share, 'pddl', LaunchConfiguration('problem_file')]
+    # Onde o robo comeca e termina: a arena tem duas areas de start e duas de finish
+    start_arg = DeclareLaunchArgument(
+        'start', default_value='1', choices=['1', '2'],
+        description='area de inicio: 1 -> locstart1, 2 -> locstart2',
+    )
+    finish_arg = DeclareLaunchArgument(
+        'finish', default_value='1', choices=['1', '2'],
+        description='area de fim: 1 -> locfinish1, 2 -> locfinish2',
     )
 
-    # Incluir o launch base oficial do plansys2
-    plansys2_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(
-                plansys2_share, 'launch', 'plansys2_bringup_launch_distributed.py'
-            )
-        ),
-        launch_arguments={
-            'model_file': os.path.join(pkg_share, 'pddl', 'domain.pddl'),
-            'problem_file': problem_file_path,
-            'autostart': 'true',
-        }.items(),
+    # Opcional: YAML do @Work Commander. Se for passado, e' convertido aqui mesmo
+    # (planning/yaml_para_pddl.py) e o problem_file e' ignorado.
+    task_yaml_arg = DeclareLaunchArgument(
+        'task_yaml', default_value='',
+        description='arquivo .yaml da prova (Commander); se vazio, usa problem_file',
     )
 
     locations_yaml = os.path.join(pkg_share, 'config', 'locations.yaml')
+
+    def preparar_problema(context):
+        start = LaunchConfiguration('start').perform(context)
+        finish = LaunchConfiguration('finish').perform(context)
+        task_yaml = LaunchConfiguration('task_yaml').perform(context)
+        loc_start, loc_finish = f'locstart{start}', f'locfinish{finish}'
+        logs = []
+
+        if task_yaml:
+            from planning.yaml_para_pddl import conferir_locations_yaml, traduzir
+            with open(os.path.expanduser(task_yaml)) as f:
+                doc = yaml.safe_load(f)
+            texto, locations, avisos = traduzir(doc, loc_start, loc_finish)
+            nome = f'problem-{doc["task_id"].lower()}'
+            logs += [f'[planning] {task_yaml} convertido para PDDL'] + [f'[planning] AVISO: {a}' for a in avisos]
+            faltando = conferir_locations_yaml(locations_yaml, locations)
+            if faltando:
+                logs.append(f'[planning] AVISO: faltam em locations.yaml: {", ".join(faltando)}')
+        else:
+            problem_file = LaunchConfiguration('problem_file').perform(context)
+            with open(os.path.join(pkg_share, 'pddl', problem_file)) as f:
+                texto = f.read()
+            nome = os.path.splitext(problem_file)[0]
+            # troca a area de inicio/fim do arquivo pela escolhida no launch
+            for prefixo, novo_nome in (('locstart', loc_start), ('locfinish', loc_finish)):
+                achados = set(re.findall(rf'\b{prefixo}\d\b', texto))
+                if len(achados) == 1:
+                    texto = re.sub(rf'\b{prefixo}\d\b', novo_nome, texto)
+                elif len(achados) > 1:
+                    logs.append(f'[planning] AVISO: {problem_file} usa {sorted(achados)}; '
+                                f'{prefixo} nao foi trocado')
+                else:
+                    logs.append(f'[planning] AVISO: {problem_file} nao tem {prefixo}1/{prefixo}2; '
+                                f'start/finish ignorados para ele')
+
+        caminho = os.path.join(tempfile.gettempdir(), f'{nome}-s{start}-f{finish}.pddl')
+        with open(caminho, 'w') as f:
+            f.write(texto)
+        logs.append(f'[planning] inicio: {loc_start} | fim: {loc_finish} | problema: {caminho}')
+
+        # Incluir o launch base oficial do plansys2
+        plansys2_cmd = IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                os.path.join(
+                    plansys2_share, 'launch', 'plansys2_bringup_launch_distributed.py'
+                )
+            ),
+            launch_arguments={
+                'model_file': os.path.join(pkg_share, 'pddl', 'domain.pddl'),
+                'problem_file': caminho,
+                'autostart': 'true',
+            }.items(),
+        )
+        return [LogInfo(msg=m) for m in logs] + [plansys2_cmd]
+
 
     # Node para a ação "move-cheio"
     move_cheio_action_node = LifecycleNode(
@@ -185,6 +244,9 @@ def generate_launch_description():
     return LaunchDescription([
         phase_arg,
         problem_file_arg,
-        plansys2_cmd,
+        start_arg,
+        finish_arg,
+        task_yaml_arg,
+        OpaqueFunction(function=preparar_problema),
         acoes,
     ])

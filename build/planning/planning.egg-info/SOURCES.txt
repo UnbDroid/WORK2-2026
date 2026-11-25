@@ -43,6 +43,7 @@ planning/place_from_at_shelf_action.py
 planning/place_in_container_action.py
 planning/planning_controller.py
 planning/stack_action.py
+planning/yaml_para_pddl.py
 resource/planning
 test/test_copyright.py
 test/test_flake8.py

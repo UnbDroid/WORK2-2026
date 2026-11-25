@@ -1,0 +1,443 @@
+"""
+Converte o arquivo de equipe do @Work Commander (YAML, contrato v3) num problema PDDL
+para o domain.pddl do pacote `planning`.
+
+Linha de comando (a partir de src/planning):
+    python3 tools/yaml_para_pddl.py ATT2.yaml --start 2 --finish 1 --locations config/locations.yaml
+
+Pelo launch (converte na hora, sem precisar rodar este script antes):
+    ros2 launch planning plansys2.launch.py task_yaml:=/caminho/ATT2.yaml start:=2 finish:=1
+"""
+import argparse
+import itertools
+import os
+import sys
+
+import yaml
+
+# NOMES
+
+ROBO = 'robot1'
+SLOTS_ROBO = ['slot1', 'slot2', 'slot3']
+MAX_POSICOES_MESA = 4          # slot_to_cmd conhece p1..p4
+POSICAO_PILHA = 2              # posicao usada pela acao `stack` (centro da zona)
+COR_PT = {'BLUE': 'azul', 'RED': 'vermelho'}
+COR_ID_VISAO = {'BLUE': '-2', 'RED': '-1'}
+
+
+def nome_cubo(tag):
+    return f'cube{tag}'
+
+
+def nome_ws(area):            # 'WS_4' -> 'loc4'
+    return f'loc{int(area.split("_")[1])}'
+
+
+def nome_shelf(area, nivel):  # ('SH_2','BOTTOM') -> 'locshelf3', ('SH_2','TOP') -> 'locshelf4'
+    n = int(area.split('_')[1])
+    return f'locshelf{2 * n - 1}' if nivel == 'BOTTOM' else f'locshelf{2 * n}'
+
+
+def nome_pp(area):            # 'PP' -> 'locpp1', 'PP_2' -> 'locpp2'
+    return 'locpp1' if area == 'PP' else f'locpp{int(area.split("_")[1])}'
+
+
+def nome_container(cor, loc):
+    return f'container_{COR_PT[cor]}_{loc}{COR_ID_VISAO[cor]}'
+
+
+def nome_cavidade(slot_tag):
+    return f'cav{slot_tag}'
+
+def nome_posicao(k, loc):     # (1, 'loc4') -> 'p1l4', (1, 'locshelf4') -> 'p1lshelf4'
+    return f'p{k}l{loc[3:]}'
+
+
+# conferencia do arquivo (invariantes do contrato)
+
+class ErroContrato(Exception):
+    pass
+
+
+def tipo_area(area):
+    if area.startswith('WS_'):
+        return 'WS'
+    if area.startswith('SH_'):
+        return 'SH'
+    if area == 'PP' or area.startswith('PP_'):
+        return 'PP'
+    raise ErroContrato(f'Area desconhecida: {area}')
+
+
+def posicoes_da_area(area, dados, stacking, nome_estado):
+    """Devolve lista de (obj, colocacao) a partir das chaves de posicao.
+    colocacao = (tipo, area, detalhe)."""
+    t = tipo_area(area)
+    saida = []
+    if t == 'WS':
+        for i, o in enumerate(dados.get('table') or []):
+            saida.append((o, ('table', area, i)))
+        for cor, objs in (dados.get('containers') or {}).items():
+            for o in objs or []:
+                saida.append((o, ('container', area, cor)))
+        if 'stack' in dados:
+            if area not in stacking:
+                raise ErroContrato(f'{nome_estado}.{area}: `stack` numa WS fora de stacking_areas')
+            for i, o in enumerate(dados.get('stack') or []):
+                saida.append((o, ('stack', area, i)))
+    elif t == 'SH':
+        for nivel, objs in (dados.get('levels') or {}).items():
+            if nivel not in ('BOTTOM', 'TOP'):
+                raise ErroContrato(f'{nome_estado}.{area}: nivel invalido {nivel}')
+            for i, o in enumerate(objs or []):
+                saida.append((o, ('shelf_' + nivel, area, i)))
+    elif t == 'PP':
+        slots = dados.get('slots')
+        if slots is None:
+            # arranjo escondido (AMT): sabemos so que esta na PP
+            for o in dados.get('obj_ids') or []:
+                saida.append((o, ('pp_desconhecido', area, None)))
+        else:
+            for tag, o in slots.items():
+                if o is not None:
+                    saida.append((o, ('slot', area, int(tag))))
+    return saida
+
+
+def conferir(doc):
+    erros = []
+    objetos = {o['id']: o['color'] for o in doc.get('objects') or []}
+    if len(objetos) != len(doc.get('objects') or []):
+        erros.append('IDs repetidos em `objects`')
+    ativas = list(doc.get('active_service_areas') or [])
+    stacking = doc.get('stacking_areas') or {}
+    pts = doc.get('precision_tables') or {}
+
+    for nome_estado in ('start_state', 'finish_state'):
+        estado = doc.get(nome_estado) or {}
+        if set(estado) != set(ativas):
+            erros.append(f'{nome_estado}: areas {sorted(estado)} != ativas {sorted(ativas)}')
+        vistos = []
+        for area, dados in estado.items():
+            obj_ids = list(dados.get('obj_ids') or [])
+            if obj_ids != sorted(obj_ids):
+                erros.append(f'{nome_estado}.{area}: obj_ids fora de ordem crescente')
+            try:
+                pos = posicoes_da_area(area, dados, stacking, nome_estado)
+            except ErroContrato as e:
+                erros.append(str(e))
+                continue
+            ids_pos = sorted(o for o, _ in pos)
+            if ids_pos != sorted(obj_ids):
+                erros.append(f'{nome_estado}.{area}: posicoes {ids_pos} != obj_ids {obj_ids}')
+            vistos += obj_ids
+            # containers: cor do cubo == cor do container, e container declarado
+            for cor in (dados.get('containers') or {}):
+                if {'color': cor, 'at': area} not in (doc.get('containers') or []):
+                    erros.append(f'{nome_estado}.{area}: container {cor} nao declarado em `containers`')
+                for o in dados['containers'][cor] or []:
+                    if objetos.get(o) != cor:
+                        erros.append(f'{nome_estado}.{area}: cubo {o} ({objetos.get(o)}) no container {cor}')
+            if tipo_area(area) == 'PP' and dados.get('slots') is not None:
+                esperado = [int(t) for t in (pts.get(area) or {}).get('slot_tags', [])]
+                if [int(t) for t in dados['slots']] != esperado:
+                    erros.append(f'{nome_estado}.{area}: chaves de slots != precision_tables.{area}.slot_tags')
+            if area in stacking and nome_estado == 'start_state' and obj_ids:
+                erros.append(f'start_state.{area}: zona de empilhamento deve comecar vazia')
+        if sorted(vistos) != sorted(objetos):
+            erros.append(f'{nome_estado}: objetos {sorted(vistos)} != `objects` {sorted(objetos)}')
+    if erros:
+        raise ErroContrato('Arquivo fora do contrato:\n  - ' + '\n  - '.join(erros))
+
+
+# TRADUCAO
+
+def traduzir(doc, loc_start, loc_finish, com_finish=True):
+    conferir(doc)
+    avisos = []
+    task = doc['task_id']
+    objetos = {o['id']: o['color'] for o in doc['objects']}
+    ativas = list(doc['active_service_areas'])
+    stacking = doc.get('stacking_areas') or {}
+    pts = doc.get('precision_tables') or {}
+
+    # locations
+    mapa_areas = {}           # area YAML -> lista de locations PDDL
+    locations = [loc_start]
+    for area in ativas:
+        t = tipo_area(area)
+        if t == 'WS':
+            locs = [nome_ws(area)]
+        elif t == 'SH':
+            locs = [nome_shelf(area, 'BOTTOM'), nome_shelf(area, 'TOP')]
+        else:
+            locs = [nome_pp(area)]
+        mapa_areas[area] = locs
+        locations += locs
+    locations.append(loc_finish)
+
+    def loc_de(col):
+        tipo, area, _ = col
+        if tipo == 'shelf_BOTTOM':
+            return nome_shelf(area, 'BOTTOM')
+        if tipo == 'shelf_TOP':
+            return nome_shelf(area, 'TOP')
+        if tipo in ('slot', 'pp_desconhecido'):
+            return nome_pp(area)
+        return nome_ws(area)
+
+    # colocacoes
+    inicio, fim = {}, {}
+    for nome_estado, destino in (('start_state', inicio), ('finish_state', fim)):
+        for area, dados in doc[nome_estado].items():
+            for o, col in posicoes_da_area(area, dados, stacking, nome_estado):
+                destino[o] = col
+
+    def parado(o):
+        a, b = inicio[o], fim[o]
+        if a[0] == 'pp_desconhecido':
+            return False
+        if a[0] in ('table', 'shelf_BOTTOM', 'shelf_TOP') and a[:2] == b[:2]:
+            return True       # mesma mesa/nivel: nao precisa ser movido
+        return a == b
+
+    # containers
+    containers = {}           # (cor, area) -> nome
+    for c in doc.get('containers') or []:
+        containers[(c['color'], c['at'])] = nome_container(c['color'], nome_ws(c['at']))
+
+    # cavidades (mesa de precisao)
+    cavidades = []            # (loc, nome)
+    for area, info in pts.items():
+        for tag in info.get('slot_tags', []):
+            cavidades.append((nome_pp(area), nome_cavidade(tag)))
+
+    # posicoes
+    posicoes = []             # (loc, nome)
+    pos_ocupadas = set()
+    pos_do_obj = {}           # o -> (loc, nome_posicao) no estado final
+    for area, dados in doc['finish_state'].items():
+        listas = []
+        if tipo_area(area) == 'WS' and dados.get('table'):
+            listas.append((nome_ws(area), dados['table']))
+        if tipo_area(area) == 'SH' and (dados.get('levels') or {}).get('TOP'):
+            listas.append((nome_shelf(area, 'TOP'), dados['levels']['TOP']))
+        if tipo_area(area) == 'SH' and (dados.get('levels') or {}).get('BOTTOM'):
+            listas.append((nome_shelf(area, 'BOTTOM'), dados['levels']['BOTTOM']))
+        for loc, lista in listas:
+            if len(lista) > MAX_POSICOES_MESA:
+                raise ErroContrato(f'{area}: {len(lista)} cubos soltos, mas slot_to_cmd so conhece '
+                                   f'{MAX_POSICOES_MESA} posicoes')
+            for k, o in enumerate(lista, start=1):
+                p = nome_posicao(k, loc)
+                posicoes.append((loc, p))
+                pos_do_obj[o] = (loc, p)
+                if parado(o):
+                    pos_ocupadas.add((loc, p))
+    for area in stacking:
+        pilha = (doc['finish_state'].get(area) or {}).get('stack') or []
+        if len(pilha) > 2:
+            raise ErroContrato(
+                f'{area}: pilha com {len(pilha)} cubos. A acao `stack` do domain so monta pilha '
+                'de 2 (segura base e topo ao mesmo tempo); precisa de uma acao nova para 3+.')
+        if pilha:
+            loc = nome_ws(area)
+            p = nome_posicao(POSICAO_PILHA, loc)
+            posicoes.append((loc, p))
+            if len(pilha) == 1:
+                pos_do_obj[pilha[0]] = (loc, p)
+    # cubos que vem de fora e precisam entrar num slot da PP: com o domain atual
+    # o caminho e' place-at-location (solta na PP) + place-at-cavity -> precisa de
+    # uma posicao livre na PP por cubo que chega.
+    chegando_pp = {}
+    for o, col in fim.items():
+        if col[0] == 'slot' and inicio[o][0] not in ('slot', 'pp_desconhecido'):
+            chegando_pp.setdefault(loc_de(col), []).append(o)
+    for loc, objs in chegando_pp.items():
+        for k in range(1, len(objs) + 1):
+            posicoes.append((loc, f'pf{k}l{loc[3:]}'))
+        avisos.append(
+            f'{loc}: cubos {sorted(objs)} chegam de outra area para um slot da mesa de precisao. '
+            'O domain nao tem acao "segurando -> cavidade"; o plano vai usar place-at-location '
+            '(posicao pfNlpp) + place-at-cavity, e o node place_at_cavity_two hoje roda a rotina '
+            'de ordenacao do AMT. Falta uma acao propria para isso.')
+
+    # init
+    init = [f'(= (carga {ROBO}) 0)', '']
+    restantes = {loc: 0 for loc in locations}
+    for o in objetos:
+        if not parado(o):
+            restantes[loc_de(inicio[o])] += 1
+    init += [f'(= (restantes {loc}) {n})' for loc, n in restantes.items()] + ['']
+    init += [f'(gripper-free {ROBO})', f'(at-robot {ROBO} {loc_start})']
+    init += [f'(slot-free {ROBO} {s})' for s in SLOTS_ROBO] + ['']
+
+    for (cor, area), nome in containers.items():
+        init.append(f'(container-at {nome} {nome_ws(area)})')
+    if containers:
+        init.append('')
+
+    cav_ocupadas = set()
+    for o in sorted(objetos):
+        col = inicio[o]
+        tipo, area, det = col
+        c = nome_cubo(o)
+        if tipo == 'container':
+            init.append(f'(in-container {c} {containers[(det, area)]})')
+        elif tipo == 'stack':
+            raise ErroContrato('Pilha no estado inicial nao e\' suportada')
+        else:
+            init.append(f'(obj-at {c} {loc_de(col)})')
+            if tipo == 'slot' and parado(o):
+                init.append(f'(in-cavity {c} {loc_de(col)} {nome_cavidade(det)})')
+                cav_ocupadas.add(nome_cavidade(det))
+            if tipo in ('table', 'shelf_BOTTOM', 'shelf_TOP') and parado(o) and o in pos_do_obj:
+                loc, p = pos_do_obj[o]
+                init.append(f'(at-position {c} {loc} {p})')
+    init.append('')
+    for loc, p in posicoes:
+        if (loc, p) not in pos_ocupadas:
+            init.append(f'(position-free {loc} {p})')
+    for loc, cav in cavidades:
+        if cav not in cav_ocupadas:
+            init.append(f'(cavity-free {loc} {cav})')
+    init.append('')
+    for a, b in itertools.permutations(locations, 2):
+        if a != loc_finish:
+            init.append(f'(connected {a} {b})')
+
+    # goal
+    goal = []
+    for o in sorted(objetos):
+        tipo, area, det = fim[o]
+        c = nome_cubo(o)
+        comentario = f'; {area}'
+        if tipo == 'container':
+            goal.append(f'(in-container {c} {containers[(det, area)]})   {comentario} container {COR_PT[det]}')
+        elif tipo == 'slot':
+            goal.append(f'(in-cavity {c} {loc_de(fim[o])} {nome_cavidade(det)})   {comentario} slot {det}')
+        elif tipo == 'stack':
+            continue  # tratado abaixo
+        else:
+            loc = loc_de(fim[o])
+            goal.append(f'(obj-at {c} {loc})   {comentario}')
+            if o in pos_do_obj:
+                goal.append(f'(at-position {c} {loc} {pos_do_obj[o][1]})')
+    for area in stacking:
+        pilha = (doc['finish_state'].get(area) or {}).get('stack') or []
+        loc = nome_ws(area)
+        if len(pilha) == 1:
+            o = pilha[0]
+            goal.append(f'(obj-at {nome_cubo(o)} {loc})   ; {area} pilha de 1 cubo')
+            goal.append(f'(at-position {nome_cubo(o)} {loc} {pos_do_obj[o][1]})')
+        for base, topo in zip(pilha, pilha[1:]):
+            goal.append(f'(on {nome_cubo(topo)} {nome_cubo(base)} {loc})   ; {area} pilha: {topo} sobre {base}')
+    if com_finish:
+        goal.append(f'(at-robot {ROBO} {loc_finish})')
+
+    # texto
+    cab = [
+        f'; Gerado por tools/yaml_para_pddl.py a partir de {task} ({doc.get("name", "")})',
+        f'; duracao da prova: {doc.get("duration_min", "?")} min',
+        f'; inicio: {loc_start} | fim: {loc_finish}',
+        ';',
+        '; Areas do YAML -> locations do PDDL:',
+    ]
+    for area, locs in mapa_areas.items():
+        cab.append(f';   {area:6s} -> {", ".join(locs)}')
+    cab.append(';')
+    cab.append('; Cubos (tag -> cor): ' + ', '.join(f'{o}={COR_PT[c]}' for o, c in sorted(objetos.items())))
+    if stacking:
+        for area, info in stacking.items():
+            cab.append(f'; Zona de empilhamento: {area} ({nome_ws(area)}), tag de referencia {info.get("reference_tag")}')
+    destinos_pp = {o: f'zone{fim[o][2]}' for o in sorted(objetos) if fim[o][0] == 'slot'}
+    if destinos_pp:
+        cab.append(';')
+        cab.append('; Para place_at_cavity_two_action.py (cavidade de destino de cada cubo):')
+        cab.append(f';   ZONA_DO_CUBO = {destinos_pp}')
+    for a in avisos:
+        cab.append('; AVISO: ' + a)
+
+    def bloco(linhas, ind):
+        return '\n'.join((ind + l) if l else '' for l in linhas)
+
+    obj_linhas = [
+        f'{ROBO} - robot',
+        ' '.join(SLOTS_ROBO) + ' - slot',
+        ' '.join(locations) + ' - location',
+        ' '.join(nome_cubo(o) for o in sorted(objetos)) + ' - object',
+    ]
+    if containers:
+        obj_linhas.append(' '.join(containers.values()) + ' - container')
+    if posicoes:
+        obj_linhas.append(' '.join(p for _, p in posicoes) + ' - position')
+    if cavidades:
+        obj_linhas.append(' '.join(c for _, c in cavidades) + ' - cavity')
+
+    texto = '\n'.join(cab) + f'''
+
+(define (problem {task.lower()}-instance)
+    (:domain robocup-work-transport)
+
+    (:objects
+{bloco(obj_linhas, ' ' * 8)}
+    )
+
+    (:init
+{bloco(init, ' ' * 8)}
+    )
+
+    (:goal
+        (and
+{bloco(goal, ' ' * 12)}
+        )
+    )
+)
+'''
+    return texto, locations, avisos
+
+
+def conferir_locations_yaml(caminho, locations):
+    with open(caminho) as f:
+        dados = yaml.safe_load(f)
+    conhecidas = set(dados['/**']['ros__parameters']['locations'])
+    return [l for l in locations if l not in conhecidas]
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument('yaml', help='arquivo de equipe (.yaml) do @Work Commander')
+    ap.add_argument('-o', '--saida', help='arquivo .pddl de saida (padrao: pddl/problem-<task>.pddl)')
+    ap.add_argument('--locations', help='locations.yaml para conferir se todas as locations existem')
+    ap.add_argument('--sem-finish', action='store_true', help='nao exige (at-robot robot1 locfinish) no goal')
+    ap.add_argument('--start', choices=['1', '2'], default='1',
+                    help='posicao inicial a usar: locstart1 ou locstart2 (padrao: 1)')
+    ap.add_argument('--finish', choices=['1', '2'], default='1',
+                    help='posicao final a usar: locfinish1 ou locfinish2 (padrao: 1)')
+    args = ap.parse_args()
+
+    loc_start = f'locstart{args.start}'
+    loc_finish = f'locfinish{args.finish}'
+
+    with open(args.yaml) as f:
+        doc = yaml.safe_load(f)
+    try:
+        texto, locations, avisos = traduzir(doc, loc_start, loc_finish, com_finish=not args.sem_finish)
+    except ErroContrato as e:
+        sys.exit(f'ERRO: {e}')
+
+    saida = args.saida or os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'pddl',
+                                       f'problem-{doc["task_id"].lower()}.pddl')
+    with open(saida, 'w') as f:
+        f.write(texto)
+    print(f'Escrito: {os.path.normpath(saida)}')
+    for a in avisos:
+        print('AVISO:', a)
+    if args.locations:
+        faltando = conferir_locations_yaml(args.locations, locations)
+        if faltando:
+            print(f'AVISO: faltam em {args.locations}: {", ".join(faltando)}')
+
+
+if __name__ == '__main__':
+    main()
