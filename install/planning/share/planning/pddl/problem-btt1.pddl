@@ -1,12 +1,13 @@
 ; Gerado por tools/yaml_para_pddl.py a partir de BTT1 (Basic Transportation Test I)
 ; duracao da prova: 10 min
+; inicio: locstart1 | fim: locfinish1
 ;
 ; Areas do YAML -> locations do PDDL:
-;   WS_1   -> loc1
-;   WS_2   -> loc2
-;   WS_3   -> loc3
+;   WS_7   -> loc7
+;   WS_8   -> loc8
+;   WS_10  -> loc10
 ;
-; Cubos (tag -> cor): 4=azul, 11=vermelho, 23=azul
+; Cubos (tag -> cor): 4=vermelho, 11=azul, 16=vermelho, 25=vermelho
 
 (define (problem btt1-instance)
     (:domain robocup-work-transport)
@@ -14,61 +15,65 @@
     (:objects
         robot1 - robot
         slot1 slot2 slot3 - slot
-        locstart loc1 loc2 loc3 locfinish - location
-        cube4 cube11 cube23 - object
-        p1l2 p2l2 p1l3 - position
+        locstart1 loc7 loc8 loc10 locfinish1 - location
+        cube4 cube11 cube16 cube25 - object
+        p1l7 p1l8 p2l8 p1l10 - position
     )
 
     (:init
         (= (carga robot1) 0)
 
-        (= (restantes locstart) 0)
-        (= (restantes loc1) 3)
-        (= (restantes loc2) 0)
-        (= (restantes loc3) 0)
-        (= (restantes locfinish) 0)
+        (= (restantes locstart1) 0)
+        (= (restantes loc7) 3)
+        (= (restantes loc8) 1)
+        (= (restantes loc10) 0)
+        (= (restantes locfinish1) 0)
 
         (gripper-free robot1)
-        (at-robot robot1 locstart)
+        (at-robot robot1 locstart1)
         (slot-free robot1 slot1)
         (slot-free robot1 slot2)
         (slot-free robot1 slot3)
 
-        (obj-at cube4 loc1)
-        (obj-at cube11 loc1)
-        (obj-at cube23 loc1)
+        (obj-at cube4 loc7)
+        (obj-at cube11 loc7)
+        (obj-at cube16 loc8)
+        (obj-at cube25 loc7)
 
-        (position-free loc2 p1l2)
-        (position-free loc2 p2l2)
-        (position-free loc3 p1l3)
+        (position-free loc7 p1l7)
+        (position-free loc8 p1l8)
+        (position-free loc8 p2l8)
+        (position-free loc10 p1l10)
 
-        (connected locstart loc1)
-        (connected locstart loc2)
-        (connected locstart loc3)
-        (connected locstart locfinish)
-        (connected loc1 locstart)
-        (connected loc1 loc2)
-        (connected loc1 loc3)
-        (connected loc1 locfinish)
-        (connected loc2 locstart)
-        (connected loc2 loc1)
-        (connected loc2 loc3)
-        (connected loc2 locfinish)
-        (connected loc3 locstart)
-        (connected loc3 loc1)
-        (connected loc3 loc2)
-        (connected loc3 locfinish)
+        (connected locstart1 loc7)
+        (connected locstart1 loc8)
+        (connected locstart1 loc10)
+        (connected locstart1 locfinish1)
+        (connected loc7 locstart1)
+        (connected loc7 loc8)
+        (connected loc7 loc10)
+        (connected loc7 locfinish1)
+        (connected loc8 locstart1)
+        (connected loc8 loc7)
+        (connected loc8 loc10)
+        (connected loc8 locfinish1)
+        (connected loc10 locstart1)
+        (connected loc10 loc7)
+        (connected loc10 loc8)
+        (connected loc10 locfinish1)
     )
 
     (:goal
         (and
-            (obj-at cube4 loc2)   ; WS_2
-            (at-position cube4 loc2 p2l2)
-            (obj-at cube11 loc3)   ; WS_3
-            (at-position cube11 loc3 p1l3)
-            (obj-at cube23 loc2)   ; WS_2
-            (at-position cube23 loc2 p1l2)
-            (at-robot robot1 locfinish)
+            (obj-at cube4 loc8)   ; WS_8
+            (at-position cube4 loc8 p2l8)
+            (obj-at cube11 loc10)   ; WS_10
+            (at-position cube11 loc10 p1l10)
+            (obj-at cube16 loc7)   ; WS_7
+            (at-position cube16 loc7 p1l7)
+            (obj-at cube25 loc8)   ; WS_8
+            (at-position cube25 loc8 p1l8)
+            (at-robot robot1 locfinish1)
         )
     )
 )

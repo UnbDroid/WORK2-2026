@@ -281,9 +281,9 @@ class VisionNode(Node):
 
     ALVOS = {
         "cubo": {
-            5.0:  (0.228,    0.731),
-            10.0: (0.173, 0.695),
-            15.0: (0.215, 0.586),
+            5.0:  (0.201, 0.778),
+            10.0: (0.174, 0.710),
+            15.0: (0.188, 0.625),
         },
         "zona": {
             5.0:  (0.0, 0.0),   # CALIBRAR
@@ -367,6 +367,7 @@ class VisionNode(Node):
         self.sub_garra = self.create_subscription(String, '/topico_garra', self.garra_callback, 10)
         self.pub_garra = self.create_publisher(String, '/topico_garra', 10) #mudei
         self.pub_status = self.create_publisher(String, '/topico_garra_status', 10)
+        self.pub_deteccao = self.create_publisher(String, '/topico_deteccao', 10)
         self.pub_cmd_vel = self.create_publisher(Twist, '/cmd_vel', 10)
 
         cv2.namedWindow("Visão do Robô", cv2.WINDOW_NORMAL)
@@ -402,6 +403,12 @@ class VisionNode(Node):
         self.x_filt = None
         self.z_filt = None
 
+    def log_deteccao(self, texto, no_topico=True):
+        """Mostra o log no terminal e, se no_topico, publica o MESMO texto em /topico_deteccao."""
+        self.get_logger().info(texto)
+        if no_topico:
+            self.pub_deteccao.publish(String(data=texto))
+
     # Callback de comando (único canal de controle: /topico_garra)
     def garra_callback(self, msg):
         cmd = msg.data
@@ -411,22 +418,22 @@ class VisionNode(Node):
         if cmd.startswith('impossivel'):
             if self.fase in (Fase.BUSCANDO, Fase.ALINHANDO):
                 self.get_logger().warning(
-                    f'[IMPOSSÍVEL] "{cmd}" recebido na fase {self.fase.name} (alvo {self.comando_atual}). '
+                    f'(listener) [IMPOSSÍVEL] "{cmd}" recebido na fase {self.fase.name} (alvo {self.comando_atual}). '
                     f'Parei de buscar/alinhar e vou responder como se o alvo tivesse sido pego.')
                 self.concluir_alinhamento()
                 self.get_logger().warning(
-                    f'[IMPOSSÍVEL] Eco enviado (alinhamento FINGIDO, nada foi pego): {self.comando_atual}. '
+                    f'(listener) [IMPOSSÍVEL] Eco enviado (alinhamento FINGIDO, nada foi pego): {self.comando_atual}. '
                     f'A garra segue para o próximo passo.')
             else:
                 self.get_logger().info(
-                    f'[IMPOSSÍVEL] "{cmd}" ignorado: robô na fase {self.fase.name}, não há alinhamento para encerrar.')
+                    f'(listener) [IMPOSSÍVEL] "{cmd}" ignorado: robô na fase {self.fase.name}, não há alinhamento para encerrar.')
             return
         if not cmd.startswith('transladar:'):
             return
 
         partes = cmd.split(':')
         if len(partes) not in (3, 4):
-            self.get_logger().error(f'Formato inesperado (esperado transladar:cubeX:Ncm[:local]): {cmd}')
+            self.get_logger().error(f'(listener) Formato inesperado (esperado transladar:cubeX:Ncm[:local]): {cmd}')
             return
 
         nome_alvo = partes[1]
@@ -437,31 +444,31 @@ class VisionNode(Node):
         tipo = self.nome_para_tipo(nome_alvo)
 
         if alvo is None or tipo is None or altura_cm is None:
-            self.get_logger().error(f'Comando inválido: {cmd}')
+            self.get_logger().error(f'(listener) Comando inválido: {cmd}')
             return
 
         if tipo == 'container' and alvo not in container_IDS.values():
             self.get_logger().error(
-                f'Contêiner inválido (use -1 = vermelho, -2 = azul): {cmd}')
+                f'(listener) Contêiner inválido (use -1 = vermelho, -2 = azul): {cmd}')
             return
 
         if tipo != 'container' and alvo < 0:
-            self.get_logger().error(f'ID negativo só é válido para contêiner: {cmd}')
+            self.get_logger().error(f'(listener) ID negativo só é válido para contêiner: {cmd}')
             return
 
         if tipo == 'zona':
             # zoneN (N = 1..7) -> tag 100+N
             if not 1 <= alvo <= ZONA_N_MAX:
-                self.get_logger().error(f'Zona inválida (use zone1..zone{ZONA_N_MAX}): {cmd}')
+                self.get_logger().error(f'(listener) Zona inválida (use zone1..zone{ZONA_N_MAX}): {cmd}')
                 return
             alvo = ZONA_TAG_BASE + alvo
 
         if altura_cm not in self.ALVOS[tipo]:
-            self.get_logger().error(f'{tipo} a {altura_cm} cm sem calibração. Disponíveis: {list(self.ALVOS[tipo])}')
+            self.get_logger().error(f'(listener) {tipo} a {altura_cm} cm sem calibração. Disponíveis: {list(self.ALVOS[tipo])}')
             return
 
         if self.ALVOS[tipo][altura_cm] == (0.0, 0.0):
-            self.get_logger().error(f'{tipo} a {altura_cm} cm ainda não calibrado (alvo 0, 0). Comando ignorado.')
+            self.get_logger().error(f'(listener) {tipo} a {altura_cm} cm ainda não calibrado (alvo 0, 0). Comando ignorado.')
             return
 
         if local != self.local_atual:
@@ -476,7 +483,7 @@ class VisionNode(Node):
         self.altura_mesa_cm = altura_cm
         self.frames_estaveis = 0
         self.resetar_filtro()
-        self.get_logger().info(f'Comando: {cmd} -> {tipo} id {alvo}, mesa a {altura_cm} cm, local {local}')
+        self.get_logger().info(f'(listener) Comando: {cmd} -> {tipo} id {alvo}, mesa a {altura_cm} cm, local {local}')
 
         self.iniciar_busca()
 
@@ -526,7 +533,7 @@ class VisionNode(Node):
             return None
         sentido = self.sentido_para(esquerda)
         self.get_logger().info(
-            f'Zona {self.alvo_id - ZONA_TAG_BASE}: vendo {sorted(visiveis)} -> '
+            f'(listener) Zona {self.alvo_id - ZONA_TAG_BASE}: vendo {sorted(visiveis)} -> '
             f'vou para a {"esquerda" if esquerda else "direita"} '
             f'(sentido {"normal" if sentido == 1 else "inverso"})')
         return sentido
@@ -541,18 +548,18 @@ class VisionNode(Node):
         y_tag = mem.get(self.alvo_id)
 
         if y_tag is None:
-            self.get_logger().info(f'Alvo {self.alvo_id}: sem registro -> sentido normal')
+            self.get_logger().info(f'(listener) Alvo {self.alvo_id}: sem registro -> sentido normal')
             return 1
 
         delta = y_tag - self.y_est
         if abs(delta) < self.get_parameter('dist_min_memoria').value:
-            self.get_logger().info(f'Alvo {self.alvo_id}: registrado aqui perto (delta={delta:.2f} m) -> sentido normal')
+            self.get_logger().info(f'(listener) Alvo {self.alvo_id}: registrado aqui perto (delta={delta:.2f} m) -> sentido normal')
             return 1
 
         esquerda = delta > 0
         sentido = self.sentido_para(esquerda)
         self.get_logger().info(
-            f'Alvo {self.alvo_id}: registrado a {abs(delta):.2f} m à '
+            f'(listener) Alvo {self.alvo_id}: registrado a {abs(delta):.2f} m à '
             f'{"esquerda" if esquerda else "direita"} -> sentido {"normal" if sentido == 1 else "inverso"}')
         return sentido
 
@@ -574,23 +581,23 @@ class VisionNode(Node):
         eco = String()
         eco.data = self.comando_atual
         self.pub_status.publish(eco)
-        self.get_logger().info(f'Alinhado. Eco enviado em /topico_garra_status: {eco.data}')
+        self.get_logger().info(f'(listener) Alinhado. Eco enviado em /topico_garra_status: {eco.data}')
 
     # Inspecionar: qual cubo está embaixo da zona em frente?
     def iniciar_inspecao(self, cmd):
         partes = cmd.split(':')
         if len(partes) != 2:
-            self.get_logger().error(f'Formato inesperado (esperado inspecionar:zoneN): {cmd}')
+            self.get_logger().error(f'(listener) Formato inesperado (esperado inspecionar:zoneN): {cmd}')
             return
 
         nome = partes[1].strip()
         n = self.nome_para_id(nome)
         if self.nome_para_tipo(nome) != 'zona' or n is None or not 1 <= n <= ZONA_N_MAX:
-            self.get_logger().error(f'Inspeção inválida (use inspecionar:zone1..zone{ZONA_N_MAX}): {cmd}')
+            self.get_logger().error(f'(listener) Inspeção inválida (use inspecionar:zone1..zone{ZONA_N_MAX}): {cmd}')
             return
 
         if self.fase != Fase.IDLE:
-            self.get_logger().error(f'Robô ocupado (fase {self.fase.name}); inspeção ignorada: {cmd}')
+            self.get_logger().error(f'(listener) Robô ocupado (fase {self.fase.name}); inspeção ignorada: {cmd}')
             return
 
         self.zona_inspecionada = ZONA_TAG_BASE + n
@@ -598,7 +605,7 @@ class VisionNode(Node):
         self.votos_inspecao = []
         self.inicio_inspecao = self.get_clock().now()
         self.fase = Fase.INSPECIONANDO
-        self.get_logger().info(f'Inspecionando {nome} (tag {self.zona_inspecionada})')
+        self.get_logger().info(f'(listener) Inspecionando {nome} (tag {self.zona_inspecionada})')
 
     def cubo_abaixo(self, zona_tag, results):
         """Id do cubo (tag 1..6) logo ABAIXO da tag da zona na imagem, ou None.
@@ -628,7 +635,7 @@ class VisionNode(Node):
         decorrido = (self.get_clock().now() - self.inicio_inspecao).nanoseconds / 1e9
         if decorrido > float(self.get_parameter('inspecao_timeout').value):
             self.get_logger().error(
-                f'Tag da zona {self.zona_inspecionada} não apareceu em {decorrido:.0f} s; inspeção cancelada, sem resposta.')
+                f'(listener) Tag da zona {self.zona_inspecionada} não apareceu em {decorrido:.0f} s; inspeção cancelada, sem resposta.')
             self.fase = Fase.IDLE
             return
 
@@ -651,13 +658,13 @@ class VisionNode(Node):
         eco = String()
         eco.data = f'inspecionar:{self.nome_zona_inspecao}:{resultado}'
         self.pub_status.publish(eco)
-        self.get_logger().info(f'Inspeção concluída (votos {dict(votos)}). Resposta em /topico_garra_status: {eco.data}')
+        self.log_deteccao(f'(listener) Inspeção concluída (votos {dict(votos)}). Resposta em /topico_garra_status: {eco.data}')
         self.fase = Fase.IDLE
 
     # Cálculo de Aproximação
     def calcular_velocidade_aproximacao(self, delta_x, delta_z, tipo, altura_cm):
-        Kp_x = 8.0
-        Kp_z = 2.0
+        Kp_x = 2.0 #4.0
+        Kp_z = 4.0  #8.0
 
         distancia_alvo_x, distancia_alvo_z = self.ALVOS[tipo][altura_cm]
         tolerancia_x = 0.01
@@ -669,23 +676,23 @@ class VisionNode(Node):
         if abs(erro_lateral) > tolerancia_x:
             vx = Kp_x * erro_lateral
             vy = 0
-            vx = max(min(vx, 0.5), -0.5)
+            vx = max(min(vx, 0.3), -0.3)
             if abs(vx) < 0.1:
-                vx = 0.15 if vx > 0 else -0.15
+                vx = 0.15 if vx > 0 else -0.150
 
         elif abs(erro_frontal) > tolerancia_z:
             vy = Kp_z * erro_frontal
             vx = 0
-            vy = max(min(vy, 0.5), -0.5)
+            vy = max(min(vy, 0.3), -0.3)
             if abs(vy) < 0.1:
-                vy = 0.15 if vy > 0 else -0.15
+                vy = 0.150 if vy > 0 else -0.150
 
         else:
             vx = 0
             vy = 0
 
-        #print(f'Velocidade final: vx={vx:.3f} e vy={vy:.3f}  A coordenada X atual: {delta_x:.3f}, o erro lateral atual é:{erro_lateral:.3f} , A coordenada Y atual: {delta_z:.3f}, O erro frontal atual é:{erro_frontal:.3f}')
-
+        print(f'(listener) Velocidade final: vx={vx:.3f} e vy={vy:.3f}  A coordenada X atual: {delta_x:.3f}, o erro lateral atual é:{erro_lateral:.3f} , A coordenada Y atual: {delta_z:.3f}, O erro frontal atual é:{erro_frontal:.3f}')
+        
         return vy, -vx
 
     # Fases do Comportamento
@@ -696,8 +703,8 @@ class VisionNode(Node):
             # Só começa a alinhar depois de ver a tag por alguns frames seguidos:
             # um único frame na borda da imagem não é confiável.
             if self.frames_vistos >= self.get_parameter('frames_para_avistar').value:
-                self.get_logger().info(f'Tag {self.alvo_id} avistada! Iniciando alinhamento.')
-                self.get_logger().info(f'Cubo da cor {alvo.get("cor_cubo", "não identificada")}')
+                self.log_deteccao(f'(listener) Tag {self.alvo_id} avistada! Iniciando alinhamento.', no_topico=(self.tipo_alvo == 'cubo'))
+                self.log_deteccao(f'(listener) Cubo da cor {alvo.get("cor_cubo", "não identificada")}', no_topico=(self.tipo_alvo == 'cubo'))
                 self.frames_estaveis = 0
                 self.frames_perdidos = 0
                 self.resetar_filtro()
@@ -714,13 +721,13 @@ class VisionNode(Node):
         if decorrido >= tempo_trecho:
             self.trechos_feitos += 1
             if max_trechos > 0 and self.trechos_feitos >= max_trechos:
-                self.get_logger().error(f'Tag {self.alvo_id} não encontrada após {self.trechos_feitos} trechos. Parando o robô.')
+                self.get_logger().error(f'(listener) Tag {self.alvo_id} não encontrada após {self.trechos_feitos} trechos. Parando o robô.')
                 self.parar_robo()
                 self.fase = Fase.IDLE
                 return
             self.sentido_busca *= -1
             self.inicio_trecho = self.get_clock().now()
-            self.get_logger().info('Tag não encontrada neste trecho; invertendo o sentido da busca.')
+            self.get_logger().info('(listener) Tag não encontrada neste trecho; invertendo o sentido da busca.')
 
         twist = Twist()
         twist.linear.y = float(self.get_parameter('search_vy').value) * self.sentido_busca
@@ -735,7 +742,7 @@ class VisionNode(Node):
             self.publicar_cmd(Twist())
 
             if self.frames_perdidos >= self.get_parameter('frames_perdida_limite').value:
-                self.get_logger().warning(f'Tag {self.alvo_id} perdida durante o alinhamento; voltando a buscar.')
+                self.get_logger().warning(f'(listener) Tag {self.alvo_id} perdida durante o alinhamento; voltando a buscar.')
                 # Volta a varrer em direção ao lado onde a tag estava (erro lateral > 0 = tag à direita)
                 self.sentido_busca = self.sentido_para(self.ultimo_erro_lateral < 0)
                 self.inicio_trecho = self.get_clock().now()
@@ -760,7 +767,7 @@ class VisionNode(Node):
                 twist.linear.x = float(self.get_parameter('velocidade_cega_container').value)
                 self.publicar_cmd(twist)
                 self.get_logger().info(
-                    '[contêiner] topo fora da imagem: avançando em linha reta',
+                    '(listener) [contêiner] topo fora da imagem: avançando em linha reta',
                     throttle_duration_sec=1.0)
                 return
 
@@ -775,7 +782,7 @@ class VisionNode(Node):
             # Use estes valores para calibrar o ponto ideal em ALVOS["container"]
             bx, by, bw, bh = alvo["bbox"]
             self.get_logger().info(
-                f'[calibração contêiner] X={cam_x:.4f}  Z={cam_z:.4f}  h_px={alvo.get("h_px", 0)}'
+                f'(listener) [calibração contêiner] X={cam_x:.4f}  Z={cam_z:.4f}  h_px={alvo.get("h_px", 0)}'
                 f'  y_topo={by}  y_base={by + bh}  x_esq={bx}  x_dir={bx + bw}',
                 throttle_duration_sec=0.5)
 
@@ -863,7 +870,7 @@ class VisionNode(Node):
             cv2.waitKey(1)
 
         except Exception as e:
-            self.get_logger().error(f'Erro no processamento da imagem: {e}')
+            self.get_logger().error(f'(listener) Erro no processamento da imagem: {e}')
 
 
 def main(args=None):
