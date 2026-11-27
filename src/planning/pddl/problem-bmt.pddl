@@ -16,7 +16,7 @@
         slot1 slot2 slot3 - slot
         locstart1 loc3 loc4 locfinish1 - location
         cube5 cube13 cube22 cube23 - object
-        p1l3 p1l4 p2l4 p3l4 - position
+        pf1l3 pf1l4 pf2l4 pf3l4 - position
     )
 
     (:init
@@ -34,14 +34,14 @@
         (slot-free robot1 slot3)
 
         (obj-at cube5 loc3)
-        (at-position cube5 loc3 p1l3)
+        (at-position cube5 loc3 pf1l3)
         (obj-at cube13 loc3)
         (obj-at cube22 loc3)
         (obj-at cube23 loc3)
 
-        (position-free loc4 p1l4)
-        (position-free loc4 p2l4)
-        (position-free loc4 p3l4)
+        (position-free loc4 pf1l4)
+        (position-free loc4 pf2l4)
+        (position-free loc4 pf3l4)
 
         (connected locstart1 loc3)
         (connected locstart1 loc4)
@@ -57,13 +57,13 @@
     (:goal
         (and
             (obj-at cube5 loc3)   ; WS_3
-            (at-position cube5 loc3 p1l3)
+            (at-position cube5 loc3 pf1l3)
             (obj-at cube13 loc4)   ; WS_4
-            (at-position cube13 loc4 p3l4)
+            (at-position cube13 loc4 pf3l4)
             (obj-at cube22 loc4)   ; WS_4
-            (at-position cube22 loc4 p2l4)
+            (at-position cube22 loc4 pf2l4)
             (obj-at cube23 loc4)   ; WS_4
-            (at-position cube23 loc4 p1l4)
+            (at-position cube23 loc4 pf1l4)
             (at-robot robot1 locfinish1)
         )
     )

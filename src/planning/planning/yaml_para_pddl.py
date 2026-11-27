@@ -50,7 +50,7 @@ def nome_cavidade(slot_tag):
     return f'cav{slot_tag}'
 
 def nome_posicao(k, loc):     # (1, 'loc4') -> 'p1l4', (1, 'locshelf4') -> 'p1lshelf4'
-    return f'p{k}l{loc[3:]}'
+    return f'pf{k}l{loc[3:]}'
 
 
 # conferencia do arquivo (invariantes do contrato)

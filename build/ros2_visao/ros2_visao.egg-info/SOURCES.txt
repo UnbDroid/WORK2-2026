@@ -14,6 +14,7 @@ ros2_visao/__init__.py
 ros2_visao/img_pub_node.py
 ros2_visao/img_subpp_node.py
 ros2_visao/teste.py
+ros2_visao/testedois copy.py
 ros2_visao/testedois.py
 ros2_visao/trackbar.py
 test/test_copyright.py

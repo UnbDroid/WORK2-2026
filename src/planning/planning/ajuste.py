@@ -28,18 +28,18 @@ class AproximarRotacionar(Node):
         )
 
         # Distância de segurança das paredes laterais
-        self.distancia_limite_parede = 0.22
+        self.distancia_limite_parede = 0.27
         self.distancia_parede_90 = None
         self.distancia_parede_270 = None
         self.ultimo_scan_valido = None
 
         # Aproximação: distância-alvo selecionada pela altura da mesa
         self.declare_parameter('alturas_mesa', [5, 10, 15])
-        self.declare_parameter('distancia_alvo', [0.28, 0.22, 0.16])
+        self.declare_parameter('distancia_alvo', [0.26, 0.22, 0.16])
         self.declare_parameter('tolerancia_altura', 0.05)
         self.distancia_padrao = 0.28
         self.distancia_alvo = self.distancia_padrao
-        self.tolerancia = 0.02
+        self.tolerancia = 0.02 
         self.velocidade_frente = 0.20
         self.velocidade_ajuste = 0.10
 
@@ -74,7 +74,7 @@ class AproximarRotacionar(Node):
         # Segurança
         self.timeout = 2.0
         self.timeout_ajuste = 30.0
-        self.distancia_minima_segura = 0.12
+        self.distancia_minima_segura = 0.01
 
         # Recuperação quando a leitura frontal é inf
         self.espera_recuperacao = 0.5

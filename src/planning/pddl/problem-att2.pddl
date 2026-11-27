@@ -20,7 +20,7 @@
         locstart1 loc2 loc5 loc6 locshelf1 locshelf2 locshelf7 locshelf8 locfinish1 - location
         cube5 cube10 cube12 cube22 cube29 - object
         container_azul_loc5-2 container_vermelho_loc5-1 - container
-        p1l6 p1lshelf8 - position
+        pf1l6 pf1lshelf8 - position
     )
 
     (:init
@@ -51,8 +51,8 @@
         (obj-at cube22 loc2)
         (obj-at cube29 locshelf1)
 
-        (position-free loc6 p1l6)
-        (position-free locshelf8 p1lshelf8)
+        (position-free loc6 pf1l6)
+        (position-free locshelf8 pf1lshelf8)
 
         (connected locstart1 loc2)
         (connected locstart1 loc5)
@@ -124,9 +124,9 @@
         (and
             (in-container cube5 container_azul_loc5-2)   ; WS_5 container azul
             (obj-at cube10 loc6)   ; WS_6
-            (at-position cube10 loc6 p1l6)
+            (at-position cube10 loc6 pf1l6)
             (obj-at cube12 locshelf8)   ; SH_4
-            (at-position cube12 locshelf8 p1lshelf8)
+            (at-position cube12 locshelf8 pf1lshelf8)
             (in-container cube22 container_vermelho_loc5-1)   ; WS_5 container vermelho
             (in-container cube29 container_azul_loc5-2)   ; WS_5 container azul
             (at-robot robot1 locfinish1)

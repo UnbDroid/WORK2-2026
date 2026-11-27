@@ -2,6 +2,7 @@ from collections import Counter
 from enum import Enum, auto
 import re
 import cv2
+import math
 import numpy as np
 import apriltag
 import rclpy
@@ -281,9 +282,9 @@ class VisionNode(Node):
 
     ALVOS = {
         "cubo": {
-            5.0:  (0.201, 0.778),
-            10.0: (0.174, 0.710),
-            15.0: (0.188, 0.625),
+            5.0:  (0.174, 0.802),
+            10.0: (0.145, 0.714),
+            15.0: (0.195, 0.649),
         },
         "zona": {
             5.0:  (0.0, 0.0),   # CALIBRAR
@@ -311,7 +312,7 @@ class VisionNode(Node):
         self.classifier = ObjectClassifier()
 
         # Parâmetros (ros2 run ... --ros-args -p search_vy:=-0.3)
-        self.declare_parameter('search_vy', -0.2)           # VELOCIDADE (m/s) da translação na busca; o sinal define o sentido "normal"
+        self.declare_parameter('search_vy', -0.1)           # VELOCIDADE (m/s) da translação na busca; o sinal define o sentido "normal"
         self.declare_parameter('search_sweep_time', 30.0)   # TEMPO (s) de cada trecho da busca antes de inverter
         self.declare_parameter('search_max_legs', 3)        # nº máximo de trechos antes de desistir (0 = varre para sempre)
         self.declare_parameter('stable_frames', 5)          # frames seguidos dentro da tolerância para concluir o alinhamento
@@ -324,6 +325,7 @@ class VisionNode(Node):
         self.declare_parameter('inspecao_votos_min', 2)     # nº mínimo de frames vendo o MESMO cubo para aceitar; senão = vazio
         self.declare_parameter('inspecao_timeout', 10.0)    # (s) tempo total do inspecionar; passou disso sem juntar os frames, desiste e não responde
         self.declare_parameter('pareamento_tol_x', 1.0)     # tolerância lateral cubo x zona, em larguras da tag da zona
+        self.declare_parameter('suavizacao_tag', 0.5)
 
         # Estado do comportamento
         self.fase = Fase.IDLE
@@ -342,6 +344,8 @@ class VisionNode(Node):
         # Filtro exponencial do contêiner (X, Z suavizados)
         self.x_filt = None
         self.z_filt = None
+        self.vx_ant = 0.0
+        self.vy_ant = 0.0
 
         # Mesa PP: zonas visíveis no último frame e estado do inspecionar
         self.zonas_visiveis = []
@@ -403,6 +407,10 @@ class VisionNode(Node):
         self.x_filt = None
         self.z_filt = None
 
+    def resetar_rampa(self, vx=0.0, vy=0.0):
+        self.vx_ant = 0.0
+        self.vy_ant = 0.0
+
     def log_deteccao(self, texto, no_topico=True):
         """Mostra o log no terminal e, se no_topico, publica o MESMO texto em /topico_deteccao."""
         self.get_logger().info(texto)
@@ -412,6 +420,11 @@ class VisionNode(Node):
     # Callback de comando (único canal de controle: /topico_garra)
     def garra_callback(self, msg):
         cmd = msg.data
+
+        if cmd.startswith('guardar'):
+            self.iniciar_inspecao(cmd)
+            return
+
         if cmd.startswith('inspecionar:'):
             self.iniciar_inspecao(cmd)
             return
@@ -483,6 +496,7 @@ class VisionNode(Node):
         self.altura_mesa_cm = altura_cm
         self.frames_estaveis = 0
         self.resetar_filtro()
+        self.resetar_rampa()
         self.get_logger().info(f'(listener) Comando: {cmd} -> {tipo} id {alvo}, mesa a {altura_cm} cm, local {local}')
 
         self.iniciar_busca()
@@ -574,6 +588,7 @@ class VisionNode(Node):
         self.parar_robo()
         self.fase = Fase.IDLE
         self.resetar_filtro()
+        self.resetar_rampa()
 
         if self.tipo_alvo == 'cubo':
             self.memoria.get(self.local_atual, {}).pop(self.alvo_id, None)
@@ -663,8 +678,12 @@ class VisionNode(Node):
 
     # Cálculo de Aproximação
     def calcular_velocidade_aproximacao(self, delta_x, delta_z, tipo, altura_cm):
-        Kp_x = 2.0 #4.0
+        Kp_x = 4.0 #4.0
         Kp_z = 4.0  #8.0
+        V_MAX_X = 0.125
+        V_MAX_Z = 0.25
+        V_MIN = 0.04
+        DV = 0.02
 
         distancia_alvo_x, distancia_alvo_z = self.ALVOS[tipo][altura_cm]
         tolerancia_x = 0.01
@@ -673,27 +692,26 @@ class VisionNode(Node):
         erro_frontal = delta_z - distancia_alvo_z
         erro_lateral = delta_x - distancia_alvo_x
 
-        if abs(erro_lateral) > tolerancia_x:
-            vx = Kp_x * erro_lateral
-            vy = 0
-            vx = max(min(vx, 0.3), -0.3)
-            if abs(vx) < 0.1:
-                vx = 0.15 if vx > 0 else -0.150
+        def eixo(erro, kp, v_max):
+            if abs(erro) < tolerancia_x:
+                return 0.0
+            v = kp * erro 
+            v = math.copysign(max(abs(v), V_MIN), v)
+            return max(min(v, v_max), -v_max)
+        
+        def rampa(v_novo, v_ant):
+            if abs(v_novo) > abs(v_ant) or v_novo * v_ant < 0:
+                return v_ant + max(min(v_novo - v_ant, DV), -DV)
+            return v_novo
 
-        elif abs(erro_frontal) > tolerancia_z:
-            vy = Kp_z * erro_frontal
-            vx = 0
-            vy = max(min(vy, 0.3), -0.3)
-            if abs(vy) < 0.1:
-                vy = 0.150 if vy > 0 else -0.150
 
-        else:
-            vx = 0
-            vy = 0
-
+        vx = rampa(eixo(erro_lateral, Kp_x, V_MAX_X), self.vx_ant)
+        vy = rampa(eixo(erro_frontal, Kp_z, V_MAX_Z), self.vy_ant)
+        self.vx_ant, self.vy_ant = vx, vy
+        
         print(f'(listener) Velocidade final: vx={vx:.3f} e vy={vy:.3f}  A coordenada X atual: {delta_x:.3f}, o erro lateral atual é:{erro_lateral:.3f} , A coordenada Y atual: {delta_z:.3f}, O erro frontal atual é:{erro_frontal:.3f}')
         
-        return vy, -vx
+        return 0.07, -0.07
 
     # Fases do Comportamento
     def passo_busca(self, alvo):
@@ -704,10 +722,11 @@ class VisionNode(Node):
             # um único frame na borda da imagem não é confiável.
             if self.frames_vistos >= self.get_parameter('frames_para_avistar').value:
                 self.log_deteccao(f'(listener) Tag {self.alvo_id} avistada! Iniciando alinhamento.', no_topico=(self.tipo_alvo == 'cubo'))
-                self.log_deteccao(f'(listener) Cubo da cor {alvo.get("cor_cubo", "não identificada")}', no_topico=(self.tipo_alvo == 'cubo'))
+                #self.log_deteccao(f'(listener) Cubo da cor {alvo.get("cor_cubo", "não identificada")}', no_topico=(self.tipo_alvo == 'cubo'))
                 self.frames_estaveis = 0
                 self.frames_perdidos = 0
                 self.resetar_filtro()
+                self.resetar_rampa(vx=-float(self.get_parameter('search_vy').value) * self.sentido_busca)
                 self.fase = Fase.ALINHANDO
                 self.passo_alinhamento(alvo)
                 return
@@ -738,12 +757,18 @@ class VisionNode(Node):
         if alvo is None:
             self.frames_estaveis = 0
             self.frames_perdidos += 1
-            self.resetar_filtro()
-            self.publicar_cmd(Twist())
+
+            # Desacelera aos poucos (também reduz o borrão e ajuda a reencontrar a tag)
+            DV_FREIO = 0.04
+            self.vx_ant = math.copysign(max(abs(self.vx_ant) - DV_FREIO, 0.0), self.vx_ant)
+            self.vy_ant = math.copysign(max(abs(self.vy_ant) - DV_FREIO, 0.0), self.vy_ant)
+            twist = Twist()
+            twist.linear.x = float(self.vy_ant)
+            twist.linear.y = float(-self.vx_ant)
+            self.publicar_cmd(twist)
 
             if self.frames_perdidos >= self.get_parameter('frames_perdida_limite').value:
                 self.get_logger().warning(f'(listener) Tag {self.alvo_id} perdida durante o alinhamento; voltando a buscar.')
-                # Volta a varrer em direção ao lado onde a tag estava (erro lateral > 0 = tag à direita)
                 self.sentido_busca = self.sentido_para(self.ultimo_erro_lateral < 0)
                 self.inicio_trecho = self.get_clock().now()
                 self.trechos_feitos = 0
@@ -757,29 +782,34 @@ class VisionNode(Node):
         alvo_x, _ = self.ALVOS[self.tipo_alvo][self.altura_mesa_cm]
         self.ultimo_erro_lateral = cam_x - alvo_x
 
-        # Contêiner: suaviza X e Z (a massa de cor é mais ruidosa que uma tag)
+        # Contêiner com o topo cortado = ainda longe: só avança em linha reta
+        if self.tipo_alvo == 'container' and alvo["bbox"][1] <= Y_TOPO_CORTADO:
+            self.resetar_filtro()
+            self.resetar_rampa()
+            self.frames_estaveis = 0
+            twist = Twist()
+            twist.linear.x = float(self.get_parameter('velocidade_cega_container').value)
+            self.publicar_cmd(twist)
+            self.get_logger().info(
+                '(listener) [contêiner] topo fora da imagem: avançando em linha reta',
+                throttle_duration_sec=1.0)
+            return
+
+        # Suaviza X e Z para QUALQUER alvo (antes era só o contêiner)
         if self.tipo_alvo == 'container':
-            # Topo cortado = ainda longe: sem correção lateral nem cálculo de Z, só avança
-            if alvo["bbox"][1] <= Y_TOPO_CORTADO:
-                self.resetar_filtro()
-                self.frames_estaveis = 0
-                twist = Twist()
-                twist.linear.x = float(self.get_parameter('velocidade_cega_container').value)
-                self.publicar_cmd(twist)
-                self.get_logger().info(
-                    '(listener) [contêiner] topo fora da imagem: avançando em linha reta',
-                    throttle_duration_sec=1.0)
-                return
-
             a = float(self.get_parameter('suavizacao_container').value)
-            if self.x_filt is None:
-                self.x_filt, self.z_filt = cam_x, cam_z
-            else:
-                self.x_filt = a * cam_x + (1 - a) * self.x_filt
-                self.z_filt = a * cam_z + (1 - a) * self.z_filt
-            cam_x, cam_z = self.x_filt, self.z_filt
+        else:
+            a = float(self.get_parameter('suavizacao_tag').value)
 
-            # Use estes valores para calibrar o ponto ideal em ALVOS["container"]
+        if self.x_filt is None:
+            self.x_filt, self.z_filt = cam_x, cam_z
+        else:
+            self.x_filt = a * cam_x + (1 - a) * self.x_filt
+            self.z_filt = a * cam_z + (1 - a) * self.z_filt
+        cam_x, cam_z = self.x_filt, self.z_filt
+
+        # Log de calibração (só contêiner, como antes)
+        if self.tipo_alvo == 'container':
             bx, by, bw, bh = alvo["bbox"]
             self.get_logger().info(
                 f'(listener) [calibração contêiner] X={cam_x:.4f}  Z={cam_z:.4f}  h_px={alvo.get("h_px", 0)}'

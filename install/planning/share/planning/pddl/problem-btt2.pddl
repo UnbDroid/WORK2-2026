@@ -1,81 +1,94 @@
-(define (problem bmt-instance)
+; Gerado por tools/yaml_para_pddl.py a partir de BTT2 (Basic Transportation Test II)
+; duracao da prova: 10 min
+; inicio: locstart1 | fim: locfinish1
+;
+; Areas do YAML -> locations do PDDL:
+;   WS_2   -> loc2
+;   WS_3   -> loc3
+;   WS_6   -> loc6
+;   WS_7   -> loc7
+;
+; Cubos (tag -> cor): 3=vermelho, 8=vermelho, 14=vermelho, 20=vermelho, 23=vermelho
+
+(define (problem btt2-instance)
     (:domain robocup-work-transport)
 
     (:objects
         robot1 - robot
         slot1 slot2 slot3 - slot
-        cube1 cube2 cube3 cube4 cube5 - object             ; Trocar para número de april tags que devem ser pegas
-        locstart loc1 loc2 loc3 loc4 locfinish - location  ; Trocar 1 para altura da location
-        p1l1 p2l1 p1l2 p2l2 p1l3 - position                ; Trocar numero depois de l para location correspondente
+        locstart1 loc2 loc3 loc6 loc7 locfinish1 - location
+        cube3 cube8 cube14 cube20 cube23 - object
+        pf1l2 pf1l3 pf2l3 pf1l6 pf1l7 - position
     )
 
     (:init
-        (= (carga robot1) 0)                     ; Robo sempre começa carregando 0 cubos
+        (= (carga robot1) 0)
 
-        (= (restantes loc1) 2)                   ; Inserir aqui apenas localizações que começam com cubos, e suas quantidades
+        (= (restantes locstart1) 0)
         (= (restantes loc2) 1)
-        (= (restantes loc3) 2)
-        (= (restantes loc4) 0)
+        (= (restantes loc3) 1)
+        (= (restantes loc6) 1)
+        (= (restantes loc7) 2)
+        (= (restantes locfinish1) 0)
 
         (gripper-free robot1)
-        (at-robot robot1 locstart)
-
+        (at-robot robot1 locstart1)
         (slot-free robot1 slot1)
         (slot-free robot1 slot2)
         (slot-free robot1 slot3)
 
-        (obj-at cube1 loc1)
-        (obj-at cube2 loc1)
-        (obj-at cube3 loc2)
-        (obj-at cube4 loc3)
-        (obj-at cube5 loc3)
+        (obj-at cube3 loc7)
+        (obj-at cube8 loc6)
+        (obj-at cube14 loc2)
+        (obj-at cube20 loc3)
+        (obj-at cube23 loc7)
 
-        (position-free loc1 p1l1)
-        (position-free loc1 p2l1)
-        (position-free loc2 p1l2)
-        (position-free loc2 p2l2)
-        (position-free loc3 p1l3)
+        (position-free loc2 pf1l2)
+        (position-free loc3 pf1l3)
+        (position-free loc3 pf2l3)
+        (position-free loc6 pf1l6)
+        (position-free loc7 pf1l7)
 
-        (connected locstart loc1)   ; Dois métodos, se for fácil, tentar guiar caminho, senão colocar todos assim e ve o que é calulado
-        (connected locstart loc2)
-        (connected locstart loc3)
-        (connected locstart loc4)
-        (connected locstart locfinish)
-        (connected loc1 locstart)
-        (connected loc1 loc2)
-        (connected loc1 loc3)
-        (connected loc1 loc4)
-        (connected loc1 locfinish)
-        (connected loc2 locstart)
-        (connected loc2 loc1)
+        (connected locstart1 loc2)
+        (connected locstart1 loc3)
+        (connected locstart1 loc6)
+        (connected locstart1 loc7)
+        (connected locstart1 locfinish1)
+        (connected loc2 locstart1)
         (connected loc2 loc3)
-        (connected loc2 loc4)
-        (connected loc2 locfinish)
-        (connected loc3 locstart)
-        (connected loc3 loc1)
+        (connected loc2 loc6)
+        (connected loc2 loc7)
+        (connected loc2 locfinish1)
+        (connected loc3 locstart1)
         (connected loc3 loc2)
-        (connected loc3 loc4)
-        (connected loc3 locfinish)
-        (connected loc4 locstart)
-        (connected loc4 loc1)
-        (connected loc4 loc2)
-        (connected loc4 loc3)
-        (connected loc4 locfinish)
-        (connected locfinish locstart)
-        (connected locfinish loc1)
-        (connected locfinish loc2)
-        (connected locfinish loc3)
-        (connected locfinish loc4)
+        (connected loc3 loc6)
+        (connected loc3 loc7)
+        (connected loc3 locfinish1)
+        (connected loc6 locstart1)
+        (connected loc6 loc2)
+        (connected loc6 loc3)
+        (connected loc6 loc7)
+        (connected loc6 locfinish1)
+        (connected loc7 locstart1)
+        (connected loc7 loc2)
+        (connected loc7 loc3)
+        (connected loc7 loc6)
+        (connected loc7 locfinish1)
     )
 
     (:goal
         (and
-            (obj-at cube1 loc2)
-            (obj-at cube2 loc2)
-            (obj-at cube3 loc3)
-            (obj-at cube4 loc1)
-            (obj-at cube5 loc1)
-            (at-robot robot1 locfinish)
+            (obj-at cube3 loc6)   ; WS_6
+            (at-position cube3 loc6 pf1l6)
+            (obj-at cube8 loc2)   ; WS_2
+            (at-position cube8 loc2 pf1l2)
+            (obj-at cube14 loc3)   ; WS_3
+            (at-position cube14 loc3 pf2l3)
+            (obj-at cube20 loc7)   ; WS_7
+            (at-position cube20 loc7 pf1l7)
+            (obj-at cube23 loc3)   ; WS_3
+            (at-position cube23 loc3 pf1l3)
+            (at-robot robot1 locfinish1)
         )
     )
 )

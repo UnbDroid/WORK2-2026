@@ -359,7 +359,7 @@ index 0000000..3397aed
 +        if tipo_area(area) == 'SH' and (dados.get('levels') or {}).get('BOTTOM'):
 +            listas.append((nome_shelf(area, 'BOTTOM'), dados['levels']['BOTTOM']))
 +        for loc, lista in listas:
-+            if len(lista) > MAX_POSICOES_MESA:
++            if len(lista) > MAX_POSICOE'   S_MESA:
 +                raise ErroContrato(f'{area}: {len(lista)} cubos soltos, mas slot_to_cmd so conhece '
 +                                   f'{MAX_POSICOES_MESA} posicoes')
 +            for k, o in enumerate(lista, start=1):
@@ -630,7 +630,7 @@ index bfaf193..b93eaae 100644
 -    return f'cav{slot_tag}'
 -
 -def nome_posicao(k, loc):     # (1, 'loc4') -> 'p1l4', (1, 'locshelf4') -> 'p1lshelf4'
--    return f'p{k}l{loc[3:]}'
+-    return f'pf{k}l{loc[3:]}'
 -
 -
 -# conferencia do arquivo (invariantes do contrato)

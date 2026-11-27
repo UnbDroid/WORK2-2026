@@ -10,7 +10,7 @@
         cube1 cube2 - object
         locstart loc7 loc4 locfinish - location
         slot1 slot2 slot3 - slot 
-        p2l4 - position
+        pf2l4 - position
 
     )
 
@@ -37,7 +37,7 @@
         (connected loc7 loc4)
         (connected loc4 locfinish)
 
-        (position-free loc4 p2l4)
+        (position-free loc4 pf2l4)
 
     )
 

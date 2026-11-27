@@ -24,8 +24,11 @@ class ImagePublisher(Node):
         self.publicando = False
 
         # Inicializa a câmera com segurança no início (fica aberta em segundo plano, mas em silêncio)
-        self.cameraDevice = 3
-        self.camera = cv2.VideoCapture(self.cameraDevice)
+        # self.cameraDevice = 0
+        # self.camera = cv2.VideoCapture(self.cameraDevice)
+        #Eu mudei essas 2 aqui, o original é o comentado
+        self.cameraDevice = "/dev/v4l/by-id/usb-046d_Logitech_BRIO_DA982BC6-video-index0"
+        self.camera = cv2.VideoCapture(self.cameraDevice, cv2.CAP_V4L2)
 
         if not self.camera.isOpened():
             self.get_logger().error("(talker) ERRO CRÍTICO: Não foi possível conectar à câmera.")

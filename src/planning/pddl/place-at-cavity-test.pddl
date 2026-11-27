@@ -37,7 +37,7 @@
         (connected loc7 loc4)
         (connected loc4 locfinish)
 
-        (position-free loc4 p2l4)
+        (position-free loc4 pf2l4)
 
     )
 

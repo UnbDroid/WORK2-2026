@@ -1,0 +1,59 @@
+# @Work Commander — task da RoboCup@Work Brasil (Entry-Level), edicao 2026
+# Prova: BTT2 — Basic Transportation Test II | Duracao: 10 min
+#
+# Arquivo ENTREGUE AS EQUIPES. Contrato campo a campo: config/schema_task_equipe.yaml
+#
+# Como ler start_state / finish_state, area por area:
+#   obj_ids    = TODOS os objetos de tarefa na area (ordem crescente, SEM
+#                significado de posicao).
+#   table      = soltos sobre a mesa, da esquerda para a direita (WS).
+#   containers = dentro do container daquela cor (WS que hospeda container).
+#   levels     = prateleira: BOTTOM e TOP, cada nivel da esquerda para a direita.
+#   slots      = mesa de precisao: tag de referencia do slot -> ID do objeto
+#                (null = slot vazio). As tags estao em precision_tables.
+#   stack      = zona de empilhamento (uma WS, listada em stacking_areas):
+#                pilha sobre a tag de referencia, da BASE ao TOPO. Nesta prova
+#                essa mesa so recebe a pilha.
+#   A uniao de table/containers/levels/slots/stack e' SEMPRE igual a obj_ids.
+# Cada objeto e' um ATTC: `id` = ID da AprilTag, `color` = cor do cubo (BLUE |
+# RED). Os IDs nao se repetem nesta task, entao nos estados o ID basta.
+# Containers nao tem AprilTag: o arquivo diz a cor e a workstation de cada um;
+# localizar o container sobre a mesa, pela cor, e' tarefa do robo.
+
+
+task_id: BTT2
+name: Basic Transportation Test II
+duration_min: 10
+active_service_areas: [WS_2, WS_3, WS_6, WS_7]
+objects:
+- {id: 3, color: RED}
+- {id: 8, color: RED}
+- {id: 14, color: RED}
+- {id: 20, color: RED}
+- {id: 23, color: RED}
+start_state:
+  WS_2:
+    obj_ids: [14]
+    table: [14]
+  WS_3:
+    obj_ids: [20]
+    table: [20]
+  WS_6:
+    obj_ids: [8]
+    table: [8]
+  WS_7:
+    obj_ids: [3, 23]
+    table: [23, 3]
+finish_state:
+  WS_2:
+    obj_ids: [8]
+    table: [8]
+  WS_3:
+    obj_ids: [14, 23]
+    table: [23, 14]
+  WS_6:
+    obj_ids: [3]
+    table: [3]
+  WS_7:
+    obj_ids: [20]
+    table: [20]

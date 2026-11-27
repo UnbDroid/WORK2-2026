@@ -4,6 +4,8 @@ from rclpy.duration import Duration
 import os
 import yaml
 from ament_index_python.packages import get_package_share_directory
+import math #mudei
+from geometry_msgs.msg import Twist
 
 class GripperPrimitives(ActionExecutorClient):
     def __init__(self, action_name: str):
@@ -20,6 +22,12 @@ class GripperPrimitives(ActionExecutorClient):
         # Dicionário interno para armazenar os locais mapeados
         self.locations_dict = self._load_locations_from_params()
         self.get_logger().info(f'locations carregadas: {self.locations_dict}')
+
+        self._pub_vel = self.create_publisher(Twist, '/cmd_vel', 10) #mudei
+        self._vel_ativa = False
+        self._vel_twist = None
+        self._vel_fim = None
+        self._timer_vel = self.create_timer(0.05, self._timer_vel_callback)  # 20 Hz
 
     def _status_callback(self, msg): #roda sempre que chega uma mensagem em /topico_garra_status
         self._current_reply = msg.data
@@ -129,4 +137,29 @@ class GripperPrimitives(ActionExecutorClient):
         else:
             self.get_logger().error(f'Location {loc_name} nao encontrada no YAML de parametros!')
             return 0.0 # Valor default em caso de erro
+
+    def start_translation(self, distancia_m: float, velocidade: float = 0.1):
+        """Translada de lado em malha aberta. distancia_m > 0 = esquerda, < 0 = direita
+        (mesma convenção do vision_node: +linear.y = esquerda)."""
+        if distancia_m == 0.0:
+            self._vel_ativa = False
+            return
+        duracao = abs(distancia_m) / velocidade
+        self._vel_twist = Twist()
+        self._vel_twist.linear.y = math.copysign(velocidade, distancia_m)
+        self._vel_fim = self.get_clock().now() + Duration(seconds=duracao)
+        self._vel_ativa = True
+
+    def translation_finished(self) -> bool:
+        return not self._vel_ativa
+
+    def _timer_vel_callback(self):
+        if not self._vel_ativa:
+            return
+        if self.get_clock().now() >= self._vel_fim:
+            self._vel_ativa = False
+            for _ in range(3):                 # garante que as rodas param
+                self._pub_vel.publish(Twist())
+            return
+        self._pub_vel.publish(self._vel_twist)
         
