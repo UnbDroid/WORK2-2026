@@ -22,6 +22,8 @@ class ImagePublisher(Node):
 
         # Chave de controle (Começa falso)
         self.publicando = False
+        self.cmd_ativo = None   # comando de visão que ligou a câmera (espera a resposta dele)
+        self.t_ligou = None
 
         # Inicializa a câmera com segurança no início (fica aberta em segundo plano, mas em silêncio)
         # self.cameraDevice = 0
@@ -42,22 +44,53 @@ class ImagePublisher(Node):
         self.timer = self.create_timer(self.periodCommunication, self.timer_callbackFunction)
         self.i = 0
 
+    # Comandos que precisam da câmera (todos atendidos pelo nó de visão, o listener)
+    COMANDOS_VISAO = ('transladar:', 'inspecionar:', 'guardar')
+    # Segurança: se a resposta nunca vier, a câmera desliga sozinha depois deste tempo (s)
+    TEMPO_MAX_LIGADA = 300.0
+
     def garra_callback(self, msg):
         cmd = msg.data
-        if not cmd.startswith('transladar:'):
-            return  # Ignora outros comandos
+        if not cmd.startswith(self.COMANDOS_VISAO):
+            return  # Ignora outros comandos (garra, ajustar, impossivel...)
 
         self.get_logger().info(f'(talker) Comando recebido: {cmd} -> LIGANDO envio de imagens!')
+        self.cmd_ativo = cmd
+        self.t_ligou = self.get_clock().now()
         self.publicando = True  # Libera o timer para publicar
 
+    def e_resposta_da_visao(self, status):
+        """True se 'status' é a resposta do comando de visão que ligou a câmera.
+        transladar e guardar: eco igual ao comando. inspecionar:zoneN: 'inspecionar:zoneN:<resultado>'."""
+        cmd = getattr(self, 'cmd_ativo', None)
+        if cmd is None:
+            return False
+        if cmd.startswith('inspecionar:'):
+            return status.startswith(cmd + ':')
+        if cmd == 'guardar':
+            return status.startswith('guardar')
+        return status == cmd
+
     def status_callback(self, msg):
-        # NOVO: Quando o listener publica o eco em /topico_garra_status, a tarefa acabou!
-        self.get_logger().info(f'(talker) Alinhamento concluído ({msg.data}) -> DESLIGANDO envio de imagens.')
+        # Desliga só quando chega a resposta do comando de visão em andamento. Antes desligava
+        # com QUALQUER status: o eco do transladar desligava a câmera antes do inspecionar
+        # (que não religava) e o inspecionar nunca recebia imagem.
+        if not self.publicando or not self.e_resposta_da_visao(msg.data):
+            return
+        self.get_logger().info(f'(talker) Visão concluiu ({msg.data}) -> DESLIGANDO envio de imagens.')
         self.publicando = False  # Trava o timer novamente, parando de publicar
+        self.cmd_ativo = None
 
     def timer_callbackFunction(self):
         # Se a chave for falsa, não faz nada (economia total de recursos)
         if not self.publicando:
+            return
+
+        if (self.get_clock().now() - self.t_ligou).nanoseconds / 1e9 > self.TEMPO_MAX_LIGADA:
+            self.get_logger().warn(
+                f'(talker) Sem resposta da visão para {self.cmd_ativo} em {self.TEMPO_MAX_LIGADA:.0f} s -> DESLIGANDO.')
+            self.publicando = False
+            self.cmd_ativo = None
             return
 
         sucess, frame = self.camera.read()
@@ -85,3 +118,4 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
+ 

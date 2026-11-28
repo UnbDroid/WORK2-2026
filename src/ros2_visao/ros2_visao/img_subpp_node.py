@@ -275,6 +275,7 @@ class Fase(Enum):
     BUSCANDO = auto()   # translada de lado procurando a tag
     ALINHANDO = auto()  # tag avistada, alinhamento fino
     INSPECIONANDO = auto()  # parado em frente a uma zona, lendo qual cubo está embaixo
+    GUARDANDO = auto()      # parado entre dois places na mesma mesa, gravando as tags à vista na memória
 
 
 # 5. NÓ ROS 2
@@ -292,8 +293,8 @@ class VisionNode(Node):
             15.0: (0.0, 0.0),   # CALIBRAR
         },
         "container": {
-            5.0:  (0.130, 0.626),   
-            10.0: (0.148, 0.720),  
+            5.0:  (0.130, 0.626),
+            10.0: (0.148, 0.720),
             15.0: (0.2124 , 0.8413),
         },
         "empilhamento": {
@@ -313,7 +314,11 @@ class VisionNode(Node):
 
         # Parâmetros (ros2 run ... --ros-args -p search_vy:=-0.3)
         self.declare_parameter('search_vy', -0.1)           # VELOCIDADE (m/s) da translação na busca; o sinal define o sentido "normal"
-        self.declare_parameter('search_sweep_time', 30.0)   # TEMPO (s) de cada trecho da busca antes de inverter
+        # TEMPO (s) do 1º trecho da busca (ponto de partida -> uma ponta da mesa); os seguintes
+        # duram o dobro. Busca esgotada leva T + 2T + 2T = 5T: precisa ficar abaixo do timeout
+        # das ações (TIMEOUT_VISAO = 150 s na rotina PP). Com 10 s: 50 s e 1 m por trecho a 0.1 m/s.
+        self.declare_parameter('search_sweep_time', 10.0)
+        self.declare_parameter('frames_olhar_inicio', 5)    # frames parado olhando antes de escolher o sentido da busca
         self.declare_parameter('search_max_legs', 3)        # nº máximo de trechos antes de desistir (0 = varre para sempre)
         self.declare_parameter('stable_frames', 5)          # frames seguidos dentro da tolerância para concluir o alinhamento
         self.declare_parameter('frames_para_avistar', 3)    # frames seguidos vendo a tag antes de iniciar o alinhamento
@@ -326,6 +331,20 @@ class VisionNode(Node):
         self.declare_parameter('inspecao_timeout', 10.0)    # (s) tempo total do inspecionar; passou disso sem juntar os frames, desiste e não responde
         self.declare_parameter('pareamento_tol_x', 1.0)     # tolerância lateral cubo x zona, em larguras da tag da zona
         self.declare_parameter('suavizacao_tag', 0.5)
+        # Ganhos do controle PI de aproximação (ki = 0 volta a ser só P, igual antes)
+        self.declare_parameter('kp_x', 4.0)    # proporcional lateral
+        self.declare_parameter('kp_z', 4.0)    # proporcional frontal
+        self.declare_parameter('ki_x', 1.0)    # integral lateral (1/s)
+        self.declare_parameter('ki_z', 1.0)    # integral frontal (1/s)
+        self.declare_parameter('i_max', 0.05)  # (m/s) contribuição máxima do termo integral (anti-windup)
+        # Guardar (pedido pelo place_at_location com guardar:<local> entre dois places na mesma mesa)
+        self.declare_parameter('guardar_atraso', 0.5)  # (s) espera inicial sem gravar (garra recolhendo, imagem assentando)
+        self.declare_parameter('guardar_tempo', 2.0)   # (s) tempo observando e gravando as tags, depois do atraso
+        # Calibração: com log_tags = true, a cada calib_frames frames imprime a média e o
+        # desvio de X e Z de cada tag à vista, em QUALQUER fase (inclusive parado em IDLE).
+        # Pode ligar com o nó rodando:  ros2 param set /vision_node log_tags true
+        self.declare_parameter('log_tags', False)
+        self.declare_parameter('calib_frames', 30)
 
         # Estado do comportamento
         self.fase = Fase.IDLE
@@ -347,6 +366,10 @@ class VisionNode(Node):
         self.vx_ant = 0.0
         self.vy_ant = 0.0
 
+        # Estado do PI: integral do erro (m*s) por eixo e instante do último cálculo
+        self.integral = {"x": 0.0, "z": 0.0}
+        self.t_pi_ant = None
+
         # Mesa PP: zonas visíveis no último frame e estado do inspecionar
         self.zonas_visiveis = []
         self.zona_inspecionada = None   # id da tag da zona (101..107)
@@ -354,18 +377,41 @@ class VisionNode(Node):
         self.votos_inspecao = []
         self.inicio_inspecao = None
 
-        # Memória: local -> {id da tag: posição lateral estimada da tag (m)}
+        # Guardar: o place_at_location manda guardar:<local> em /topico_garra quando faz outro
+        # place na mesma mesa. O robô fica parado, grava as tags à vista na memória e responde
+        # guardar:<local> em /topico_garra_status.
+        self.local_guardar = None
+        self.inicio_guardar = None
+        self.tags_guardadas = set()
+
+        # Início da busca: alguns frames parado olhando (a câmera acabou de ligar) para saber
+        # em frente a qual tag o robô está antes de escolher o sentido.
+        self.frames_olhar = 0
+
+        # Memória: local -> lista dos ids das tags na ordem em que estão na mesa,
+        # da ESQUERDA para a DIREITA. Ex.: [1, 2, 3] = o 1 está à esquerda do 2, que está
+        # à esquerda do 3. Só a ordem importa, não a distância. A lista de cada mesa é
+        # mantida quando o robô sai e volta (a ordem continua valendo).
         self.memoria = {}
         self.local_atual = None
+        # Tag que está (ou estava por último) na frente da câmera: é "onde o robô está"
+        # dentro da lista acima.
+        self.ultima_tag = None
+        # Posição lateral estimada (eixo de y_est) onde cada tag foi vista por último.
+        # Usada SÓ para decidir de que lado da última tag uma tag nova (vista sozinha) fica.
+        self.y_tags = {}
 
-        # Posição lateral estimada do robô (m, +y = esquerda), integrando a velocidade comandada.
-        # Serve só para decidir o sentido da busca: guardar o x da câmera (como era antes)
-        # fica obsoleto assim que o robô anda.
+        # Posição lateral estimada do robô (m, +y = esquerda), integrando a velocidade lateral
+        # de TUDO que é publicado em /cmd_vel (este nó, a translação do place_at_location, o
+        # ajuste...). Antes só contava o que este nó publicava. Zera ao trocar de mesa.
         self.y_est = 0.0
         self.vy_ultimo = 0.0
         self.t_ultimo_cmd = None
 
         self.cubo_identificado_enviado = False #mudei
+
+        # Calibração: amostras (X, Z) por id de tag, para a média do log_tags
+        self.calib_amostras = {}
 
         self.sub = self.create_subscription(Image, '/cam/image_raw', self.image_callback, 10)
         self.sub_garra = self.create_subscription(String, '/topico_garra', self.garra_callback, 10)
@@ -373,6 +419,8 @@ class VisionNode(Node):
         self.pub_status = self.create_publisher(String, '/topico_garra_status', 10)
         self.pub_deteccao = self.create_publisher(String, '/topico_deteccao', 10)
         self.pub_cmd_vel = self.create_publisher(Twist, '/cmd_vel', 10)
+        self.sub_cmd_vel = self.create_subscription(Twist, '/cmd_vel', self.cmd_vel_callback, 10)
+        self.timer_seguranca_guardar = self.create_timer(0.2, self.timer_guardar)
 
         cv2.namedWindow("Visão do Robô", cv2.WINDOW_NORMAL)
         cv2.resizeWindow("Visão do Robô", 640, 480)
@@ -408,8 +456,17 @@ class VisionNode(Node):
         self.z_filt = None
 
     def resetar_rampa(self, vx=0.0, vy=0.0):
-        self.vx_ant = 0.0
-        self.vy_ant = 0.0
+        # Ponto de partida da rampa. Na passagem busca -> alinhamento, vx recebe a
+        # velocidade lateral da busca, para o robô não dar um tranco ao começar a alinhar.
+        self.vx_ant = float(vx)
+        self.vy_ant = float(vy)
+        # Todo lugar que reinicia a rampa também começa um alinhamento novo (ou encerra
+        # um): o integral acumulado do alvo anterior não vale mais.
+        self.resetar_integral()
+
+    def resetar_integral(self):
+        self.integral = {"x": 0.0, "z": 0.0}
+        self.t_pi_ant = None
 
     def log_deteccao(self, texto, no_topico=True):
         """Mostra o log no terminal e, se no_topico, publica o MESMO texto em /topico_deteccao."""
@@ -421,8 +478,8 @@ class VisionNode(Node):
     def garra_callback(self, msg):
         cmd = msg.data
 
-        if cmd.startswith('guardar'):
-            self.iniciar_inspecao(cmd)
+        if cmd == 'guardar' or cmd.startswith('guardar:'):
+            self.receber_guardar(cmd)
             return
 
         if cmd.startswith('inspecionar:'):
@@ -433,7 +490,7 @@ class VisionNode(Node):
                 self.get_logger().warning(
                     f'(listener) [IMPOSSÍVEL] "{cmd}" recebido na fase {self.fase.name} (alvo {self.comando_atual}). '
                     f'Parei de buscar/alinhar e vou responder como se o alvo tivesse sido pego.')
-                self.concluir_alinhamento()
+                self.concluir_alinhamento(fingido=True)
                 self.get_logger().warning(
                     f'(listener) [IMPOSSÍVEL] Eco enviado (alinhamento FINGIDO, nada foi pego): {self.comando_atual}. '
                     f'A garra segue para o próximo passo.')
@@ -484,11 +541,16 @@ class VisionNode(Node):
             self.get_logger().error(f'(listener) {tipo} a {altura_cm} cm ainda não calibrado (alvo 0, 0). Comando ignorado.')
             return
 
+        if self.fase == Fase.GUARDANDO:
+            # Um transladar no meio do guardar quer dizer que o plano já seguiu (ex.: o
+            # place_at_location desistiu de esperar): o guardar é cancelado e o transladar
+            # é atendido normalmente, para nada ficar travado.
+            self.get_logger().warning(
+                f'(listener) {cmd} recebido durante o guardar de {self.local_guardar}; guardar cancelado.')
+            self.fase = Fase.IDLE
+
         if local != self.local_atual:
-            # Mudou de local: o referencial lateral e a memória antiga não valem mais
-            self.local_atual = local
-            self.memoria[local] = {}
-            self.y_est = 0.0
+            self.mudar_local(local)
 
         self.comando_atual = cmd
         self.alvo_id = alvo
@@ -501,31 +563,103 @@ class VisionNode(Node):
 
         self.iniciar_busca()
 
-    # Publicação de velocidade + estimativa de posição lateral
+    def mudar_local(self, local):
+        """Mudou de mesa. A ORDEM das tags desta mesa (se o robô já esteve aqui) continua
+        valendo e é mantida. O que zera é o referencial de posição: a posição lateral
+        estimada, as posições das tags e a tag "em frente" (o robô chegou num ponto novo)."""
+        self.local_atual = local
+        self.memoria.setdefault(local, [])
+        self.ultima_tag = None
+        self.y_tags = {}
+        self.y_est = 0.0
+        if self.memoria[local]:
+            self.get_logger().info(f'(listener) De volta a {local}; ordem lembrada: {self.memoria[local]}')
+
+    # Publicação de velocidade
     def publicar_cmd(self, twist):
+        # A posição lateral (y_est) é integrada em cmd_vel_callback, que recebe também
+        # estas mensagens: não integrar aqui, senão conta duas vezes.
+        self.pub_cmd_vel.publish(twist)
+
+    def cmd_vel_callback(self, twist):
+        """Integra a velocidade lateral de qualquer nó que publique em /cmd_vel."""
         agora = self.get_clock().now()
         if self.t_ultimo_cmd is not None:
             dt = (agora - self.t_ultimo_cmd).nanoseconds / 1e9
-            if dt < 0.5:  # ignora lacunas (nó ficou em IDLE sem publicar)
+            if dt < 0.5:  # ignora lacunas (ninguém publicando: robô parado)
                 self.y_est += self.vy_ultimo * dt
         self.t_ultimo_cmd = agora
         self.vy_ultimo = twist.linear.y
-        self.pub_cmd_vel.publish(twist)
 
     def parar_robo(self):
         for _ in range(3):
             self.publicar_cmd(Twist())
 
     # Memória e escolha de sentido
-    def registrar_tags(self, results):
-        if self.fase == Fase.IDLE or self.local_atual is None:
+    def registrar_tags(self, results, forcar=False):
+        """Guarda a ORDEM (esquerda -> direita) das tags vistas neste local.
+
+        - Tag nova vista junto com uma tag já conhecida no mesmo frame: entra do lado
+          certo dela, pela posição na imagem.
+        - Tag nova vista sozinha (nenhuma conhecida no frame): entra logo ao lado da última
+          tag vista, do lado em que ela está em relação a essa última tag (comparando as
+          posições laterais estimadas). Funciona mesmo se o robô inverteu o sentido no meio.
+        Também atualiza ultima_tag (a tag mais perto do centro da imagem).
+        Só roda na busca e no alinhamento: em IDLE/INSPECIONANDO o comando atual pode ser
+        de outro local (inspecionar não diz o local) e estragaria a lista deste.
+        forcar=True: chamado pelo guardar, que já garantiu que local_atual é o local certo."""
+        if (self.fase not in (Fase.BUSCANDO, Fase.ALINHANDO) and not forcar) or self.local_atual is None:
             return
-        mem = self.memoria.setdefault(self.local_atual, {})
-        for item in results:
-            if item["id"] >= 0:
-                # Posição lateral da tag no mesmo eixo de y_est (+ = esquerda).
-                # O x da câmera é + para a direita, por isso o sinal de menos.
-                mem[item["id"]] = self.y_est - item["pose_3d"][0]
+        ordem = self.memoria.setdefault(self.local_atual, [])
+
+        # Tags deste frame, da esquerda para a direita na imagem (x da câmera + = direita).
+        # A mesma tag pode aparecer duas vezes no frame: fica só a primeira.
+        vistas = []
+        for r in sorted((r for r in results if r["id"] >= 0), key=lambda r: r["pose_3d"][0]):
+            if all(v["id"] != r["id"] for v in vistas):
+                vistas.append(r)
+        if not vistas:
+            return
+        ids = [r["id"] for r in vistas]
+        tamanho_antes = len(ordem)
+
+        # Posição lateral estimada de cada tag deste frame (+ = esquerda; x da câmera + = direita)
+        y_frame = {r["id"]: self.y_est - r["pose_3d"][0] for r in vistas}
+
+        conhecidas = [i for i, t in enumerate(ids) if t in ordem]
+        if conhecidas:
+            # As novas à esquerda da primeira conhecida entram logo antes dela
+            primeira = conhecidas[0]
+            pos = ordem.index(ids[primeira])
+            for t in ids[:primeira]:
+                ordem.insert(pos, t)
+                pos += 1
+            # As demais novas entram logo depois da tag à esquerda delas no frame
+            for i in range(primeira + 1, len(ids)):
+                if ids[i] not in ordem:
+                    ordem.insert(ordem.index(ids[i - 1]) + 1, ids[i])
+        elif not ordem:
+            ordem.extend(ids)
+        elif self.ultima_tag not in ordem or self.ultima_tag not in self.y_tags:
+            # A mesa já tem ordem lembrada (de uma visita anterior), mas nada deste frame é
+            # conhecido e não há referência de onde o robô está: sem como saber o lado,
+            # não insere. Estas tags entram quando aparecerem junto com uma conhecida.
+            pass
+        else:
+            y_ult = self.y_tags[self.ultima_tag]
+            a_esquerda = [t for t in ids if y_frame[t] > y_ult]    # já em ordem esq -> dir
+            a_direita = [t for t in ids if y_frame[t] <= y_ult]
+            pos = ordem.index(self.ultima_tag)
+            ordem[pos:pos] = a_esquerda                             # logo à esquerda da última
+            pos = ordem.index(self.ultima_tag)
+            ordem[pos + 1:pos + 1] = a_direita                      # logo à direita da última
+
+        if len(ordem) != tamanho_antes:
+            self.get_logger().info(
+                f'(listener) Ordem das tags em {self.local_atual}: {ordem}')
+
+        self.y_tags.update(y_frame)
+        self.ultima_tag = min(vistas, key=lambda r: abs(r["pose_3d"][0]))["id"]
 
     def sentido_para(self, esquerda):
         """Converte 'ir para a esquerda/direita' no sentido (+1/-1) usado pela busca."""
@@ -558,45 +692,132 @@ class VisionNode(Node):
             if sentido is not None:
                 return sentido
 
-        mem = self.memoria.get(self.local_atual, {})
-        y_tag = mem.get(self.alvo_id)
+        ordem = self.memoria.get(self.local_atual, [])
 
-        if y_tag is None:
+        if self.alvo_id not in ordem or self.ultima_tag not in ordem:
             self.get_logger().info(f'(listener) Alvo {self.alvo_id}: sem registro -> sentido normal')
             return 1
 
-        delta = y_tag - self.y_est
-        if abs(delta) < self.get_parameter('dist_min_memoria').value:
-            self.get_logger().info(f'(listener) Alvo {self.alvo_id}: registrado aqui perto (delta={delta:.2f} m) -> sentido normal')
+        if self.alvo_id == self.ultima_tag:
+            self.get_logger().info(f'(listener) Alvo {self.alvo_id}: é a última tag vista (aqui na frente) -> sentido normal')
             return 1
 
-        esquerda = delta > 0
+        # Na lista (esquerda -> direita), alvo antes de onde estou = alvo à esquerda
+        esquerda = ordem.index(self.alvo_id) < ordem.index(self.ultima_tag)
         sentido = self.sentido_para(esquerda)
         self.get_logger().info(
-            f'(listener) Alvo {self.alvo_id}: registrado a {abs(delta):.2f} m à '
-            f'{"esquerda" if esquerda else "direita"} -> sentido {"normal" if sentido == 1 else "inverso"}')
+            f'(listener) Alvo {self.alvo_id}: ordem {ordem}, estou na {self.ultima_tag} -> vou para a '
+            f'{"esquerda" if esquerda else "direita"} (sentido {"normal" if sentido == 1 else "inverso"})')
         return sentido
 
     def iniciar_busca(self):
-        self.sentido_busca = self.escolher_sentido()
+        # O sentido só é escolhido depois de alguns frames parado olhando (ver passo_busca):
+        # a câmera acabou de ligar e o robô pode ter chegado agora a esta mesa, então ainda
+        # não se sabe em frente a qual tag ele está.
+        self.frames_olhar = int(self.get_parameter('frames_olhar_inicio').value)
+        self.sentido_busca = 1
         self.inicio_trecho = self.get_clock().now()
         self.trechos_feitos = 0
         self.frames_vistos = 0
         self.fase = Fase.BUSCANDO
+        if self.frames_olhar <= 0:
+            self.sentido_busca = self.escolher_sentido()
 
-    def concluir_alinhamento(self):
+    def concluir_alinhamento(self, fingido=False):
+        """Para o robô, volta para IDLE e manda o eco do comando em /topico_garra_status.
+
+        fingido=True: o alvo NÃO foi alcançado (comando 'impossivel' ou busca esgotada).
+        O eco é o mesmo, para a garra e o plano seguirem, mas a memória de ordem não é
+        alterada: o robô não está na frente do alvo."""
         self.parar_robo()
         self.fase = Fase.IDLE
         self.resetar_filtro()
         self.resetar_rampa()
 
-        if self.tipo_alvo == 'cubo':
-            self.memoria.get(self.local_atual, {}).pop(self.alvo_id, None)
+        # Alinhado de verdade = o robô está na frente do alvo. O alvo continua na lista
+        # mesmo depois de pego: o lugar dele serve de referência para achar os outros.
+        if not fingido and self.alvo_id is not None and self.alvo_id >= 0:
+            self.ultima_tag = self.alvo_id
+            self.y_tags.setdefault(self.alvo_id, self.y_est)
 
         eco = String()
         eco.data = self.comando_atual
         self.pub_status.publish(eco)
-        self.get_logger().info(f'(listener) Alinhado. Eco enviado em /topico_garra_status: {eco.data}')
+        if fingido:
+            self.get_logger().warning(f'(listener) Alinhamento FINGIDO. Eco enviado em /topico_garra_status: {eco.data}')
+        else:
+            self.get_logger().info(f'(listener) Alinhado. Eco enviado em /topico_garra_status: {eco.data}')
+
+    # Guardar: pedido pelo place_at_location (guardar:<local>) entre dois places na mesma
+    # mesa. Parado, grava na memória as tags à vista e responde guardar:<local>.
+    # Toda chegada de guardar tem resposta (mesmo quando não dá para guardar), para o
+    # place_at_location nunca ficar esperando.
+    def receber_guardar(self, cmd):
+        partes = cmd.split(':', 1)
+        local = partes[1].strip() if len(partes) == 2 and partes[1].strip() else self.local_atual
+
+        if local is None:
+            self.get_logger().error(f'(listener) Guardar sem local e nenhum transladar recebido ainda: {cmd}')
+            self.pub_status.publish(String(data=cmd))
+            return
+        if self.fase != Fase.IDLE:
+            self.get_logger().error(
+                f'(listener) Robô ocupado (fase {self.fase.name}); guardar não feito, só respondido: {cmd}')
+            self.pub_status.publish(String(data=cmd))
+            return
+        self.iniciar_guardar(local)
+
+    def iniciar_guardar(self, local):
+        """Para o robô e começa a observar."""
+        if local != self.local_atual:
+            self.mudar_local(local)
+        self.parar_robo()
+        self.resetar_filtro()
+        self.resetar_rampa()
+        self.local_guardar = local
+        self.inicio_guardar = self.get_clock().now()
+        self.tags_guardadas = set()
+        self.fase = Fase.GUARDANDO
+        self.get_logger().info(f'(listener) Guardando a memória de {local}...')
+
+    def timer_guardar(self):
+        """Segurança: se a câmera parar de mandar frames no meio do guardar, ele termina
+        mesmo assim (com o que tiver gravado), em vez de ficar preso em GUARDANDO."""
+        if self.fase != Fase.GUARDANDO:
+            return
+        decorrido = (self.get_clock().now() - self.inicio_guardar).nanoseconds / 1e9
+        limite = (float(self.get_parameter('guardar_atraso').value)
+                  + float(self.get_parameter('guardar_tempo').value) + 2.0)
+        if decorrido > limite:
+            self.get_logger().warning('(listener) Guardar sem frames da câmera; encerrando com o que foi visto.')
+            self.concluir_guardar()
+
+    def passo_guardar(self, results):
+        decorrido = (self.get_clock().now() - self.inicio_guardar).nanoseconds / 1e9
+        atraso = float(self.get_parameter('guardar_atraso').value)
+        if decorrido < atraso:
+            return   # espera a garra sair da frente e a imagem assentar
+
+        try:
+            self.registrar_tags(results, forcar=True)
+        except Exception as e:
+            self.get_logger().error(f'(listener) Erro ao registrar a ordem das tags no guardar: {e}')
+        self.tags_guardadas.update(r["id"] for r in results if r["id"] >= 0)
+
+        if decorrido >= atraso + float(self.get_parameter('guardar_tempo').value):
+            self.concluir_guardar()
+
+    def concluir_guardar(self):
+        self.fase = Fase.IDLE
+        ordem = self.memoria.get(self.local_guardar, [])
+        cubos = sorted(t for t in self.tags_guardadas if CUBO_ID_MIN <= t <= CUBO_ID_MAX)
+
+        eco = String()
+        eco.data = f'guardar:{self.local_guardar}'
+        self.pub_status.publish(eco)
+        self.log_deteccao(
+            f'(listener) Guardar concluído em {self.local_guardar}: cubos vistos {cubos}, '
+            f'ordem na memória {ordem}. Eco em /topico_garra_status: {eco.data}')
 
     # Inspecionar: qual cubo está embaixo da zona em frente?
     def iniciar_inspecao(self, cmd):
@@ -678,12 +899,16 @@ class VisionNode(Node):
 
     # Cálculo de Aproximação
     def calcular_velocidade_aproximacao(self, delta_x, delta_z, tipo, altura_cm):
-        Kp_x = 4.0 #4.0
-        Kp_z = 4.0  #8.0
+        Kp_x = float(self.get_parameter('kp_x').value)
+        Kp_z = float(self.get_parameter('kp_z').value)
+        Ki_x = float(self.get_parameter('ki_x').value)
+        Ki_z = float(self.get_parameter('ki_z').value)
+        I_MAX = float(self.get_parameter('i_max').value)
         V_MAX_X = 0.125
         V_MAX_Z = 0.25
         V_MIN = 0.04
         DV = 0.02
+        DT_MAX = 0.2   # (s) dt maior que isso (frame atrasado, tag sumiu) não entra inteiro no integral
 
         distancia_alvo_x, distancia_alvo_z = self.ALVOS[tipo][altura_cm]
         tolerancia_x = 0.01
@@ -692,30 +917,73 @@ class VisionNode(Node):
         erro_frontal = delta_z - distancia_alvo_z
         erro_lateral = delta_x - distancia_alvo_x
 
-        def eixo(erro, kp, v_max):
-            if abs(erro) < tolerancia_x:
+        # Tempo desde o último cálculo (o integral é erro * tempo, não erro * frame)
+        agora = self.get_clock().now()
+        if self.t_pi_ant is None:
+            dt = 0.0
+        else:
+            dt = min((agora - self.t_pi_ant).nanoseconds / 1e9, DT_MAX)
+        self.t_pi_ant = agora
+
+        def eixo(erro, nome, kp, ki, v_max, tolerancia):
+            # Dentro da tolerância: parado neste eixo, e o integral é zerado para não
+            # empurrar o robô para fora do ponto depois que ele chegou
+            if abs(erro) < tolerancia:
+                self.integral[nome] = 0.0
                 return 0.0
-            v = kp * erro 
+
+            i_ant = self.integral[nome]
+            # Erro trocou de sinal (passou do ponto): o integral antigo empurraria mais
+            # ainda para o lado errado, então recomeça do zero
+            if i_ant * erro < 0:
+                i_ant = 0.0
+
+            i_novo = i_ant + erro * dt
+            # Anti-windup 1: o termo integral sozinho nunca passa de I_MAX
+            if ki > 0:
+                lim = I_MAX / ki
+                i_novo = max(min(i_novo, lim), -lim)
+            # Anti-windup 2: se a saída já está saturada e o erro empurra para o mesmo
+            # lado, não acumula (acumular aí só causaria ultrapassagem depois)
+            v_bruto = kp * erro + ki * i_novo
+            if abs(v_bruto) > v_max and v_bruto * erro > 0:
+                i_novo = i_ant
+            self.integral[nome] = i_novo
+
+            # PI, com velocidade mínima (vence o atrito) e saturação
+            v = kp * erro + ki * i_novo
             v = math.copysign(max(abs(v), V_MIN), v)
             return max(min(v, v_max), -v_max)
-        
+
         def rampa(v_novo, v_ant):
+            # Limita a aceleração (e a troca de sentido) a DV por frame; frear é imediato
             if abs(v_novo) > abs(v_ant) or v_novo * v_ant < 0:
                 return v_ant + max(min(v_novo - v_ant, DV), -DV)
             return v_novo
 
-
-        vx = rampa(eixo(erro_lateral, Kp_x, V_MAX_X), self.vx_ant)
-        vy = rampa(eixo(erro_frontal, Kp_z, V_MAX_Z), self.vy_ant)
+        vx = rampa(eixo(erro_lateral, "x", Kp_x, Ki_x, V_MAX_X, tolerancia_x), self.vx_ant)
+        vy = rampa(eixo(erro_frontal, "z", Kp_z, Ki_z, V_MAX_Z, tolerancia_z), self.vy_ant)
         self.vx_ant, self.vy_ant = vx, vy
-        
-        print(f'(listener) Velocidade final: vx={vx:.3f} e vy={vy:.3f}  A coordenada X atual: {delta_x:.3f}, o erro lateral atual é:{erro_lateral:.3f} , A coordenada Y atual: {delta_z:.3f}, O erro frontal atual é:{erro_frontal:.3f}')
-        
-        return 0.07, -0.07
+
+        print(f'(listener) Velocidade final: vx={vx:.3f} e vy={vy:.3f}  A coordenada X atual: {delta_x:.3f}, o erro lateral atual é:{erro_lateral:.3f} , A coordenada Y atual: {delta_z:.3f}, O erro frontal atual é:{erro_frontal:.3f}'
+              f'  | I_x={Ki_x * self.integral["x"]:.3f} I_z={Ki_z * self.integral["z"]:.3f} m/s')
+
+        # (v_frente, v_lado): frente = linear.x, lado = linear.y (+y = esquerda)
+        return vy, -vx
 
     # Fases do Comportamento
     def passo_busca(self, alvo):
         """Fase 1: translada de lado; inverte o sentido a cada trecho sem achar a tag."""
+        if self.frames_olhar > 0:
+            # Começo da busca: parado alguns frames. registrar_tags (que roda antes deste
+            # passo) atualiza a tag em frente; com ela, a memória diz para que lado ir.
+            self.frames_olhar -= 1
+            if alvo is None and self.frames_olhar > 0:
+                return
+            self.frames_olhar = 0
+            self.sentido_busca = self.escolher_sentido()
+            self.inicio_trecho = self.get_clock().now()
+
         if alvo is not None:
             self.frames_vistos += 1
             # Só começa a alinhar depois de ver a tag por alguns frames seguidos:
@@ -733,16 +1001,30 @@ class VisionNode(Node):
         else:
             self.frames_vistos = 0
 
-        tempo_trecho = self.get_parameter('search_sweep_time').value
+        # O 1º trecho sai do ponto de partida e vai até uma ponta (T). Os seguintes precisam
+        # do DOBRO do tempo: T para voltar ao ponto de partida + T para varrer o outro lado.
+        # Com o mesmo T em todos, o 2º trecho só voltava ao início e o lado oposto ao
+        # sentido inicial nunca era varrido.
+        tempo_trecho = float(self.get_parameter('search_sweep_time').value)
+        if self.trechos_feitos > 0:
+            tempo_trecho *= 2.0
         max_trechos = self.get_parameter('search_max_legs').value
         decorrido = (self.get_clock().now() - self.inicio_trecho).nanoseconds / 1e9
 
-        if decorrido >= tempo_trecho:
+        # Se a tag está aparecendo agora (frames_vistos > 0, ainda confirmando), não encerra
+        # o trecho neste frame: espera a confirmação (no máximo frames_para_avistar frames).
+        if decorrido >= tempo_trecho and self.frames_vistos == 0:
             self.trechos_feitos += 1
             if max_trechos > 0 and self.trechos_feitos >= max_trechos:
-                self.get_logger().error(f'(listener) Tag {self.alvo_id} não encontrada após {self.trechos_feitos} trechos. Parando o robô.')
-                self.parar_robo()
-                self.fase = Fase.IDLE
+                # Busca esgotada: em vez de só parar (o que travaria o plano), responde como
+                # no 'impossivel': eco do comando em /topico_garra_status, alinhamento fingido.
+                self.get_logger().warning(
+                    f'(listener) [BUSCA ESGOTADA] Tag {self.alvo_id} não encontrada após {self.trechos_feitos} trechos. '
+                    f'Vou responder como se o alvo tivesse sido pego, para o plano continuar.')
+                self.concluir_alinhamento(fingido=True)
+                self.get_logger().warning(
+                    f'(listener) [BUSCA ESGOTADA] Eco enviado (alinhamento FINGIDO, nada foi pego): {self.comando_atual}. '
+                    f'A garra segue para o próximo passo.')
                 return
             self.sentido_busca *= -1
             self.inicio_trecho = self.get_clock().now()
@@ -766,6 +1048,9 @@ class VisionNode(Node):
             twist.linear.x = float(self.vy_ant)
             twist.linear.y = float(-self.vx_ant)
             self.publicar_cmd(twist)
+            # Sem tag não há erro medido: o integral fica congelado, e o tempo sem tag
+            # não conta como dt quando ela voltar
+            self.t_pi_ant = None
 
             if self.frames_perdidos >= self.get_parameter('frames_perdida_limite').value:
                 self.get_logger().warning(f'(listener) Tag {self.alvo_id} perdida durante o alinhamento; voltando a buscar.')
@@ -831,6 +1116,29 @@ class VisionNode(Node):
         else:
             self.frames_estaveis = 0
 
+    # Calibração: média de X e Z de cada tag à vista
+    def log_calibracao(self, results):
+        if not self.get_parameter('log_tags').value:
+            self.calib_amostras = {}
+            return
+        n = int(self.get_parameter('calib_frames').value)
+        for r in results:
+            if r["id"] >= 0:
+                x, _, z = r["pose_3d"]
+                self.calib_amostras.setdefault(r["id"], []).append((x, z))
+        for tag_id, amostras in list(self.calib_amostras.items()):
+            if len(amostras) < n:
+                continue
+            xs = [a[0] for a in amostras]
+            zs = [a[1] for a in amostras]
+            mx, mz = sum(xs) / n, sum(zs) / n
+            dx = math.sqrt(sum((v - mx) ** 2 for v in xs) / n)
+            dz = math.sqrt(sum((v - mz) ** 2 for v in zs) / n)
+            self.get_logger().info(
+                f'(listener) [calibração] tag {tag_id}: X={mx:.4f} (±{dx:.4f})  Z={mz:.4f} (±{dz:.4f})'
+                f'  média de {n} frames  ->  ({mx:.3f}, {mz:.3f})')
+            self.calib_amostras[tag_id] = []
+
     # Callback da Câmera
     def image_callback(self, msg):
         try:
@@ -842,8 +1150,14 @@ class VisionNode(Node):
             agora = self.get_clock().now().nanoseconds / 1e9
             results = self.classifier.classify(tags, color_objects, agora)
 
-            # Registra todas as tags na memória por local e ID
-            self.registrar_tags(results)
+            # Registra a ordem das tags. Isolado num try: se a memória der erro, a busca,
+            # o alinhamento e o eco fingido continuam rodando neste frame.
+            try:
+                self.registrar_tags(results)
+            except Exception as e:
+                self.get_logger().error(f'(listener) Erro ao registrar a ordem das tags: {e}')
+
+            self.log_calibracao(results)
 
             # Zonas (101..107) à vista neste frame: decidem o lado da busca por uma zona
             self.zonas_visiveis = [r["id"] for r in results
@@ -887,6 +1201,8 @@ class VisionNode(Node):
                 self.passo_alinhamento(alvo_encontrado)
             elif self.fase == Fase.INSPECIONANDO:
                 self.passo_inspecao(results)
+            elif self.fase == Fase.GUARDANDO:
+                self.passo_guardar(results)
             # Fase.IDLE: não publica nada em /cmd_vel
 
             texto = f"FASE: {self.fase.name}"

@@ -35,7 +35,7 @@ class AproximarRotacionar(Node):
 
         # Aproximação: distância-alvo selecionada pela altura da mesa
         self.declare_parameter('alturas_mesa', [5, 10, 15])
-        self.declare_parameter('distancia_alvo', [0.26, 0.22, 0.16])
+        self.declare_parameter('distancia_alvo', [0.20, 0.20, 0.16])
         self.declare_parameter('tolerancia_altura', 0.05)
         self.distancia_padrao = 0.28
         self.distancia_alvo = self.distancia_padrao
