@@ -18,8 +18,8 @@ class PlaceCubeAtLocationStep(Enum):
     #se o cubo deve ser pego, ou não, e continuar o sacneamento para próximos cubos
     START = auto()
     AJUSTAR1 = auto() #mudei
-    TRANSLADAR = auto() #mudei
     GUARDAR = auto()    # só quando o place anterior foi nesta mesma location
+    TRANSLADAR = auto() #mudei
     VERTICAL_CHASSI1 = auto() #pular as próximas duas etapas se o cubo já estiver em modo de "depositar" cubos, já que será realizado pela anterior
     GIRAR_CHASSI1 = auto()
     VERTICAL_CHASSI2 = auto() #inicia daqui se está em modo de depositar

@@ -187,12 +187,18 @@ class PickCubeFromLocationAction(GripperPrimitives):
 
             self.step = PickCubeStep.GIRAR_AREA
 
-            self.send_feedback(
-                0.22,
-                'Girando pegar cubo'
-            )
+            elif self.target_location in ['loc4', 'loc10']:
+                self.step = PlaceCubeAtLocationStep.GIRAR_AREA
+                self.send_command('frente_esq')
 
-            self.send_command('frente')
+            else:
+
+                self.send_feedback(
+                    0.22,
+                    'Girando pegar cubo'
+                )
+
+                self.send_command('frente')
 
         # =====================================
         # GIRAR AREA

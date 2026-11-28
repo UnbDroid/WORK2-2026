@@ -68,8 +68,18 @@ class PlaceCubeAtLocationAction(GripperPrimitives):
 
         elif self.step == PlaceCubeAtLocationStep.FECHAR and self.command_finished():
             self.step = PlaceCubeAtLocationStep.VERTICAL_CHASSI3
-            self.send_feedback(0.45, 'Subindo para altura de giro')
-            self.send_command('alt_giro')
+
+            if self.target_location in ['loc4', 'loc10']:
+                self.send_feedback(
+                    0.45,
+                    'Levantando garra para girar pela esquerda'
+                )
+
+                self.send_command('alt_giro_esquerda')
+
+            else:
+                self.send_feedback(0.45, 'Subindo para altura de giro')
+                self.send_command('alt_giro')
 
         elif self.step == PlaceCubeAtLocationStep.VERTICAL_CHASSI3 and self.command_finished():
             self.step = PlaceCubeAtLocationStep.GIRAR_AREA
@@ -79,7 +89,7 @@ class PlaceCubeAtLocationAction(GripperPrimitives):
         elif self.step == PlaceCubeAtLocationStep.GIRAR_AREA and self.command_finished():
             self.step = PlaceCubeAtLocationStep.VERTICAL_AREA1
             self.send_feedback(0.63, f'Abaixando para altura de {args[3]}')
-            self.send_command(self.height_to_cmd(args[3]))
+            self.send_command(f'container:{self.height_to_cmd(args[3])}')
 
         elif self.step == PlaceCubeAtLocationStep.VERTICAL_AREA1 and self.command_finished():
             self.step = PlaceCubeAtLocationStep.ABRIR

@@ -33,7 +33,7 @@ REF_V = 330.63
 # Evita que um cubo com a tag perdida num frame vire "contêiner".
 # CALIBRAR: deve ser maior que a altura de um cubo e menor que a do contêiner
 # na distância mais longa em que você precisa vê-lo.
-H_MIN_container = 200
+H_MIN_container = 50
 
 # Folga (px) para considerar que uma mancha de cor está dentro da caixa de uma tag.
 # Cobre o alargamento da mancha pelo blur/dilate.
@@ -283,7 +283,7 @@ class VisionNode(Node):
 
     ALVOS = {
         "cubo": {
-            5.0:  (0.174, 0.802),
+            5.0:  (0.233, 0.784),
             10.0: (0.145, 0.714),
             15.0: (0.195, 0.649),
         },
@@ -293,7 +293,7 @@ class VisionNode(Node):
             15.0: (0.0, 0.0),   # CALIBRAR
         },
         "container": {
-            5.0:  (0.130, 0.626),
+            5.0:  (0.158,0.598),
             10.0: (0.148, 0.720),
             15.0: (0.2124 , 0.8413),
         },
@@ -332,10 +332,10 @@ class VisionNode(Node):
         self.declare_parameter('pareamento_tol_x', 1.0)     # tolerância lateral cubo x zona, em larguras da tag da zona
         self.declare_parameter('suavizacao_tag', 0.5)
         # Ganhos do controle PI de aproximação (ki = 0 volta a ser só P, igual antes)
-        self.declare_parameter('kp_x', 4.0)    # proporcional lateral
-        self.declare_parameter('kp_z', 4.0)    # proporcional frontal
-        self.declare_parameter('ki_x', 1.0)    # integral lateral (1/s)
-        self.declare_parameter('ki_z', 1.0)    # integral frontal (1/s)
+        self.declare_parameter('kp_x', 3.0)    # proporcional lateral
+        self.declare_parameter('kp_z', 3.0)    # proporcional frontal
+        self.declare_parameter('ki_x', 2.0)    # integral lateral (1/s)
+        self.declare_parameter('ki_z', 2.0)    # integral frontal (1/s)
         self.declare_parameter('i_max', 0.05)  # (m/s) contribuição máxima do termo integral (anti-windup)
         # Guardar (pedido pelo place_at_location com guardar:<local> entre dois places na mesma mesa)
         self.declare_parameter('guardar_atraso', 0.5)  # (s) espera inicial sem gravar (garra recolhendo, imagem assentando)
@@ -1195,6 +1195,14 @@ class VisionNode(Node):
                     alvo_busca = None
                     alvo_na_borda = True
 
+            if self.fase == Fase.BUSCANDO and self.tipo_alvo == 'container':
+                for it in results:
+                    if it["waypoint"] == "container":
+                        self.get_logger().info(
+                            f'(listener) [debug contêiner] id={it["id"]} (comando: {self.alvo_id}) '
+                            f'h_px={it["h_px"]} bbox={it["bbox"]} na_borda={alvo_na_borda} '
+                            f'frames_vistos={self.frames_vistos}',
+                            throttle_duration_sec=0.3)
             if self.fase == Fase.BUSCANDO:
                 self.passo_busca(alvo_busca)
             elif self.fase == Fase.ALINHANDO:
